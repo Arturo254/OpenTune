@@ -273,11 +273,11 @@ git submodule update --init --recursive
 
 ## 许可证
 
-**版权 © 2025 Arturo Cervantes**
+**Copyright © 2025 Arturo Cervantes**
 
-本程序遵循 GNU GPL v3 协议发布，您可以自由传播和修改，但需遵循协议条款。
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-本程序分发时不附带任何担保，包括但不限于适销性或特定用途的适用性。详情请查看 [GNU GPL 协议](  https://github.com/Arturo254/OpenTune/blob/main/LICENSE  )。
+This program is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU General Public License](https://github.com/Arturo254/OpenTune/blob/main/LICENSE) for more details.
 
 <div align="center">
 
