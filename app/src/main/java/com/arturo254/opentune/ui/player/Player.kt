@@ -6,12 +6,17 @@ import android.text.format.Formatter
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -65,9 +70,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -701,56 +711,129 @@ fun BottomSheetPlayer(
                 Spacer(modifier = Modifier.size(12.dp))
 
                 Box(
-                    modifier =
-                        Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(textButtonColor)
-                            .clickable {
-                                if (download?.state == Download.STATE_COMPLETED) {
-                                    DownloadService.sendRemoveDownload(
-                                        context,
-                                        ExoDownloadService::class.java,
-                                        mediaMetadata.id,
-                                        false,
-                                    )
-                                } else {
-                                    database.transaction {
-                                        insert(mediaMetadata)
-                                    }
-                                    val downloadRequest =
-                                        DownloadRequest
-                                            .Builder(mediaMetadata.id, mediaMetadata.id.toUri())
-                                            .setCustomCacheKey(mediaMetadata.id)
-                                            .setData(mediaMetadata.title.toByteArray())
-                                            .build()
-                                    DownloadService.sendAddDownload(
-                                        context,
-                                        ExoDownloadService::class.java,
-                                        downloadRequest,
-                                        false,
-                                    )
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(textButtonColor)
+                        .clickable {
+                            if (download?.state == Download.STATE_COMPLETED) {
+                                DownloadService.sendRemoveDownload(
+                                    context,
+                                    ExoDownloadService::class.java,
+                                    mediaMetadata.id,
+                                    false,
+                                )
+                            } else {
+                                database.transaction {
+                                    insert(mediaMetadata)
                                 }
-                            },
+                                val downloadRequest =
+                                    DownloadRequest
+                                        .Builder(mediaMetadata.id, mediaMetadata.id.toUri())
+                                        .setCustomCacheKey(mediaMetadata.id)
+                                        .setData(mediaMetadata.title.toByteArray())
+                                        .build()
+                                DownloadService.sendAddDownload(
+                                    context,
+                                    ExoDownloadService::class.java,
+                                    downloadRequest,
+                                    false,
+                                )
+                            }
+                        },
                 ) {
-                    Image(
-                        painter =
-                            painterResource(
-                                if (download?.state ==
-                                    Download.STATE_COMPLETED
-                                ) {
-                                    R.drawable.offline
-                                } else {
-                                    R.drawable.download
-                                },
-                            ),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(iconButtonColor),
-                        modifier =
-                            Modifier
-                                .align(Alignment.Center)
-                                .size(24.dp),
+                    // Indicador de progreso circular de fondo
+                    if (download?.state == Download.STATE_DOWNLOADING) {
+                        val progress = download!!.percentDownloaded / 100f
+                        val animatedProgress by animateFloatAsState(
+                            targetValue = progress,
+                            animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                            label = "downloadProgress"
+                        )
+
+                        Canvas(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(2.dp)
+                        ) {
+                            val strokeWidth = 3.dp.toPx()
+                            val radius = (size.minDimension - strokeWidth) / 2
+                            val center = Offset(size.width / 2, size.height / 2)
+
+                            // Círculo de fondo (gris)
+                            drawCircle(
+                                color = iconButtonColor.copy(alpha = 0.3f),
+                                radius = radius,
+                                center = center,
+                                style = Stroke(width = strokeWidth)
+                            )
+
+                            // Círculo de progreso
+                            if (animatedProgress > 0f) {
+                                drawArc(
+                                    color = iconButtonColor,
+                                    startAngle = -90f,
+                                    sweepAngle = 360f * animatedProgress,
+                                    useCenter = false,
+                                    topLeft = Offset(
+                                        center.x - radius,
+                                        center.y - radius
+                                    ),
+                                    size = Size(radius * 2, radius * 2),
+                                    style = Stroke(
+                                        width = strokeWidth,
+                                        cap = StrokeCap.Round
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    // Icono central con animación
+                    val iconResource = when (download?.state) {
+                        Download.STATE_COMPLETED -> R.drawable.offline
+                        Download.STATE_DOWNLOADING -> R.drawable.pause // o R.drawable.download_pause
+                        Download.STATE_FAILED -> R.drawable.error
+                        else -> R.drawable.download
+                    }
+
+                    val iconAlpha by animateFloatAsState(
+                        targetValue = if (download?.state == Download.STATE_DOWNLOADING) 0.8f else 1f,
+                        animationSpec = tween(durationMillis = 200),
+                        label = "iconAlpha"
                     )
+
+                    val iconScale by animateFloatAsState(
+                        targetValue = if (download?.state == Download.STATE_DOWNLOADING) 0.9f else 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        ),
+                        label = "iconScale"
+                    )
+
+                    Image(
+                        painter = painterResource(iconResource),
+                        contentDescription = when (download?.state) {
+                            Download.STATE_COMPLETED -> "Downloaded"
+                            Download.STATE_DOWNLOADING -> "Downloading..."
+                            Download.STATE_FAILED -> "Download failed"
+                            else -> "Download"
+                        },
+                        colorFilter = ColorFilter.tint(
+                            when (download?.state) {
+                                Download.STATE_FAILED -> MaterialTheme.colorScheme.error
+                                else -> iconButtonColor
+                            }
+                        ),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(24.dp)
+                            .scale(iconScale)
+                            .alpha(iconAlpha),
+                    )
+
+
                 }
 
 
@@ -1050,13 +1133,16 @@ fun BottomSheetPlayer(
                 Box(modifier = Modifier.weight(1f)) {
                     ResizableIconButton(
                         icon = if (currentSong?.song?.liked == true) R.drawable.favorite else R.drawable.favorite_border,
-                        color = if (currentSong?.song?.liked == true) MaterialTheme.colorScheme.error else TextBackgroundColor,
-                        modifier =
-                            Modifier
-                                .size(32.dp)
-                                .padding(4.dp)
-                                .align(Alignment.Center),
-                        onClick = playerConnection::toggleLike,
+                        color = if (currentSong?.song?.liked == true) Color(0xFFE91E63) else TextBackgroundColor,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .padding(4.dp)
+                            .align(Alignment.Center),
+                        onClick = {
+                            currentSong?.song?.let {
+                                playerConnection.toggleLike()
+                            }
+                        },
                     )
                 }
             }

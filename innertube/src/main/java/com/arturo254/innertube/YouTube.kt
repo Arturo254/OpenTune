@@ -220,7 +220,7 @@ object YouTube {
                     client = WEB_REMIX,
                     continuation = continuation,
                 ).body<BrowseResponse>()
-                songs += response.continuationContents?.musicPlaylistShelfContinuation?.contents?.getItems()?.mapNotNull {
+                songs += response.onResponseReceivedActions?.firstOrNull()?.appendContinuationItemsAction?.continuationItems?.getItems()?.mapNotNull {
                     AlbumPage.fromMusicResponsiveListItemRenderer(it)
                 }.orEmpty()
                 continuation = response.continuationContents?.musicPlaylistShelfContinuation?.continuations?.getContinuation()
@@ -632,7 +632,7 @@ object YouTube {
         innerTube.removeFromPlaylist(WEB_REMIX, playlistId, videoId, setVideoId)
     }
 
-    suspend fun moveSongPlaylist(playlistId: String, setVideoId: String, successorSetVideoId: String) = runCatching {
+    suspend fun moveSongPlaylist(playlistId: String, setVideoId: String, successorSetVideoId: String?) = runCatching {
         innerTube.moveSongPlaylist(WEB_REMIX, playlistId, setVideoId, successorSetVideoId)
     }
 

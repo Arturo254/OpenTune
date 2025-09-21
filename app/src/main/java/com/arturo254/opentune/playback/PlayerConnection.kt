@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -355,15 +356,27 @@ class PlayerConnection(
     fun toggleLike() {
         try {
             Log.d(TAG, "Toggling like for current track")
-            service.toggleLike()
-            // Actualizar estado local
-            _isLiked.value = !_isLiked.value
+
+            // Actualizar estado local primero para UI responsiva
+            val newLikedState = !_isLiked.value
+            _isLiked.value = newLikedState
+
+            // Llamada asíncrona al servicio
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    service.toggleLike()
+                } catch (e: Exception) {
+                    // Revertir estado si falla
+                    _isLiked.value = !newLikedState
+                    Log.e(TAG, "Error toggling like, reverting state", e)
+                    reportException(e)
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error toggling like", e)
             reportException(e)
         }
     }
-
     fun seekToNext() {
         try {
             Log.d(TAG, "Seeking to next track")

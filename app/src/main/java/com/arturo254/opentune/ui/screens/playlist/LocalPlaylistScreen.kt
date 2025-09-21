@@ -146,7 +146,7 @@ import org.burnoutcrew.reorderable.reorderable
 import java.time.LocalDateTime
 
 
-@SuppressLint("RememberReturnType")
+@SuppressLint("RememberReturnType", "StringFormatInvalid")
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LocalPlaylistScreen(
@@ -373,7 +373,11 @@ fun LocalPlaylistScreen(
         )
     }
 
+
+
+
     val headerItems = 2
+// Reemplaza tu rememberReorderableLazyListState actual con este código modificado
     val reorderableState =
         rememberReorderableLazyListState(
             onMove = { from, to ->
@@ -384,8 +388,37 @@ fun LocalPlaylistScreen(
             onDragEnd = { fromIndex, toIndex ->
                 val from = if (fromIndex < 2) 2 else fromIndex
                 val to = if (toIndex < 2) 2 else toIndex
+
+                // Actualizar la base de datos local primero
                 database.transaction {
                     move(viewModel.playlistId, from - headerItems, to - headerItems)
+                }
+
+                // Si es una playlist de YouTube, sincronizar con YouTube
+                if (viewModel.playlist.value?.playlist?.browseId != null) {
+                    viewModel.viewModelScope.launch(Dispatchers.IO) {
+                        try {
+                            val playlistSongMap = database.playlistSongMaps(viewModel.playlistId, 0)
+                            val successorIndex = if (from > to) to else to + 1
+                            val successorSetVideoId = playlistSongMap.getOrNull(successorIndex)?.setVideoId
+
+                            playlistSongMap.getOrNull(from - headerItems)?.setVideoId?.let { setVideoId ->
+                                YouTube.moveSongPlaylist(
+                                    viewModel.playlist.value?.playlist?.browseId!!,
+                                    setVideoId,
+                                    successorSetVideoId
+                                )
+                            }
+                        } catch (e: Exception) {
+                            // Manejar errores de sincronización con YouTube
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = context.getString(R.string.error_unknown, e.message),
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        }
+                    }
                 }
             },
         )
@@ -397,6 +430,12 @@ fun LocalPlaylistScreen(
     }
 
     var dismissJob: Job? by remember { mutableStateOf(null) }
+
+
+
+
+
+
 
     Box(
         modifier = Modifier.fillMaxSize(),

@@ -39,6 +39,7 @@ import com.arturo254.opentune.constants.ShowLyricsKey
 import com.arturo254.opentune.constants.SwipeThumbnailKey
 import com.arturo254.opentune.ui.component.AppConfig
 import com.arturo254.opentune.ui.component.Lyrics
+
 import com.arturo254.opentune.utils.rememberPreference
 import kotlin.math.roundToInt
 

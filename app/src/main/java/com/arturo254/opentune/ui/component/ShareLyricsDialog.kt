@@ -1,7 +1,6 @@
 package com.arturo254.opentune.ui.component
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
@@ -68,7 +67,6 @@ import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.request.ImageRequest
 import com.arturo254.opentune.R
-
 import com.arturo254.opentune.models.MediaMetadata
 import com.arturo254.opentune.utils.ComposeToImage
 import kotlinx.coroutines.Dispatchers

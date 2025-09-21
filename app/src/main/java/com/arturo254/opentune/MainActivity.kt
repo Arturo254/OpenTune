@@ -36,6 +36,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -173,6 +174,7 @@ import com.arturo254.opentune.ui.component.BottomSheetMenu
 import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.component.LocalMenuState
 import com.arturo254.opentune.ui.component.LocaleManager
+import com.arturo254.opentune.ui.component.Lyrics
 import com.arturo254.opentune.ui.component.TopSearch
 import com.arturo254.opentune.ui.component.rememberBottomSheetState
 import com.arturo254.opentune.ui.component.shimmer.ShimmerTheme
@@ -221,8 +223,6 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
-import androidx.compose.animation.*
-import com.arturo254.opentune.ui.component.FullScreenLyricsScreen
 
 // El codigo original de la aplicacion pertenece a : Arturo Cervantes Galindo (Arturo254) Cualquier parecido es copia y pega de mi codigo original
 
@@ -332,6 +332,8 @@ class MainActivity : ComponentActivity() {
 
             var showFullscreenLyrics by remember { mutableStateOf(false) }
 
+
+            var sliderPosition by remember { mutableStateOf<Long?>(null) }
 
             val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
             val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
@@ -749,13 +751,6 @@ class MainActivity : ComponentActivity() {
                                                                     blendMode = BlendMode.DstIn
                                                                 )
                                                             },
-                                                        onError = { error ->
-                                                            // Log del error sin crashear la app
-                                                            Log.w(
-                                                                "PlayerBackground",
-                                                                "Error loading background image: ${error.result.throwable.message}"
-                                                            )
-                                                        }
                                                     )
                                                 }
                                             }
@@ -1050,6 +1045,8 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.fillMaxSize()
                                     )
 
+
+
                                     AnimatedVisibility(
                                         visible = showFullscreenLyrics,
                                         enter = slideInVertically(
@@ -1061,10 +1058,9 @@ class MainActivity : ComponentActivity() {
                                             animationSpec = tween(300)
                                         ) + fadeOut(animationSpec = tween(300))
                                     ) {
-                                        FullScreenLyricsScreen(
+                                        Lyrics(
                                             sliderPositionProvider = {
-                                                // Obtener posición del slider desde el player connection
-                                                null // o la lógica que tengas para obtener la posición del slider
+                                                sliderPosition
                                             },
                                             onNavigateBack = {
                                                 showFullscreenLyrics = false
