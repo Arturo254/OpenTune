@@ -90,6 +90,7 @@ fun LyricsMenu(
                 }
                 // NUEVO: Notificar que las letras fueron actualizadas
                 onLyricsUpdated()
+                onDismiss()
             },
         )
     }
@@ -225,6 +226,7 @@ fun LyricsMenu(
                                 }
                                 // NUEVO: Notificar actualización antes de cerrar
                                 onLyricsUpdated()
+                                showSearchResultDialog = false
                                 onDismiss()
                             }
                             .padding(12.dp)

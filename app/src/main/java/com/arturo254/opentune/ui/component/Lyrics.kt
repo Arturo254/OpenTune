@@ -257,7 +257,6 @@ fun Lyrics(
         if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
     }
 
-    // Cargar letras desde BD primero, luego desde API si no existen
     LaunchedEffect(currentSongId) {
         currentSongId?.let { songId ->
             if (lyricsCache.containsKey(songId)) {
@@ -269,44 +268,16 @@ fun Lyrics(
 
             withContext(Dispatchers.IO) {
                 try {
-                    val existingLyrics: LyricsEntity? = null // TODO: Implementar consulta a BD
+                    val existingLyrics = database.getLyrics(songId)
 
-                    if (existingLyrics != null) {
-                        val newCache = lyricsCache.toMutableMap().apply {
+                    val newCache = lyricsCache.toMutableMap().apply {
+                        if (existingLyrics != null) {
                             put(songId, existingLyrics)
                         }
-                        lyricsCache = newCache
-                        currentLyricsEntity = existingLyrics
-                        isLoadingLyrics = false
-                    } else {
-                        val entryPoint = EntryPointAccessors.fromApplication(
-                            context.applicationContext,
-                            com.arturo254.opentune.di.LyricsHelperEntryPoint::class.java
-                        )
-                        val lyricsHelper = entryPoint.lyricsHelper()
-
-                        val fetchedLyrics = mediaMetadata?.let { lyricsHelper.getLyrics(it) }
-
-                        val lyricsEntity = if (fetchedLyrics != null) {
-                            val entity = LyricsEntity(songId, fetchedLyrics)
-                            database.query {
-                                upsert(entity)
-                            }
-                            entity
-                        } else {
-                            val entity = LyricsEntity(songId, LYRICS_NOT_FOUND)
-                            database.query {
-                                upsert(entity)
-                            }
-                            entity
-                        }
-
-                        val newCache = lyricsCache.toMutableMap().apply {
-                            put(songId, lyricsEntity)
-                        }
-                        lyricsCache = newCache
-                        currentLyricsEntity = lyricsEntity
                     }
+                    lyricsCache = newCache
+                    currentLyricsEntity = existingLyrics
+                    isLoadingLyrics = false
                 } catch (e: Exception) {
                     val errorEntity = LyricsEntity(songId, LYRICS_NOT_FOUND)
                     val newCache = lyricsCache.toMutableMap().apply {
