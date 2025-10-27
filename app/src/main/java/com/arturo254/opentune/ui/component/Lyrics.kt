@@ -268,16 +268,59 @@ fun Lyrics(
 
             withContext(Dispatchers.IO) {
                 try {
-                    val existingLyrics = database.getLyrics(songId)
+                    // Primero, intentar cargar desde la BD
+                    val existingLyrics = try {
+                        database.getLyrics(songId)
+                    } catch (e: Throwable) {
+                        null
+                    }
 
-                    val newCache = lyricsCache.toMutableMap().apply {
-                        if (existingLyrics != null) {
+                    if (existingLyrics != null) {
+                        val newCache = lyricsCache.toMutableMap().apply {
                             put(songId, existingLyrics)
                         }
+                        lyricsCache = newCache
+                        currentLyricsEntity = existingLyrics
+                    } else {
+                        // Si no hay en BD, intentar obtener desde la API mediante LyricsHelper
+                        try {
+                            val entryPoint = EntryPointAccessors.fromApplication(
+                                context.applicationContext,
+                                com.arturo254.opentune.di.LyricsHelperEntryPoint::class.java
+                            )
+                            val lyricsHelper = entryPoint.lyricsHelper()
+                            val fetchedLyrics: String? = mediaMetadata?.let { lyricsHelper.getLyrics(it) }
+
+                            val entity = if (!fetchedLyrics.isNullOrBlank()) {
+                                LyricsEntity(songId, fetchedLyrics)
+                            } else {
+                                LyricsEntity(songId, LYRICS_NOT_FOUND)
+                            }
+
+                            // Guardar/upsert en BD para cache
+                            try {
+                                database.query {
+                                    upsert(entity)
+                                }
+                            } catch (e: Throwable) {
+                                // Si el upsert falla, no bloquear el flujo: seguir con cache temporal
+                            }
+
+                            val newCache = lyricsCache.toMutableMap().apply {
+                                put(songId, entity)
+                            }
+                            lyricsCache = newCache
+                            currentLyricsEntity = entity
+                        } catch (e: Throwable) {
+                            // Si falla la obtención por red/entrypoint, guardar marcador de "no encontrado"
+                            val errorEntity = LyricsEntity(songId, LYRICS_NOT_FOUND)
+                            val newCache = lyricsCache.toMutableMap().apply {
+                                put(songId, errorEntity)
+                            }
+                            lyricsCache = newCache
+                            currentLyricsEntity = errorEntity
+                        }
                     }
-                    lyricsCache = newCache
-                    currentLyricsEntity = existingLyrics
-                    isLoadingLyrics = false
                 } catch (e: Exception) {
                     val errorEntity = LyricsEntity(songId, LYRICS_NOT_FOUND)
                     val newCache = lyricsCache.toMutableMap().apply {
