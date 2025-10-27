@@ -17,6 +17,10 @@ import com.arturo254.opentune.playback.MusicService
 import com.arturo254.opentune.playback.MusicService.Companion.PERSISTENT_QUEUE_FILE
 import com.arturo254.opentune.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.arturo254.opentune.db.entities.ArtistEntity
+import com.arturo254.opentune.db.entities.Song
+import com.arturo254.opentune.db.entities.SongEntity
+import com.arturo254.opentune.viewmodels.BackupRestoreViewModel.Companion.SETTINGS_FILENAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.io.FileInputStream
@@ -27,29 +31,23 @@ import kotlin.system.exitProcess
 
 @HiltViewModel
 class BackupRestoreViewModel @Inject constructor(
-    private val database: MusicDatabase
+    val database: MusicDatabase,
 ) : ViewModel() {
-
     fun backup(context: Context, uri: Uri) {
         runCatching {
-            context.contentResolver.openOutputStream(uri)?.use {
+            context.applicationContext.contentResolver.openOutputStream(uri)?.use {
                 it.buffered().zipOutputStream().use { outputStream ->
-                    // Guardar settings excluyendo VISITOR_DATA si es necesario
-                    val settingsFile = context.filesDir / "datastore" / SETTINGS_FILENAME
-                    if (settingsFile.exists()) {
-                        settingsFile.inputStream().buffered().use { inputStream ->
+                    (context.filesDir / "datastore" / SETTINGS_FILENAME).inputStream().buffered()
+                        .use { inputStream ->
                             outputStream.putNextEntry(ZipEntry(SETTINGS_FILENAME))
                             inputStream.copyTo(outputStream)
                         }
-                    }
-
-                    // Guardar base de datos
                     runBlocking(Dispatchers.IO) {
                         database.checkpoint()
                     }
-                    FileInputStream(database.openHelper.writableDatabase.path).use { dbStream ->
+                    FileInputStream(database.openHelper.writableDatabase.path).use { inputStream ->
                         outputStream.putNextEntry(ZipEntry(InternalDatabase.DB_NAME))
-                        dbStream.copyTo(outputStream)
+                        inputStream.copyTo(outputStream)
                     }
                 }
             }
@@ -63,16 +61,16 @@ class BackupRestoreViewModel @Inject constructor(
 
     fun restore(context: Context, uri: Uri) {
         runCatching {
-            context.contentResolver.openInputStream(uri)?.use {
+            context.applicationContext.contentResolver.openInputStream(uri)?.use {
                 it.zipInputStream().use { inputStream ->
-                    var entry = tryOrNull { inputStream.nextEntry }
+                    var entry = tryOrNull { inputStream.nextEntry } // prevent ZipException
                     while (entry != null) {
                         when (entry.name) {
                             SETTINGS_FILENAME -> {
-                                val outFile = context.filesDir / "datastore" / SETTINGS_FILENAME
-                                outFile.outputStream().use { outputStream ->
-                                    inputStream.copyTo(outputStream)
-                                }
+                                (context.filesDir / "datastore" / SETTINGS_FILENAME).outputStream()
+                                    .use { outputStream ->
+                                        inputStream.copyTo(outputStream)
+                                    }
                             }
 
                             InternalDatabase.DB_NAME -> {
@@ -85,27 +83,98 @@ class BackupRestoreViewModel @Inject constructor(
                                 }
                             }
                         }
-                        entry = tryOrNull { inputStream.nextEntry }
+                        entry = tryOrNull { inputStream.nextEntry } // prevent ZipException
                     }
                 }
             }
-
-            // Detener servicio y limpiar cola persistente
             context.stopService(Intent(context, MusicService::class.java))
             context.filesDir.resolve(PERSISTENT_QUEUE_FILE).delete()
-
-            // Reiniciar app
-            context.startActivity(
-                Intent(
-                    context,
-                    MainActivity::class.java
-                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
+            context.startActivity(Intent(context, MainActivity::class.java))
             exitProcess(0)
         }.onFailure {
             reportException(it)
             Toast.makeText(context, R.string.restore_failed, Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun importPlaylistFromCsv(context: Context, uri: Uri): ArrayList<Song> {
+        val songs = arrayListOf<Song>()
+        runCatching {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                val lines = stream.bufferedReader().readLines()
+                lines.forEachIndexed { _, line ->
+                    val parts = line.split(",").map { it.trim() }
+                    val title = parts[0]
+                    val artistStr = parts[1]
+
+                    val artists = artistStr.split(";").map { it.trim() }.map {
+                        ArtistEntity(
+                            id = "",
+                            name = it,
+                        )
+                    }
+                    val mockSong = Song(
+                        song = SongEntity(
+                            id = "",
+                            title = title,
+                        ),
+                        artists = artists,
+                    )
+                    songs.add(mockSong)
+                }
+            }
+        }
+
+        if (songs.isEmpty()) {
+            Toast.makeText(
+                context,
+                "No songs found. Invalid file, or perhaps no song matches were found.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        return songs
+    }
+
+    fun loadM3UOnline(
+        context: Context,
+        uri: Uri,
+    ): ArrayList<Song> {
+        val songs = ArrayList<Song>()
+
+        runCatching {
+            context.applicationContext.contentResolver.openInputStream(uri)?.use { stream ->
+                val lines = stream.bufferedReader().readLines()
+                if (lines.first().startsWith("#EXTM3U")) {
+                    lines.forEachIndexed { _, rawLine ->
+                        if (rawLine.startsWith("#EXTINF:")) {
+                            // maybe later write this to be more efficient
+                            val artists =
+                                rawLine.substringAfter("#EXTINF:").substringAfter(',').substringBefore(" - ").split(';')
+                            val title = rawLine.substringAfter("#EXTINF:").substringAfter(',').substringAfter(" - ")
+
+                            val mockSong = Song(
+                                song = SongEntity(
+                                    id = "",
+                                    title = title,
+                                ),
+                                artists = artists.map { ArtistEntity("", it) },
+                            )
+                            songs.add(mockSong)
+
+                        }
+                    }
+                }
+            }
+        }
+
+        if (songs.isEmpty()) {
+            Toast.makeText(
+                context,
+                "No songs found. Invalid file, or perhaps no song matches were found.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        return songs
     }
 
     fun resetVisitorData(context: Context) {
@@ -142,3 +211,4 @@ class BackupRestoreViewModel @Inject constructor(
         const val SETTINGS_FILENAME = "settings.preferences_pb"
     }
 }
+

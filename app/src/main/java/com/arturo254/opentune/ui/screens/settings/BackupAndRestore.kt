@@ -9,45 +9,14 @@ import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -60,20 +29,21 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.arturo254.opentune.R
+import com.arturo254.opentune.db.entities.Song
 import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.viewmodels.BackupRestoreViewModel
+import com.arturo254.opentune.ui.menu.OnlinePlaylistAdder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
 import java.io.File
-import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -89,10 +59,18 @@ fun BackupAndRestore(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+    // Estados
     var uploadStatus by remember { mutableStateOf<UploadStatus?>(null) }
     var showVisitorDataDialog by remember { mutableStateOf(false) }
     var showVisitorDataResetDialog by remember { mutableStateOf(false) }
+    var importedTitle by remember { mutableStateOf("") }
+    val importedSongs = remember { mutableStateListOf<Song>() }
+    var showChoosePlaylistDialogOnline by remember { mutableStateOf(false) }
+    var isProgressStarted by remember { mutableStateOf(false) }
+    var progressPercentage by remember { mutableIntStateOf(0) }
 
+    // Launchers
     val backupLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
             if (uri != null) {
@@ -116,10 +94,38 @@ fun BackupAndRestore(
             }
         }
 
+    val importPlaylistFromCsv =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@rememberLauncherForActivityResult
+            val result = viewModel.importPlaylistFromCsv(context, uri)
+            importedSongs.clear()
+            importedSongs.addAll(result)
+            if (importedSongs.isNotEmpty()) {
+                showChoosePlaylistDialogOnline = true
+            }
+        }
+
+    val importM3uLauncherOnline =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@rememberLauncherForActivityResult
+            val result = viewModel.loadM3UOnline(context, uri)
+            importedSongs.clear()
+            importedSongs.addAll(result)
+            if (importedSongs.isNotEmpty()) {
+                showChoosePlaylistDialogOnline = true
+            }
+        }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.backup_restore)) },
+                title = {
+                    Text(
+                        stringResource(R.string.backup_restore),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 navigationIcon = {
                     IconButton(
                         onClick = {
@@ -150,54 +156,107 @@ fun BackupAndRestore(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            // Sección: Backup y Restore
+            SectionHeader(
+                icon = painterResource(R.drawable.backup),
+                title = "Respaldo y Restauración"
+            )
 
-            // Sección de información
-            InfoSection()
-
-            // Sección de acciones principales
-            ActionSection(
-                isLoading = uploadStatus is UploadStatus.Uploading,
-                onBackupClick = {
+            ActionCard(
+                icon = painterResource(R.drawable.backup),
+                title = stringResource(R.string.backup),
+                description = stringResource(R.string.backup_description),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                isEnabled = uploadStatus !is UploadStatus.Uploading,
+                onClick = {
                     val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
                     backupLauncher.launch(
                         "${context.getString(R.string.app_name)}_${
                             LocalDateTime.now().format(formatter)
                         }.backup"
                     )
-                },
-                onRestoreClick = {
+                }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ActionCard(
+                icon = painterResource(R.drawable.restore),
+                title = stringResource(R.string.restore),
+                description = stringResource(R.string.restore_description),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                isEnabled = uploadStatus !is UploadStatus.Uploading,
+                onClick = {
                     restoreLauncher.launch(arrayOf("application/octet-stream"))
                 }
             )
 
-            // Nueva sección para gestión de VISITOR_DATA
-            VisitorDataSection(
+            // Sección: Importar Playlists
+            SectionHeader(
+                icon = painterResource(R.drawable.playlist_add),
+                title = "Importar Playlists"
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                CompactActionCard(
+                    modifier = Modifier.weight(1f),
+                    icon = painterResource(R.drawable.playlist_add),
+                    title = "M3U",
+                    onClick = {
+                        importM3uLauncherOnline.launch(arrayOf("audio/*"))
+                    }
+                )
+
+                CompactActionCard(
+                    modifier = Modifier.weight(1f),
+                    icon = painterResource(R.drawable.playlist_add),
+                    title = "CSV",
+                    onClick = {
+                        importPlaylistFromCsv.launch(arrayOf("text/csv"))
+                    }
+                )
+            }
+
+            // Sección: VISITOR_DATA
+            SectionHeader(
+                icon = painterResource(R.drawable.replay),
+                title = stringResource(R.string.visitor_data_title)
+            )
+
+            VisitorDataCard(
                 onResetClick = { showVisitorDataResetDialog = true },
                 onInfoClick = { showVisitorDataDialog = true }
             )
 
             // Estado de carga
-            UploadStatusSection(uploadStatus) {
-                copyToClipboard(context, (uploadStatus as UploadStatus.Success).fileUrl)
+            AnimatedVisibility(
+                visible = uploadStatus != null,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    UploadStatusSection(uploadStatus) {
+                        copyToClipboard(context, (uploadStatus as UploadStatus.Success).fileUrl)
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
 
-    // Diálogo de información sobre VISITOR_DATA
+    // Diálogos
     if (showVisitorDataDialog) {
-        VisitorDataInfoDialog(
-            onDismiss = { showVisitorDataDialog = false }
-        )
+        VisitorDataInfoDialog(onDismiss = { showVisitorDataDialog = false })
     }
 
-    // Diálogo de confirmación para resetear VISITOR_DATA
     if (showVisitorDataResetDialog) {
         VisitorDataResetDialog(
             onConfirm = {
@@ -207,113 +266,190 @@ fun BackupAndRestore(
             onDismiss = { showVisitorDataResetDialog = false }
         )
     }
+
+    OnlinePlaylistAdder(
+        isVisible = showChoosePlaylistDialogOnline,
+        allowSyncing = false,
+        initialTextFieldValue = importedTitle,
+        songs = importedSongs,
+        onDismiss = { showChoosePlaylistDialogOnline = false },
+        onProgressStart = { newVal -> isProgressStarted = newVal },
+        onPercentageChange = { newPercentage -> progressPercentage = newPercentage }
+    )
+
+    LaunchedEffect(progressPercentage, isProgressStarted) {
+        if (isProgressStarted && progressPercentage == 99) {
+            delay(10000)
+            if (progressPercentage == 99) {
+                isProgressStarted = false
+                progressPercentage = 0
+            }
+        }
+    }
+
+    if (isProgressStarted) {
+        LoadingOverlay(progress = progressPercentage)
+    }
 }
 
 @Composable
-private fun InfoSection() {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+private fun SectionHeader(
+    icon: Painter,
+    title: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Icon(
+            painter = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun ActionCard(
+    icon: Painter,
+    title: String,
+    description: String,
+    color: androidx.compose.ui.graphics.Color,
+    isEnabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        enabled = isEnabled,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = color)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                modifier = Modifier.size(48.dp)
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.info),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.backup_info_title),
-                    style = MaterialTheme.typography.titleLarge
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LocalContentColor.current.copy(alpha = 0.7f)
                 )
             }
 
-            Text(
-                text = stringResource(R.string.backup_info_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Text(
-                text = "Nota: Las copias de seguridad ya no incluyen el VISITOR_DATA para evitar problemas de conectividad con YouTube.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
+            Icon(
+                painter = painterResource(R.drawable.arrow_forward),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = LocalContentColor.current.copy(alpha = 0.5f)
             )
         }
     }
 }
 
 @Composable
-private fun ActionSection(
-    isLoading: Boolean = false,
-    onBackupClick: () -> Unit,
-    onRestoreClick: () -> Unit
+private fun CompactActionCard(
+    modifier: Modifier = Modifier,
+    icon: Painter,
+    title: String,
+    onClick: () -> Unit
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        ActionButton(
-            icon = painterResource(R.drawable.backup),
-            title = stringResource(R.string.backup),
-            description = stringResource(R.string.backup_description),
-            isPrimary = true,
-            isEnabled = !isLoading,
-            onClick = onBackupClick
-        )
-
-        ActionButton(
-            icon = painterResource(R.drawable.restore),
-            title = stringResource(R.string.restore),
-            description = stringResource(R.string.restore_description),
-            isPrimary = false,
-            isEnabled = !isLoading,
-            onClick = onRestoreClick
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
 @Composable
-private fun VisitorDataSection(
+private fun VisitorDataCard(
     onResetClick: () -> Unit,
     onInfoClick: () -> Unit
 ) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.replay),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stringResource(R.string.visitor_data_title),
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-
             Text(
                 text = stringResource(R.string.visitor_data_description),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
             )
 
             Row(
@@ -323,192 +459,34 @@ private fun VisitorDataSection(
                 OutlinedButton(
                     onClick = onInfoClick,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.help),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.visitor_data_info_button),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Info")
                 }
 
-                Button(
+                FilledTonalButton(
                     onClick = onResetClick,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.replay),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.visitor_data_reset_button),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Resetear")
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun VisitorDataInfoDialog(
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.visitor_data_info_title),
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.visitor_data_info_intro),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-
-                Text(
-                    text = stringResource(R.string.visitor_data_info_problems),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = stringResource(R.string.visitor_data_info_solution),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Text(
-                    text = stringResource(R.string.visitor_data_info_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.visitor_data_info_confirm))
-            }
-        },
-        shape = RoundedCornerShape(16.dp)
-    )
-}
-
-@Composable
-private fun VisitorDataResetDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.visitor_data_reset_title),
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            Text(
-                text = stringResource(R.string.visitor_data_reset_message),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text(stringResource(R.string.visitor_data_reset_confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.visitor_data_reset_cancel))
-            }
-        },
-        shape = RoundedCornerShape(16.dp)
-    )
-}
-
-@Composable
-private fun ActionButton(
-    icon: Painter,
-    title: String,
-    description: String,
-    isPrimary: Boolean = true,
-    isEnabled: Boolean = true,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        enabled = isEnabled,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        contentPadding = PaddingValues(16.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isPrimary)
-                MaterialTheme.colorScheme.primaryContainer
-            else
-                MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = if (isPrimary)
-                MaterialTheme.colorScheme.onPrimaryContainer
-            else
-                MaterialTheme.colorScheme.onSecondaryContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = icon,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp)
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.Start
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(alpha = 0.8f)
-                )
-            }
-
-            Icon(
-                painter = painterResource(R.drawable.arrow_forward),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
 }
@@ -522,37 +500,92 @@ private fun UploadStatusSection(
         is UploadStatus.Uploading -> {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(
+                Row(
                     modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = MaterialTheme.colorScheme.primary
+                        modifier = Modifier.size(32.dp),
+                        strokeWidth = 3.dp
                     )
                     Text(
                         text = "Subiendo copia de seguridad...",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
         }
 
         is UploadStatus.Success -> {
-            SuccessCard(fileUrl = uploadStatus.fileUrl, onCopyClick = onCopyClick)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(R.drawable.check_circle),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "¡Backup exitoso!",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = uploadStatus.fileUrl,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontFamily = FontFamily.Monospace
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = onCopyClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.content_copy),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Copiar enlace")
+                    }
+                }
+            }
         }
 
         is UploadStatus.Failure -> {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer
                 )
@@ -569,7 +602,7 @@ private fun UploadStatusSection(
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Error al subir la copia de seguridad. Intente nuevamente.",
+                        text = "Error al subir el backup",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
@@ -577,84 +610,122 @@ private fun UploadStatusSection(
             }
         }
 
-        null -> { /* No status to show */
+        null -> {}
+    }
+}
+
+@Composable
+private fun LoadingOverlay(progress: Int) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CircularProgressIndicator(
+                progress = progress / 100f,
+                modifier = Modifier.size(64.dp),
+                strokeWidth = 6.dp
+            )
+            Text(
+                text = "$progress%",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Procesando...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
         }
     }
 }
 
 @Composable
-private fun SuccessCard(fileUrl: String, onCopyClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.check_circle),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+private fun VisitorDataInfoDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.info),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        title = {
+            Text(
+                text = stringResource(R.string.visitor_data_info_title),
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.visitor_data_info_intro))
                 Text(
-                    text = stringResource(R.string.backup_link_title),
-                    style = MaterialTheme.typography.titleMedium,
+                    stringResource(R.string.visitor_data_info_problems),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Text(
+                    stringResource(R.string.visitor_data_info_solution),
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
-
-            Text(
-                text = stringResource(R.string.backup_link_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            OutlinedCard(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = fileUrl,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Button(
-                        onClick = onCopyClick,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.content_copy),
-                            contentDescription = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.copy_link))
-                    }
-                }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Entendido")
             }
-        }
-    }
+        },
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
+@Composable
+private fun VisitorDataResetDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.replay),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        title = {
+            Text(
+                text = stringResource(R.string.visitor_data_reset_title),
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Text(stringResource(R.string.visitor_data_reset_message))
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Resetear")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        },
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+
+// Función de subida a Filebin (sin cambios)
 @SuppressLint("LogNotTimber")
 suspend fun uploadBackupToFilebin(
     context: Context,
@@ -701,10 +772,8 @@ suspend fun uploadBackupToFilebin(
             val binId = UUID.randomUUID().toString().substring(0, 8)
 
             val fileRequestBody = object : RequestBody() {
-                override fun contentType(): MediaType? =
-                    "application/octet-stream".toMediaTypeOrNull()
-
-                override fun contentLength(): Long = tempFile.length()
+                override fun contentType() = "application/octet-stream".toMediaTypeOrNull()
+                override fun contentLength() = tempFile.length()
 
                 override fun writeTo(sink: BufferedSink) {
                     tempFile.inputStream().use { input ->
@@ -744,14 +813,8 @@ suspend fun uploadBackupToFilebin(
 
             return@withContext "https://filebin.net/$binId/$fileName"
 
-        } catch (e: SecurityException) {
-            Log.e("BackupRestore", "Permisos insuficientes para acceder al archivo", e)
-            return@withContext null
-        } catch (e: IOException) {
-            Log.e("BackupRestore", "Error de E/O durante la subida", e)
-            return@withContext null
         } catch (e: Exception) {
-            Log.e("BackupRestore", "Error inesperado durante la subida", e)
+            Log.e("BackupRestore", "Error durante la subida", e)
             return@withContext null
         } finally {
             if (tempFile.exists()) {
