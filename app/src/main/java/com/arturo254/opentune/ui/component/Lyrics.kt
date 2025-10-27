@@ -1033,7 +1033,6 @@ fun Lyrics(
                 } else {
                     0.dp
                 }
-
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = if (isFullscreen) {
@@ -1168,14 +1167,9 @@ fun Lyrics(
                                     }
                                 )
                                 .background(
-                                    if (isSelected && isSelectionModeActive) {
-                                        if (isFullscreen)
-                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-                                        else
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                    } else {
-                                        Color.Transparent
-                                    }
+                                    if (isSelected && isSelectionModeActive)
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                    else Color.Transparent
                                 )
                                 .padding(
                                     horizontal = if (isFullscreen) 16.dp else 24.dp,
@@ -1207,10 +1201,15 @@ fun Lyrics(
                                 text = item.text,
                                 fontSize = 24.sp,
                                 color = if (index == displayedCurrentLineIndex && isSynced) {
-                                    if (isFullscreen) MaterialTheme.colorScheme.primary else textColor
+                                    if (isFullscreen)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        textColor
                                 } else {
-                                    if (isFullscreen) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                                    else textColor.copy(alpha = 0.8f)
+                                    if (isFullscreen)
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                                    else
+                                        textColor.copy(alpha = 0.8f)
                                 },
                                 textAlign = when (lyricsTextPosition) {
                                     LyricsPosition.LEFT -> TextAlign.Left
@@ -1227,7 +1226,7 @@ fun Lyrics(
                     }
                 }
 
-                // Mensaje cuando no se encuentran letras
+                // Letras no encontradas
                 if (lyrics == LYRICS_NOT_FOUND) {
                     if (isFullscreen) {
                         Card(
@@ -1288,7 +1287,9 @@ fun Lyrics(
                     }
                 }
             }
+
         }
+
 
         // Botones para modo flotante (no pantalla completa)
         if (!isFullscreen) {
