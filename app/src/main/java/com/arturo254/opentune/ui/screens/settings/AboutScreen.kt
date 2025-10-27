@@ -301,6 +301,24 @@ fun AboutScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
+                    onClick = { uriHandler.openUri("https://www.facebook.com/Arturo254") }
+                ) {
+                    Icon(
+                        modifier = Modifier.size(20.dp),
+                        painter = painterResource(R.drawable.facebook),
+                        contentDescription = null
+                    )
+                }
+                IconButton(
+                    onClick = { uriHandler.openUri("https://www.instagram.com/arturocg.dev/") }
+                ) {
+                    Icon(
+                        modifier = Modifier.size(20.dp),
+                        painter = painterResource(R.drawable.instagram),
+                        contentDescription = null
+                    )
+                }
+                IconButton(
                     onClick = { uriHandler.openUri("https://github.com/Arturo254/OpenTune") }
                 ) {
                     Icon(
