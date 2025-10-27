@@ -546,7 +546,17 @@ interface DatabaseDao {
 
     @Transaction
     @Query(
-        "SELECT *, (SELECT COUNT(1) FROM song_artist_map JOIN song ON song_artist_map.songId = song.id WHERE artistId = artist.id) AS songCount FROM artist WHERE (songCount > 0 AND bookmarkedAt IS NOT NULL)  ORDER BY rowId DESC",
+        """
+        SELECT *,
+               (SELECT COUNT(1)
+                FROM song_artist_map
+                         JOIN song ON song_artist_map.songId = song.id
+                WHERE artistId = artist.id
+                  AND song.inLibrary IS NOT NULL) AS songCount
+        FROM artist
+        WHERE (songCount > 0 OR bookmarkedAt IS NOT NULL)
+        ORDER BY rowId DESC
+        """
     )
     fun artistsInAA(): Flow<List<Artist>>
 
@@ -686,7 +696,18 @@ interface DatabaseDao {
     fun artist(id: String): Flow<Artist?>
 
     @Transaction
-    @Query("SELECT *, (SELECT COUNT(1) FROM song WHERE song.albumId = album.id) AS songCount FROM album WHERE album.bookmarkedAt IS NOT NULL ORDER BY rowId DESC")
+    @Query(
+        """
+        SELECT *,
+               (SELECT COUNT(1)
+                FROM song
+                WHERE song.albumId = album.id
+                  AND song.inLibrary IS NOT NULL) AS songCount
+        FROM album
+        WHERE (songCount > 0 OR album.bookmarkedAt IS NOT NULL)
+        ORDER BY rowId DESC
+        """
+    )
     fun albumsInAA(): Flow<List<Album>>
 
     @Transaction
