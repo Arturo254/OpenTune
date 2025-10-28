@@ -128,6 +128,7 @@ dependencies {
     implementation(libs.blurry)
     implementation(libs.material.ripple)
     implementation(libs.room.runtime.android)
+    implementation(libs.material.icons.extended)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 

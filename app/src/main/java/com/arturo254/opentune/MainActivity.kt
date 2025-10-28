@@ -64,6 +64,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -901,16 +902,8 @@ class MainActivity : ComponentActivity() {
                                                 onClick = {
                                                     when {
                                                         active -> onActiveChange(false)
-                                                        !isInNavigationItems -> {
-                                                            try {
-                                                                navController.navigateUp()
-                                                            } catch (e: Exception) {
-                                                                Log.e(
-                                                                    "Navigation",
-                                                                    "Error navigating up",
-                                                                    e
-                                                                )
-                                                            }
+                                                        !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } -> {
+                                                            navController.navigateUp()
                                                         }
 
                                                         else -> onActiveChange(true)
@@ -918,41 +911,25 @@ class MainActivity : ComponentActivity() {
                                                 },
                                                 onLongClick = {
                                                     when {
-                                                        active -> { /* No action */
+                                                        active -> {}
+                                                        !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } -> {
+                                                            navController.backToMain()
                                                         }
-
-                                                        !isInNavigationItems -> {
-                                                            try {
-                                                                navController.backToMain()
-                                                            } catch (e: Exception) {
-                                                                Log.e(
-                                                                    "Navigation",
-                                                                    "Error navigating to main",
-                                                                    e
-                                                                )
-                                                            }
-                                                        }
-
-                                                        else -> { /* No action */
-                                                        }
+                                                        else -> {}
                                                     }
                                                 },
                                             ) {
                                                 Icon(
                                                     painterResource(
-                                                        if (active || !isInNavigationItems) {
+                                                        if (active ||
+                                                            !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }
+                                                        ) {
                                                             R.drawable.arrow_back
                                                         } else {
                                                             R.drawable.search
-                                                        }
+                                                        },
                                                     ),
-                                                    contentDescription = stringResource(
-                                                        if (active || !isInNavigationItems) {
-                                                            R.string.back
-                                                        } else {
-                                                            R.string.search
-                                                        }
-                                                    ),
+                                                    contentDescription = null,
                                                 )
                                             }
                                         },
@@ -1269,7 +1246,6 @@ class MainActivity : ComponentActivity() {
                                 }.route,
 
                                 enterTransition = {
-                                    // Transición Material 3: entrada con leve desplazamiento + fade + spring
                                     if (initialState.destination.route in topLevelScreens &&
                                         targetState.destination.route in topLevelScreens
                                     ) {
@@ -1277,14 +1253,13 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         fadeIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) +
                                                 slideInHorizontally(
-                                                    initialOffsetX = { it / 3 },
-                                                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                                                    initialOffsetX = { it },
+                                                    animationSpec = spring(stiffness = Spring.StiffnessLow)
                                                 )
                                     }
                                 },
 
                                 exitTransition = {
-                                    // Suavizado de salida con deslizamiento y atenuación
                                     if (initialState.destination.route in topLevelScreens &&
                                         targetState.destination.route in topLevelScreens
                                     ) {
@@ -1292,14 +1267,13 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         fadeOut(spring(dampingRatio = Spring.DampingRatioLowBouncy)) +
                                                 slideOutHorizontally(
-                                                    targetOffsetX = { -it / 3 },
+                                                    targetOffsetX = { -it / 5 },
                                                     animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
                                                 )
                                     }
                                 },
 
                                 popEnterTransition = {
-                                    // Volver atrás: entrada desde el lado izquierdo + fade
                                     if ((initialState.destination.route in topLevelScreens ||
                                                 initialState.destination.route?.startsWith("search/") == true) &&
                                         targetState.destination.route in topLevelScreens
@@ -1308,14 +1282,13 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         fadeIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) +
                                                 slideInHorizontally(
-                                                    initialOffsetX = { -it / 3 },
-                                                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                                                    initialOffsetX = { -it },
+                                                    animationSpec = spring(stiffness = Spring.StiffnessLow)
                                                 )
                                     }
                                 },
 
                                 popExitTransition = {
-                                    // Salida hacia atrás: suave desplazamiento y fade-out
                                     if ((initialState.destination.route in topLevelScreens ||
                                                 initialState.destination.route?.startsWith("search/") == true) &&
                                         targetState.destination.route in topLevelScreens
@@ -1324,7 +1297,7 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         fadeOut(spring(dampingRatio = Spring.DampingRatioLowBouncy)) +
                                                 slideOutHorizontally(
-                                                    targetOffsetX = { it / 3 },
+                                                    targetOffsetX = { it / 5 },
                                                     animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
                                                 )
                                     }
