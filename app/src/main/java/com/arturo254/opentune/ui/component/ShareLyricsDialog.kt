@@ -878,7 +878,18 @@ fun ShareLyricsImageCustomizationSheet(
                                 )
 
                                 val timestamp = System.currentTimeMillis()
-                                val filename = "lyrics_$timestamp"
+                                // Crear nombre de archivo seguro con artista y canción
+                                val safeArtistName = artists.replace("[^a-zA-Z0-9\\s]".toRegex(), "").trim().replace("\\s+".toRegex(), "_")
+                                val safeSongTitle = songTitle.replace("[^a-zA-Z0-9\\s]".toRegex(), "").trim().replace("\\s+".toRegex(), "_")
+
+                                val filename = if (safeArtistName.isNotEmpty() && safeSongTitle.isNotEmpty()) {
+                                    "lyrics_${safeArtistName}_${safeSongTitle}_$timestamp"
+                                } else if (safeSongTitle.isNotEmpty()) {
+                                    "lyrics_${safeSongTitle}_$timestamp"
+                                } else {
+                                    "lyrics_$timestamp"
+                                }
+
                                 val uri = ComposeToImage.saveBitmapAsFile(
                                     context,
                                     image,
