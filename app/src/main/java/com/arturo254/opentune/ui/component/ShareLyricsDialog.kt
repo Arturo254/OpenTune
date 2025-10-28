@@ -316,8 +316,10 @@ fun ShareLyricsImageCustomizationSheet(
     val paletteColors = remember { mutableStateListOf<Color>() }
 
     var selectedCustomization by remember { mutableStateOf(colorPresets[0].customization) }
-    var isPresetSelectorExpanded by remember { mutableStateOf(false) }
+    var isPresetSelectorExpanded by remember { mutableStateOf(true) }
     var isAdvancedSettingsExpanded by remember { mutableStateOf(false) }
+    var isLayoutSettingsExpanded by remember { mutableStateOf(false) }
+    var isTextSettingsExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(coverUrl) {
         if (coverUrl != null) {
@@ -367,6 +369,7 @@ fun ShareLyricsImageCustomizationSheet(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 16.dp)
         ) {
+            // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -413,366 +416,370 @@ fun ShareLyricsImageCustomizationSheet(
                 }
             }
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            // Theme Selector Card
+            CustomizationCard(
+                title = stringResource(R.string.select_theme),
+                isExpanded = isPresetSelectorExpanded,
+                onExpandChange = { isPresetSelectorExpanded = it }
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                if (paletteColors.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.from_cover),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(bottom = 16.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.select_theme),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        IconButton(
-                            onClick = { isPresetSelectorExpanded = !isPresetSelectorExpanded },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isPresetSelectorExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = if (isPresetSelectorExpanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        items(paletteColors) { color ->
+                            val customization = ImageCustomization(
+                                backgroundColor = color,
+                                textColor = if (color.isDark()) Color.White else Color.Black,
+                                secondaryTextColor = if (color.isDark()) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f),
+                                isDark = color.isDark()
+                            )
+                            BottomSheetColorCustomizationItem(
+                                customization = customization,
+                                presetName = stringResource(R.string.cover_color),
+                                isSelected = selectedCustomization.backgroundColor == customization.backgroundColor,
+                                onClick = { selectedCustomization = customization }
                             )
                         }
                     }
+                }
 
-                    AnimatedVisibility(
-                        visible = isPresetSelectorExpanded,
-                        enter = slideInVertically() + fadeIn(),
-                        exit = slideOutVertically() + fadeOut()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(top = 16.dp)
-                        ) {
-                            if (paletteColors.isNotEmpty()) {
-                                Text(
-                                    text = stringResource(R.string.from_cover),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    modifier = Modifier.padding(bottom = 16.dp)
-                                ) {
-                                    items(paletteColors) { color ->
-                                        val customization = ImageCustomization(
-                                            backgroundColor = color,
-                                            textColor = if (color.isDark()) Color.White else Color.Black,
-                                            secondaryTextColor = if (color.isDark()) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f),
-                                            isDark = color.isDark()
-                                        )
-                                        BottomSheetColorCustomizationItem(
-                                            customization = customization,
-                                            presetName = stringResource(R.string.cover_color),
-                                            isSelected = selectedCustomization == customization,
-                                            onClick = { selectedCustomization = customization }
-                                        )
-                                    }
-                                }
-                            }
-
-                            Text(
-                                text = stringResource(R.string.presets),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(colorPresets) { preset ->
-                                    BottomSheetColorCustomizationItem(
-                                        customization = preset.customization,
-                                        presetName = preset.name,
-                                        isSelected = selectedCustomization.backgroundColor == preset.customization.backgroundColor,
-                                        onClick = { selectedCustomization = preset.customization }
-                                    )
-                                }
-                            }
-                        }
+                Text(
+                    text = stringResource(R.string.presets),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(colorPresets) { preset ->
+                        BottomSheetColorCustomizationItem(
+                            customization = preset.customization,
+                            presetName = preset.name,
+                            isSelected = selectedCustomization.backgroundColor == preset.customization.backgroundColor,
+                            onClick = { selectedCustomization = preset.customization }
+                        )
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            // Background Settings Card
+            CustomizationCard(
+                title = "Background Settings",
+                isExpanded = isAdvancedSettingsExpanded,
+                onExpandChange = { isAdvancedSettingsExpanded = it }
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Configuración Avanzada",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        IconButton(
-                            onClick = { isAdvancedSettingsExpanded = !isAdvancedSettingsExpanded },
-                            modifier = Modifier.size(32.dp)
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SettingSection(title = "Background Style") {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(
-                                imageVector = if (isAdvancedSettingsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            FilterChip(
+                                selected = selectedCustomization.backgroundStyle == BackgroundStyle.SOLID,
+                                onClick = {
+                                    selectedCustomization = selectedCustomization.copy(
+                                        backgroundStyle = BackgroundStyle.SOLID
+                                    )
+                                },
+                                label = { Text("Solid", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = selectedCustomization.backgroundStyle == BackgroundStyle.GRADIENT,
+                                onClick = {
+                                    selectedCustomization = selectedCustomization.copy(
+                                        backgroundStyle = BackgroundStyle.GRADIENT
+                                    )
+                                },
+                                label = { Text("Gradient", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = selectedCustomization.backgroundStyle == BackgroundStyle.PATTERN,
+                                onClick = {
+                                    selectedCustomization = selectedCustomization.copy(
+                                        backgroundStyle = BackgroundStyle.PATTERN
+                                    )
+                                },
+                                label = { Text("Pattern", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
 
-                    AnimatedVisibility(
-                        visible = isAdvancedSettingsExpanded,
-                        enter = slideInVertically() + fadeIn(),
-                        exit = slideOutVertically() + fadeOut()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(top = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                    SliderSetting(
+                        title = "Corner Radius",
+                        value = selectedCustomization.cornerRadius,
+                        valueRange = 0f..40f,
+                        steps = 39,
+                        onValueChange = {
+                            selectedCustomization = selectedCustomization.copy(cornerRadius = it)
+                        },
+                        valueLabel = "${selectedCustomization.cornerRadius.toInt()}dp"
+                    )
+
+                    if (selectedCustomization.backgroundStyle == BackgroundStyle.PATTERN) {
+                        SliderSetting(
+                            title = "Pattern Opacity",
+                            value = selectedCustomization.patternOpacity,
+                            valueRange = 0.01f..0.15f,
+                            steps = 0,
+                            onValueChange = {
+                                selectedCustomization = selectedCustomization.copy(patternOpacity = it)
+                            },
+                            valueLabel = "${(selectedCustomization.patternOpacity * 100).toInt()}%"
+                        )
+                    }
+
+                    SwitchSetting(
+                        title = "Border",
+                        checked = selectedCustomization.borderEnabled,
+                        onCheckedChange = {
+                            selectedCustomization = selectedCustomization.copy(borderEnabled = it)
+                        }
+                    )
+
+                    if (selectedCustomization.borderEnabled) {
+                        SliderSetting(
+                            title = "Border Width",
+                            value = selectedCustomization.borderWidth,
+                            valueRange = 1f..8f,
+                            steps = 6,
+                            onValueChange = {
+                                selectedCustomization = selectedCustomization.copy(borderWidth = it)
+                            },
+                            valueLabel = "${selectedCustomization.borderWidth.toInt()}dp"
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Text Settings Card
+            CustomizationCard(
+                title = "Text Settings",
+                isExpanded = isTextSettingsExpanded,
+                onExpandChange = { isTextSettingsExpanded = it }
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SettingSection(title = "Font Style") {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Estilo de Fondo",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    FilterChip(
-                                        selected = selectedCustomization.backgroundStyle == BackgroundStyle.SOLID,
-                                        onClick = {
-                                            selectedCustomization = selectedCustomization.copy(
-                                                backgroundStyle = BackgroundStyle.SOLID
-                                            )
-                                        },
-                                        label = { Text("Sólido", fontSize = 12.sp) },
-                                        modifier = Modifier.weight(1f)
+                            FilterChip(
+                                selected = selectedCustomization.fontStyle == FontStyle.REGULAR,
+                                onClick = {
+                                    selectedCustomization = selectedCustomization.copy(
+                                        fontStyle = FontStyle.REGULAR
                                     )
-                                    FilterChip(
-                                        selected = selectedCustomization.backgroundStyle == BackgroundStyle.GRADIENT,
-                                        onClick = {
-                                            selectedCustomization = selectedCustomization.copy(
-                                                backgroundStyle = BackgroundStyle.GRADIENT
-                                            )
-                                        },
-                                        label = { Text("Gradiente", fontSize = 12.sp) },
-                                        modifier = Modifier.weight(1f)
+                                },
+                                label = { Text("Regular", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = selectedCustomization.fontStyle == FontStyle.BOLD,
+                                onClick = {
+                                    selectedCustomization = selectedCustomization.copy(
+                                        fontStyle = FontStyle.BOLD
                                     )
-                                    FilterChip(
-                                        selected = selectedCustomization.backgroundStyle == BackgroundStyle.PATTERN,
-                                        onClick = {
-                                            selectedCustomization = selectedCustomization.copy(
-                                                backgroundStyle = BackgroundStyle.PATTERN
-                                            )
-                                        },
-                                        label = { Text("Patrón", fontSize = 12.sp) },
-                                        modifier = Modifier.weight(1f)
+                                },
+                                label = { Text("Bold", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = selectedCustomization.fontStyle == FontStyle.EXTRA_BOLD,
+                                onClick = {
+                                    selectedCustomization = selectedCustomization.copy(
+                                        fontStyle = FontStyle.EXTRA_BOLD
                                     )
-                                }
-                            }
+                                },
+                                label = { Text("Extra Bold", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
 
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Estilo de Fuente",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    FilterChip(
-                                        selected = selectedCustomization.fontStyle == FontStyle.REGULAR,
-                                        onClick = {
-                                            selectedCustomization = selectedCustomization.copy(
-                                                fontStyle = FontStyle.REGULAR
-                                            )
-                                        },
-                                        label = { Text("Normal", fontSize = 12.sp) },
-                                        modifier = Modifier.weight(1f)
+                    SettingSection(title = "Text Alignment") {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilterChip(
+                                selected = selectedCustomization.textAlignment == TextAlignment.LEFT,
+                                onClick = {
+                                    selectedCustomization = selectedCustomization.copy(
+                                        textAlignment = TextAlignment.LEFT
                                     )
-                                    FilterChip(
-                                        selected = selectedCustomization.fontStyle == FontStyle.BOLD,
-                                        onClick = {
-                                            selectedCustomization = selectedCustomization.copy(
-                                                fontStyle = FontStyle.BOLD
-                                            )
-                                        },
-                                        label = { Text("Negrita", fontSize = 12.sp) },
-                                        modifier = Modifier.weight(1f)
+                                },
+                                label = { Text("Left", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = selectedCustomization.textAlignment == TextAlignment.CENTER,
+                                onClick = {
+                                    selectedCustomization = selectedCustomization.copy(
+                                        textAlignment = TextAlignment.CENTER
                                     )
-                                    FilterChip(
-                                        selected = selectedCustomization.fontStyle == FontStyle.EXTRA_BOLD,
-                                        onClick = {
-                                            selectedCustomization = selectedCustomization.copy(
-                                                fontStyle = FontStyle.EXTRA_BOLD
-                                            )
-                                        },
-                                        label = { Text("Extra", fontSize = 12.sp) },
-                                        modifier = Modifier.weight(1f)
+                                },
+                                label = { Text("Center", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = selectedCustomization.textAlignment == TextAlignment.RIGHT,
+                                onClick = {
+                                    selectedCustomization = selectedCustomization.copy(
+                                        textAlignment = TextAlignment.RIGHT
                                     )
-                                }
-                            }
+                                },
+                                label = { Text("Right", fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
 
+                    SwitchSetting(
+                        title = "Text Shadow",
+                        checked = selectedCustomization.textShadowEnabled,
+                        onCheckedChange = {
+                            selectedCustomization = selectedCustomization.copy(textShadowEnabled = it)
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Layout Settings Card
+            CustomizationCard(
+                title = "Layout Settings",
+                isExpanded = isLayoutSettingsExpanded,
+                onExpandChange = { isLayoutSettingsExpanded = it }
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SwitchSetting(
+                        title = "Show Cover Art",
+                        checked = selectedCustomization.showCoverArt,
+                        onCheckedChange = {
+                            selectedCustomization = selectedCustomization.copy(showCoverArt = it)
+                        }
+                    )
+
+                    if (selectedCustomization.showCoverArt) {
+                        SwitchSetting(
+                            title = "Show Song Title",
+                            checked = selectedCustomization.showSongTitle,
+                            onCheckedChange = {
+                                selectedCustomization = selectedCustomization.copy(showSongTitle = it)
+                            }
+                        )
+
+                        SwitchSetting(
+                            title = "Show Artist Name",
+                            checked = selectedCustomization.showArtistName,
+                            onCheckedChange = {
+                                selectedCustomization = selectedCustomization.copy(showArtistName = it)
+                            }
+                        )
+                    }
+
+                    SwitchSetting(
+                        title = "Show Logo",
+                        checked = selectedCustomization.showLogo,
+                        onCheckedChange = {
+                            selectedCustomization = selectedCustomization.copy(showLogo = it)
+                        }
+                    )
+
+                    if (selectedCustomization.showLogo) {
+                        SettingSection(title = "Logo Position") {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text(
-                                    text = "Mostrar Carátula",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Switch(
-                                    checked = selectedCustomization.showCoverArt,
-                                    onCheckedChange = {
+                                FilterChip(
+                                    selected = selectedCustomization.logoPosition == LogoPosition.BOTTOM_LEFT,
+                                    onClick = {
                                         selectedCustomization = selectedCustomization.copy(
-                                            showCoverArt = it
-                                        )
-                                    }
-                                )
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Mostrar Logo",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Switch(
-                                    checked = selectedCustomization.showLogo,
-                                    onCheckedChange = {
-                                        selectedCustomization = selectedCustomization.copy(
-                                            showLogo = it
-                                        )
-                                    }
-                                )
-                            }
-
-                            if (selectedCustomization.showLogo) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = "Posición del Logo",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        FilterChip(
-                                            selected = selectedCustomization.logoPosition == LogoPosition.BOTTOM_LEFT,
-                                            onClick = {
-                                                selectedCustomization = selectedCustomization.copy(
-                                                    logoPosition = LogoPosition.BOTTOM_LEFT
-                                                )
-                                            },
-                                            label = { Text("Abajo Izq.", fontSize = 11.sp) },
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        FilterChip(
-                                            selected = selectedCustomization.logoPosition == LogoPosition.BOTTOM_RIGHT,
-                                            onClick = {
-                                                selectedCustomization = selectedCustomization.copy(
-                                                    logoPosition = LogoPosition.BOTTOM_RIGHT
-                                                )
-                                            },
-                                            label = { Text("Abajo Der.", fontSize = 11.sp) },
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                }
-                            }
-
-                            Column(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = "Radio de Esquinas: ${selectedCustomization.cornerRadius.toInt()}dp",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-                                Slider(
-                                    value = selectedCustomization.cornerRadius,
-                                    onValueChange = {
-                                        selectedCustomization = selectedCustomization.copy(
-                                            cornerRadius = it
+                                            logoPosition = LogoPosition.BOTTOM_LEFT
                                         )
                                     },
-                                    valueRange = 0f..40f,
-                                    steps = 39
+                                    label = { Text("Bottom Left", fontSize = 11.sp) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                FilterChip(
+                                    selected = selectedCustomization.logoPosition == LogoPosition.BOTTOM_RIGHT,
+                                    onClick = {
+                                        selectedCustomization = selectedCustomization.copy(
+                                            logoPosition = LogoPosition.BOTTOM_RIGHT
+                                        )
+                                    },
+                                    label = { Text("Bottom Right", fontSize = 11.sp) },
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
+                        }
 
-                            if (selectedCustomization.backgroundStyle == BackgroundStyle.PATTERN) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = "Opacidad del Patrón: ${(selectedCustomization.patternOpacity * 100).toInt()}%",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.padding(bottom = 8.dp)
-                                    )
-                                    Slider(
-                                        value = selectedCustomization.patternOpacity,
-                                        onValueChange = {
-                                            selectedCustomization = selectedCustomization.copy(
-                                                patternOpacity = it
-                                            )
-                                        },
-                                        valueRange = 0.01f..0.15f
-                                    )
-                                }
+                        SettingSection(title = "Logo Size") {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                FilterChip(
+                                    selected = selectedCustomization.logoSize == LogoSize.SMALL,
+                                    onClick = {
+                                        selectedCustomization = selectedCustomization.copy(
+                                            logoSize = LogoSize.SMALL
+                                        )
+                                    },
+                                    label = { Text("Small", fontSize = 12.sp) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                FilterChip(
+                                    selected = selectedCustomization.logoSize == LogoSize.MEDIUM,
+                                    onClick = {
+                                        selectedCustomization = selectedCustomization.copy(
+                                            logoSize = LogoSize.MEDIUM
+                                        )
+                                    },
+                                    label = { Text("Medium", fontSize = 12.sp) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                FilterChip(
+                                    selected = selectedCustomization.logoSize == LogoSize.LARGE,
+                                    onClick = {
+                                        selectedCustomization = selectedCustomization.copy(
+                                            logoSize = LogoSize.LARGE
+                                        )
+                                    },
+                                    label = { Text("Large", fontSize = 12.sp) },
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
                         }
                     }
+
+                    SliderSetting(
+                        title = "Padding",
+                        value = selectedCustomization.padding,
+                        valueRange = 16f..64f,
+                        steps = 47,
+                        onValueChange = {
+                            selectedCustomization = selectedCustomization.copy(padding = it)
+                        },
+                        valueLabel = "${selectedCustomization.padding.toInt()}dp"
+                    )
                 }
             }
 
@@ -858,7 +865,16 @@ fun ShareLyricsImageCustomizationSheet(
                                     fontStyle = selectedCustomization.fontStyle.name,
                                     logoPosition = selectedCustomization.logoPosition.name,
                                     cornerRadius = selectedCustomization.cornerRadius,
-                                    patternOpacity = selectedCustomization.patternOpacity
+                                    patternOpacity = selectedCustomization.patternOpacity,
+                                    textAlignment = selectedCustomization.textAlignment.name,
+                                    padding = selectedCustomization.padding,
+                                    showArtistName = selectedCustomization.showArtistName,
+                                    showSongTitle = selectedCustomization.showSongTitle,
+                                    textShadowEnabled = selectedCustomization.textShadowEnabled,
+                                    borderEnabled = selectedCustomization.borderEnabled,
+                                    borderColor = selectedCustomization.borderColor.toArgb(),
+                                    borderWidth = selectedCustomization.borderWidth,
+                                    logoSize = selectedCustomization.logoSize.name
                                 )
 
                                 val timestamp = System.currentTimeMillis()
@@ -911,6 +927,131 @@ fun ShareLyricsImageCustomizationSheet(
     }
 }
 
+@Composable
+private fun CustomizationCard(
+    title: String,
+    isExpanded: Boolean,
+    onExpandChange: (Boolean) -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                IconButton(
+                    onClick = { onExpandChange(!isExpanded) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (isExpanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = slideInVertically() + fadeIn(),
+                exit = slideOutVertically() + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier.padding(top = 16.dp),
+                    content = content
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingSection(
+    title: String,
+    content: @Composable () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        content()
+    }
+}
+
+@Composable
+private fun SliderSetting(
+    title: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChange: (Float) -> Unit,
+    valueLabel: String
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "$title: $valueLabel",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = valueRange,
+            steps = steps
+        )
+    }
+}
+
+@Composable
+private fun SwitchSetting(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
+}
+
 fun Color.isDark(): Boolean {
     val luminance = 0.299f * this.red + 0.587f * this.green + 0.114f * this.blue
     return luminance < 0.5f
@@ -926,7 +1067,8 @@ fun BottomSheetColorCustomizationItem(
 ) {
     val scale by animateFloatAsState(
         targetValue = if (isSelected) 1.1f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "scale"
     )
 
     Column(
@@ -977,10 +1119,11 @@ fun BottomSheetColorCustomizationItem(
                 alpha = if (isSelected) 1f else 0.7f
             ),
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            fontSize = 10.sp
+            modifier = Modifier.width(60.dp)
         )
     }
 }
+

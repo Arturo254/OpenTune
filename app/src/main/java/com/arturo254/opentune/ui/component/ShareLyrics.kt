@@ -52,142 +52,157 @@ import com.arturo254.opentune.models.MediaMetadata
 import kotlinx.coroutines.launch
 import kotlin.math.min
 
-// Estilos de letra
+// Enums
 enum class FontStyle {
     REGULAR, BOLD, EXTRA_BOLD
 }
 
-// Posiciones del logo
 enum class LogoPosition {
     BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT, NONE
 }
 
-// Estilos de fondo
 enum class BackgroundStyle {
     SOLID, GRADIENT, PATTERN
 }
 
-// Configuración de personalización
+enum class TextAlignment {
+    LEFT, CENTER, RIGHT
+}
+
+enum class LogoSize {
+    SMALL, MEDIUM, LARGE
+}
+
+// Data classes
 data class ImageCustomization(
-    val backgroundColor: Color = Color(0xFF0A0A0A),
-    val textColor: Color = Color(0xFFFFFFFF),
-    val secondaryTextColor: Color = Color(0xFFB0B0B0),
+    val backgroundColor: Color = Color(0xFF1A1A1A),
+    val textColor: Color = Color.White,
+    val secondaryTextColor: Color = Color.White.copy(alpha = 0.7f),
     val backgroundStyle: BackgroundStyle = BackgroundStyle.SOLID,
     val gradientColors: List<Color>? = null,
     val fontStyle: FontStyle = FontStyle.EXTRA_BOLD,
     val showCoverArt: Boolean = true,
+    val showSongTitle: Boolean = true,
+    val showArtistName: Boolean = true,
     val showLogo: Boolean = true,
-    val logoPosition: LogoPosition = LogoPosition.BOTTOM_LEFT,
-    val patternOpacity: Float = 0.03f,
-    val cornerRadius: Float = 28f,
-    val isDark: Boolean = true
+    val logoPosition: LogoPosition = LogoPosition.BOTTOM_RIGHT,
+    val logoSize: LogoSize = LogoSize.MEDIUM,
+    val patternOpacity: Float = 0.05f,
+    val cornerRadius: Float = 16f,
+    val isDark: Boolean = true,
+    val textAlignment: TextAlignment = TextAlignment.CENTER,
+    val padding: Float = 24f,
+    val textShadowEnabled: Boolean = true,
+    val borderEnabled: Boolean = false,
+    val borderColor: Color = Color.White.copy(alpha = 0.3f),
+    val borderWidth: Float = 2f
 )
 
-// Presets actualizados
 data class ColorPreset(
     val name: String,
     val customization: ImageCustomization
 )
 
+// Presets unificados
 val colorPresets = listOf(
     ColorPreset(
-        "Oscuro Clásico",
+        "Dark",
         ImageCustomization(
-            backgroundColor = Color(0xFF0A0A0A),
-            textColor = Color(0xFFFFFFFF),
-            secondaryTextColor = Color(0xFFB0B0B0),
-            backgroundStyle = BackgroundStyle.SOLID,
+            backgroundColor = Color(0xFF1A1A1A),
+            textColor = Color.White,
+            secondaryTextColor = Color.White.copy(alpha = 0.7f),
             isDark = true
         )
     ),
     ColorPreset(
-        "Azul Nocturno",
+        "Light",
         ImageCustomization(
-            backgroundColor = Color(0xFF0F172A),
-            textColor = Color(0xFFF1F5F9),
-            secondaryTextColor = Color(0xFF94A3B8),
-            backgroundStyle = BackgroundStyle.GRADIENT,
-            gradientColors = listOf(Color(0xFF0F172A), Color(0xFF1E3A8A)),
+            backgroundColor = Color(0xFFF5F5F5),
+            textColor = Color.Black,
+            secondaryTextColor = Color.Black.copy(alpha = 0.7f),
+            isDark = false
+        )
+    ),
+    ColorPreset(
+        "Blue",
+        ImageCustomization(
+            backgroundColor = Color(0xFF1E3A8A),
+            textColor = Color.White,
+            secondaryTextColor = Color.White.copy(alpha = 0.8f),
             isDark = true
         )
     ),
     ColorPreset(
-        "Verde Esmeralda",
-        ImageCustomization(
-            backgroundColor = Color(0xFF064E3B),
-            textColor = Color(0xFFECFDF5),
-            secondaryTextColor = Color(0xFFA7F3D0),
-            backgroundStyle = BackgroundStyle.PATTERN,
-            isDark = true
-        )
-    ),
-    ColorPreset(
-        "Púrpura Profundo",
+        "Purple",
         ImageCustomization(
             backgroundColor = Color(0xFF4C1D95),
-            textColor = Color(0xFFFAF5FF),
-            secondaryTextColor = Color(0xFFDDD6FE),
-            backgroundStyle = BackgroundStyle.GRADIENT,
-            gradientColors = listOf(Color(0xFF4C1D95), Color(0xFF7C2D12)),
+            textColor = Color.White,
+            secondaryTextColor = Color.White.copy(alpha = 0.8f),
             isDark = true
         )
     ),
     ColorPreset(
-        "Blanco Limpio",
+        "Red",
         ImageCustomization(
-            backgroundColor = Color(0xFFFFFFFF),
-            textColor = Color(0xFF0F172A),
-            secondaryTextColor = Color(0xFF64748B),
-            backgroundStyle = BackgroundStyle.SOLID,
-            isDark = false
+            backgroundColor = Color(0xFF991B1B),
+            textColor = Color.White,
+            secondaryTextColor = Color.White.copy(alpha = 0.8f),
+            isDark = true
         )
     ),
     ColorPreset(
-        "Crema Suave",
+        "Green",
         ImageCustomization(
-            backgroundColor = Color(0xFFFEF7ED),
-            textColor = Color(0xFF431407),
-            secondaryTextColor = Color(0xFF78716C),
-            backgroundStyle = BackgroundStyle.PATTERN,
-            patternOpacity = 0.05f,
-            isDark = false
+            backgroundColor = Color(0xFF065F46),
+            textColor = Color.White,
+            secondaryTextColor = Color.White.copy(alpha = 0.8f),
+            isDark = true
         )
     ),
     ColorPreset(
-        "Rosa Suave",
+        "Gradient Blue",
         ImageCustomization(
-            backgroundColor = Color(0xFFFFF1F2),
-            textColor = Color(0xFF881337),
-            secondaryTextColor = Color(0xFFA21CAF),
             backgroundStyle = BackgroundStyle.GRADIENT,
-            gradientColors = listOf(Color(0xFFFFF1F2), Color(0xFFFCE7F3)),
-            isDark = false
+            gradientColors = listOf(
+                Color(0xFF1E3A8A),
+                Color(0xFF3B82F6),
+                Color(0xFF60A5FA)
+            ),
+            textColor = Color.White,
+            secondaryTextColor = Color.White.copy(alpha = 0.9f),
+            isDark = true
         )
     ),
     ColorPreset(
-        "Sunset",
+        "Gradient Purple",
         ImageCustomization(
-            backgroundColor = Color(0xFFF0F9FF),
-            textColor = Color(0xFF0C4A6E),
-            secondaryTextColor = Color(0xFF0369A1),
             backgroundStyle = BackgroundStyle.GRADIENT,
-            gradientColors = listOf(Color(0xFFFEF3C7), Color(0xFFFCA5A5), Color(0xFFC084FC)),
-            isDark = false
+            gradientColors = listOf(
+                Color(0xFF4C1D95),
+                Color(0xFF7C3AED),
+                Color(0xFFA78BFA)
+            ),
+            textColor = Color.White,
+            secondaryTextColor = Color.White.copy(alpha = 0.9f),
+            isDark = true
         )
     ),
     ColorPreset(
-        "Spotify Style",
+        "Gradient Sunset",
         ImageCustomization(
-            backgroundColor = Color(0xFF121212),
-            textColor = Color(0xFF1DB954),
-            secondaryTextColor = Color(0xFFFFFFFF),
             backgroundStyle = BackgroundStyle.GRADIENT,
-            gradientColors = listOf(Color(0xFF121212), Color(0xFF1A1A1A)),
-            fontStyle = FontStyle.BOLD,
+            gradientColors = listOf(
+                Color(0xFFF59E0B),
+                Color(0xFFEF4444),
+                Color(0xFF8B5CF6)
+            ),
+            textColor = Color.White,
+            secondaryTextColor = Color.White.copy(alpha = 0.9f),
             isDark = true
         )
     )
 )
+
 
 @Composable
 fun rememberAdjustedFontSize(
@@ -308,7 +323,7 @@ fun LyricsImageCard(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "La imagen se guardará en alta resolución",
+            text = "Image will be saved in high resolution",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
@@ -340,7 +355,7 @@ private fun ModernControlsSection(
         ) {
             Column {
                 Text(
-                    text = "Compartir Letra",
+                    text = "Share Lyrics",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -362,7 +377,7 @@ private fun ModernControlsSection(
                 } else {
                     Icon(
                         painter = painterResource(id = R.drawable.image),
-                        contentDescription = "Guardar",
+                        contentDescription = "Save",
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -387,7 +402,7 @@ fun LyricsImageCardPreview(
         min(screenWidth.value - 40f, 400f).dp
     }
 
-    val outerPadding = cardSize * 0.084f
+    val outerPadding = cardSize * (customization.padding / 380f)
     val thumbnailSize = cardSize * 0.21f
 
     val painter = rememberAsyncImagePainter(
@@ -398,6 +413,12 @@ fun LyricsImageCardPreview(
             .error(R.drawable.music_note)
             .build()
     )
+
+    val logoSizeMultiplier = when (customization.logoSize) {
+        LogoSize.SMALL -> 0.7f
+        LogoSize.MEDIUM -> 1f
+        LogoSize.LARGE -> 1.3f
+    }
 
     Box(
         modifier = modifier.fillMaxWidth(),
@@ -411,6 +432,15 @@ fun LyricsImageCardPreview(
                     shape = RoundedCornerShape(customization.cornerRadius.dp),
                     ambientColor = customization.textColor.copy(alpha = 0.3f),
                     spotColor = customization.textColor.copy(alpha = 0.5f)
+                )
+                .then(
+                    if (customization.borderEnabled) {
+                        Modifier.border(
+                            width = customization.borderWidth.dp,
+                            color = customization.borderColor,
+                            shape = RoundedCornerShape(customization.cornerRadius.dp)
+                        )
+                    } else Modifier
                 ),
             colors = CardDefaults.cardColors(containerColor = Color.Transparent),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -498,34 +528,38 @@ fun LyricsImageCardPreview(
                             }
 
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = mediaMetadata.title,
-                                    style = MaterialTheme.typography.headlineSmall.copy(
-                                        fontSize = 20.sp,
-                                        letterSpacing = (-0.5).sp
-                                    ),
-                                    fontWeight = when (customization.fontStyle) {
-                                        FontStyle.REGULAR -> FontWeight.Bold
-                                        FontStyle.BOLD -> FontWeight.ExtraBold
-                                        FontStyle.EXTRA_BOLD -> FontWeight.Black
-                                    },
-                                    color = customization.textColor,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    lineHeight = 24.sp
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = mediaMetadata.artists.joinToString { it.name },
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontSize = 16.sp,
-                                        letterSpacing = 0.2.sp
-                                    ),
-                                    color = customization.secondaryTextColor,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                if (customization.showSongTitle) {
+                                    Text(
+                                        text = mediaMetadata.title,
+                                        style = MaterialTheme.typography.headlineSmall.copy(
+                                            fontSize = 20.sp,
+                                            letterSpacing = (-0.5).sp
+                                        ),
+                                        fontWeight = when (customization.fontStyle) {
+                                            FontStyle.REGULAR -> FontWeight.Bold
+                                            FontStyle.BOLD -> FontWeight.ExtraBold
+                                            FontStyle.EXTRA_BOLD -> FontWeight.Black
+                                        },
+                                        color = customization.textColor,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        lineHeight = 24.sp
+                                    )
+                                }
+                                if (customization.showArtistName) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = mediaMetadata.artists.joinToString { it.name },
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            fontSize = 16.sp,
+                                            letterSpacing = 0.2.sp
+                                        ),
+                                        color = customization.secondaryTextColor,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                         }
                     }
@@ -535,7 +569,11 @@ fun LyricsImageCardPreview(
                             .fillMaxWidth()
                             .weight(1f)
                             .padding(vertical = 16.dp),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = when (customization.textAlignment) {
+                            TextAlignment.LEFT -> Alignment.CenterStart
+                            TextAlignment.CENTER -> Alignment.Center
+                            TextAlignment.RIGHT -> Alignment.CenterEnd
+                        }
                     ) {
                         val textMeasurer = rememberTextMeasurer()
                         val optimalFontSize = rememberAdjustedFontSize(
@@ -545,7 +583,11 @@ fun LyricsImageCardPreview(
 
                         Text(
                             text = lyricText,
-                            textAlign = TextAlign.Center,
+                            textAlign = when (customization.textAlignment) {
+                                TextAlignment.LEFT -> TextAlign.Left
+                                TextAlignment.CENTER -> TextAlign.Center
+                                TextAlignment.RIGHT -> TextAlign.Right
+                            },
                             fontSize = optimalFontSize,
                             fontWeight = when (customization.fontStyle) {
                                 FontStyle.REGULAR -> FontWeight.Bold
@@ -556,24 +598,24 @@ fun LyricsImageCardPreview(
                             lineHeight = optimalFontSize * 1.3f,
                             modifier = Modifier.fillMaxWidth(),
                             letterSpacing = 0.3.sp,
-                            style = TextStyle(
-                                shadow = Shadow(
-                                    color = customization.backgroundColor.copy(alpha = 0.5f),
-                                    offset = Offset(2f, 2f),
-                                    blurRadius = 4f
+                            style = if (customization.textShadowEnabled) {
+                                TextStyle(
+                                    shadow = Shadow(
+                                        color = customization.backgroundColor.copy(alpha = 0.5f),
+                                        offset = Offset(2f, 2f),
+                                        blurRadius = 4f
+                                    )
                                 )
-                            )
+                            } else TextStyle.Default
                         )
                     }
 
-                    if (customization.showLogo) {
+                    if (customization.showLogo && customization.logoPosition != LogoPosition.NONE) {
                         Box(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = when (customization.logoPosition) {
-                                LogoPosition.BOTTOM_LEFT -> Alignment.CenterStart
-                                LogoPosition.BOTTOM_RIGHT -> Alignment.CenterEnd
-                                LogoPosition.TOP_LEFT -> Alignment.CenterStart
-                                LogoPosition.TOP_RIGHT -> Alignment.CenterEnd
+                                LogoPosition.BOTTOM_LEFT, LogoPosition.TOP_LEFT -> Alignment.CenterStart
+                                LogoPosition.BOTTOM_RIGHT, LogoPosition.TOP_RIGHT -> Alignment.CenterEnd
                                 LogoPosition.NONE -> Alignment.CenterStart
                             }
                         ) {
@@ -581,36 +623,30 @@ fun LyricsImageCardPreview(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Card(
-                                    modifier = Modifier.size(28.dp),
-                                    shape = CircleShape,
-                                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                                Box(
+                                    modifier = Modifier
+                                        .size((36 * logoSizeMultiplier).dp)
+                                        .clip(CircleShape)
+                                        .background(customization.textColor.copy(alpha = 0.15f))
+                                        .border(
+                                            1.dp,
+                                            customization.textColor.copy(alpha = 0.3f),
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(CircleShape)
-                                            .background(customization.textColor.copy(alpha = 0.15f))
-                                            .border(
-                                                1.dp,
-                                                customization.textColor.copy(alpha = 0.3f),
-                                                CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.opentune),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(20.dp),
-                                        )
-                                    }
+                                    Image(
+                                        painter = painterResource(id = R.drawable.opentune),
+                                        contentDescription = null,
+                                        modifier = Modifier.size((20 * logoSizeMultiplier).dp)
+                                    )
                                 }
 
                                 Text(
                                     text = context.getString(R.string.app_name),
-                                    fontSize = 15.sp,
+                                    fontSize = (15 * logoSizeMultiplier).sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = customization.secondaryTextColor,
+                                    color = customization.textColor,
                                     letterSpacing = 0.3.sp
                                 )
                             }
