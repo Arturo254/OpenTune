@@ -1,48 +1,42 @@
 package com.arturo254.opentune.ui.screens.settings
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,40 +44,42 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.annotation.ExperimentalCoilApi
+import coil.compose.AsyncImage
 import coil.imageLoader
 import com.arturo254.opentune.LocalPlayerAwareWindowInsets
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.MaxImageCacheSizeKey
 import com.arturo254.opentune.constants.MaxSongCacheSizeKey
+import com.arturo254.opentune.constants.ThumbnailCornerRadius
+import com.arturo254.opentune.db.entities.Song
 import com.arturo254.opentune.extensions.tryOrNull
-import com.arturo254.opentune.ui.component.AnimatedIconButton
-import com.arturo254.opentune.ui.component.EnhancedListPreference
-import com.arturo254.opentune.ui.component.EnhancedPreferenceEntry
+import com.arturo254.opentune.ui.component.IconButton
+import com.arturo254.opentune.ui.component.ListPreference
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.ui.utils.formatFileSize
 import com.arturo254.opentune.utils.rememberPreference
+import com.arturo254.opentune.viewmodels.HistoryViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoilApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun StorageSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
+    viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val imageDiskCache = context.imageLoader.diskCache ?: return
@@ -100,422 +96,456 @@ fun StorageSettings(
         defaultValue = 1024
     )
 
-    var imageCacheSize by remember { mutableStateOf(imageDiskCache.size) }
-    var playerCacheSize by remember { mutableStateOf(tryOrNull { playerCache.cacheSpace } ?: 0) }
-    var downloadCacheSize by remember {
-        mutableStateOf(tryOrNull { downloadCache.cacheSpace } ?: 0)
-    }
-    var isRefreshing by remember { mutableStateOf(false) }
-    var showDownloadClearConfirm by remember { mutableStateOf(false) }
-    var showSongCacheClearConfirm by remember { mutableStateOf(false) }
-    var showImageCacheClearConfirm by remember { mutableStateOf(false) }
+    var imageCacheSize by remember { mutableLongStateOf(imageDiskCache.size) }
+    var playerCacheSize by remember { mutableLongStateOf(tryOrNull { playerCache.cacheSpace } ?: 0) }
+    var downloadCacheSize by remember { mutableLongStateOf(tryOrNull { downloadCache.cacheSpace } ?: 0) }
 
-    val imageCacheProgress by animateFloatAsState(
+    val animatedImageCacheSize by animateFloatAsState(
         targetValue = (imageCacheSize.toFloat() / imageDiskCache.maxSize).coerceIn(0f, 1f),
-        label = "",
+        label = "imageCacheProgress",
     )
-    val playerCacheProgress by animateFloatAsState(
-        targetValue = (playerCacheSize.toFloat() / (maxSongCacheSize * 1024 * 1024L)).coerceIn(
-            0f,
-            1f
-        ),
-        label = "",
+    val animatedPlayerCacheSize by animateFloatAsState(
+        targetValue = if (maxSongCacheSize == -1) 0f
+        else (playerCacheSize.toFloat() / (maxSongCacheSize * 1024 * 1024L)).coerceIn(0f, 1f),
+        label = "playerCacheProgress",
     )
-    val downloadCachePercentage = if (downloadCacheSize > 0) {
-        (downloadCacheSize.toFloat() / (8192 * 1024 * 1024L)).coerceIn(0f, 1f) * 100
-    } else 0f
+    val animatedDownloadCacheSize by animateFloatAsState(
+        targetValue = if (downloadCacheSize == 0L) 0f else 1f,
+        label = "downloadCacheProgress",
+    )
 
-    // Refresh cache information periodically
-    LaunchedEffect(Unit) {
+    var showCachedSongsSheet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(imageDiskCache) {
         while (isActive) {
-            imageCacheSize = imageDiskCache.size
-            playerCacheSize = tryOrNull { playerCache.cacheSpace } ?: 0
-            downloadCacheSize = tryOrNull { downloadCache.cacheSpace } ?: 0
             delay(500)
+            imageCacheSize = imageDiskCache.size
+        }
+    }
+    LaunchedEffect(playerCache) {
+        while (isActive) {
+            delay(500)
+            playerCacheSize = tryOrNull { playerCache.cacheSpace } ?: 0
+        }
+    }
+    LaunchedEffect(downloadCache) {
+        while (isActive) {
+            delay(500)
+            downloadCacheSize = tryOrNull { downloadCache.cacheSpace } ?: 0
         }
     }
 
-    // Manual refresh with animation
-    fun refreshCacheInfo() {
-        coroutineScope.launch {
-            isRefreshing = true
-            withContext(Dispatchers.IO) {
-                imageCacheSize = imageDiskCache.size
-                playerCacheSize = tryOrNull { playerCache.cacheSpace } ?: 0
-                downloadCacheSize = tryOrNull { downloadCache.cacheSpace } ?: 0
-                delay(800) // Show refresh animation for a minimum time
-                isRefreshing = false
-            }
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.storage))
-                    }
-                },
-                navigationIcon = {
-                    AnimatedIconButton(
-                        onClick = navController::navigateUp,
-                        onLongClick = navController::backToMain,
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.arrow_back),
-                            contentDescription = null,
-                        )
-                    }
-                },
-                actions = {
-                    AnimatedIconButton(
-                        onClick = { refreshCacheInfo() },
-                        enabled = !isRefreshing
-                    ) {
-                        if (isRefreshing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(
-                                painterResource(R.drawable.replay),
-                                contentDescription = null,
-                            )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Descargas
+            StorageCard(
+                title = stringResource(R.string.downloaded_songs),
+                icon = R.drawable.download,
+                usedSize = downloadCacheSize,
+                maxSize = null,
+                progress = if (downloadCacheSize > 0) animatedDownloadCacheSize else 0f,
+                onClearClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        downloadCache.keys.forEach { key ->
+                            downloadCache.removeResource(key)
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
-                scrollBehavior = scrollBehavior
+                onManageClick = null
+            )
+
+            // Caché de canciones
+            StorageCard(
+                title = stringResource(R.string.song_cache),
+                icon = R.drawable.music_note,
+                usedSize = playerCacheSize,
+                maxSize = if (maxSongCacheSize == -1) null else maxSongCacheSize * 1024 * 1024L,
+                progress = animatedPlayerCacheSize,
+                onClearClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        playerCache.keys.forEach { key ->
+                            playerCache.removeResource(key)
+                        }
+                    }
+                },
+                onManageClick = { showCachedSongsSheet = true },
+                extraContent = {
+                    ListPreference(
+                        title = { Text(stringResource(R.string.max_cache_size)) },
+                        selectedValue = maxSongCacheSize,
+                        values = listOf(128, 256, 512, 1024, 2048, 4096, 8192, -1),
+                        valueText = {
+                            if (it == -1) stringResource(R.string.unlimited)
+                            else formatFileSize(it * 1024 * 1024L)
+                        },
+                        onValueSelected = onMaxSongCacheSizeChange,
+                    )
+                }
+            )
+
+            // Caché de imágenes
+            StorageCard(
+                title = stringResource(R.string.image_cache),
+                icon = R.drawable.image,
+                usedSize = imageCacheSize,
+                maxSize = imageDiskCache.maxSize,
+                progress = animatedImageCacheSize,
+                onClearClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        imageDiskCache.clear()
+                    }
+                },
+                onManageClick = null,
+                extraContent = {
+                    ListPreference(
+                        title = { Text(stringResource(R.string.max_cache_size)) },
+                        selectedValue = maxImageCacheSize,
+                        values = listOf(128, 256, 512, 1024, 2048, 4096, 8192),
+                        valueText = { formatFileSize(it * 1024 * 1024L) },
+                        onValueSelected = onMaxImageCacheSizeChange,
+                    )
+                }
             )
         }
-    ) { paddingValues ->
-        Column(
-            Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                .verticalScroll(rememberScrollState()),
-        ) {
-            // Storage overview card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+
+        TopAppBar(
+            title = { Text(stringResource(R.string.storage)) },
+            navigationIcon = {
+                IconButton(
+                    onClick = navController::navigateUp,
+                    onLongClick = navController::backToMain,
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.storage),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = stringResource(R.string.storage_overview),
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-
-                    StorageItem(
-                        title = stringResource(R.string.downloaded_songs),
-                        icon = R.drawable.download,
-                        size = downloadCacheSize,
-                        progress = downloadCachePercentage,
-                        maxSize = null
-                    )
-
-                    StorageItem(
-                        title = stringResource(R.string.song_cache),
-                        icon = R.drawable.music_note,
-                        size = playerCacheSize,
-                        progress = playerCacheProgress * 100,
-                        maxSize = if (maxSongCacheSize != -1) maxSongCacheSize * 1024 * 1024L else null
-                    )
-
-                    StorageItem(
-                        title = stringResource(R.string.image_cache),
-                        icon = R.drawable.image,
-                        size = imageCacheSize,
-                        progress = imageCacheProgress * 100,
-                        maxSize = imageDiskCache.maxSize
+                    Icon(
+                        painterResource(R.drawable.arrow_back),
+                        contentDescription = null,
                     )
                 }
-            }
-
-            // Downloaded Songs Section
-            StorageSection(
-                title = stringResource(R.string.downloaded_songs),
-                icon = R.drawable.download
-            ) {
-                Text(
-                    text = stringResource(R.string.size_used, formatFileSize(downloadCacheSize)),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                )
-
-                EnhancedPreferenceEntry(
-                    title = stringResource(R.string.clear_all_downloads),
-                    icon = R.drawable.delete,
-                    iconTint = MaterialTheme.colorScheme.error,
-                    onClick = { showDownloadClearConfirm = true },
-                )
-            }
-
-            // Song Cache Section
-            StorageSection(
-                title = stringResource(R.string.song_cache),
-                icon = R.drawable.music_note
-            ) {
-                if (maxSongCacheSize == -1) {
-                    Text(
-                        text = stringResource(R.string.size_used, formatFileSize(playerCacheSize)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                    )
-                } else {
-                    LinearProgressIndicator(
-                        progress = { playerCacheProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeCap = StrokeCap.Round
-                    )
-
-                    Text(
-                        text = stringResource(
-                            R.string.size_used,
-                            "${formatFileSize(playerCacheSize)} / ${
-                                formatFileSize(
-                                    maxSongCacheSize * 1024 * 1024L,
-                                )
-                            }",
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                    )
-                }
-
-                EnhancedListPreference(
-                    title = stringResource(R.string.max_cache_size),
-                    icon = R.drawable.settings,
-                    selectedValue = maxSongCacheSize,
-                    values = listOf(128, 256, 512, 1024, 2048, 4096, 8192, -1),
-                    valueText = {
-                        if (it == -1) stringResource(R.string.unlimited) else formatFileSize(it * 1024 * 1024L)
-                    },
-                    onValueSelected = {
-                        onMaxSongCacheSizeChange(it)
-                        refreshCacheInfo()
-                    },
-                )
-
-                EnhancedPreferenceEntry(
-                    title = stringResource(R.string.clear_song_cache),
-                    icon = R.drawable.delete,
-                    iconTint = MaterialTheme.colorScheme.error,
-                    onClick = { showSongCacheClearConfirm = true },
-                )
-            }
-
-            // Image Cache Section
-            StorageSection(
-                title = stringResource(R.string.image_cache),
-                icon = R.drawable.image
-            ) {
-                LinearProgressIndicator(
-                    progress = { imageCacheProgress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeCap = StrokeCap.Round
-                )
-
-                Text(
-                    text = stringResource(
-                        R.string.size_used,
-                        "${formatFileSize(imageCacheSize)} / ${formatFileSize(imageDiskCache.maxSize)}"
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                )
-
-                EnhancedListPreference(
-                    title = stringResource(R.string.max_cache_size),
-                    icon = R.drawable.settings,
-                    selectedValue = maxImageCacheSize,
-                    values = listOf(128, 256, 512, 1024, 2048, 4096, 8192),
-                    valueText = { formatFileSize(it * 1024 * 1024L) },
-                    onValueSelected = {
-                        onMaxImageCacheSizeChange(it)
-                        refreshCacheInfo()
-                    },
-                )
-
-                EnhancedPreferenceEntry(
-                    title = stringResource(R.string.clear_image_cache),
-                    icon = R.drawable.delete,
-                    iconTint = MaterialTheme.colorScheme.error,
-                    onClick = { showImageCacheClearConfirm = true },
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-
-    // Confirmation Dialogs
-    if (showDownloadClearConfirm) {
-        ConfirmationDialog(
-            title = stringResource(R.string.clear_all_downloads),
-            message = stringResource(R.string.clear_downloads_confirmation),
-            onConfirm = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    downloadCache.keys.forEach { key ->
-                        downloadCache.removeResource(key)
-                    }
-                    refreshCacheInfo()
-                }
-                showDownloadClearConfirm = false
             },
-            onDismiss = { showDownloadClearConfirm = false }
         )
     }
 
-    if (showSongCacheClearConfirm) {
-        ConfirmationDialog(
-            title = stringResource(R.string.clear_song_cache),
-            message = stringResource(R.string.clear_song_cache_confirmation),
-            onConfirm = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    playerCache.keys.forEach { key ->
-                        playerCache.removeResource(key)
-                    }
-                    refreshCacheInfo()
-                }
-                showSongCacheClearConfirm = false
-            },
-            onDismiss = { showSongCacheClearConfirm = false }
-        )
-    }
-
-    if (showImageCacheClearConfirm) {
-        ConfirmationDialog(
-            title = stringResource(R.string.clear_image_cache),
-            message = stringResource(R.string.clear_image_cache_confirmation),
-            onConfirm = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    imageDiskCache.clear()
-                    refreshCacheInfo()
-                }
-                showImageCacheClearConfirm = false
-            },
-            onDismiss = { showImageCacheClearConfirm = false }
+    // Bottom Sheet para gestionar canciones en caché
+    if (showCachedSongsSheet) {
+        CachedSongsBottomSheet(
+            playerCache = playerCache,
+            viewModel = viewModel,
+            onDismiss = { showCachedSongsSheet = false }
         )
     }
 }
 
 @Composable
-fun StorageSection(
+private fun StorageCard(
     title: String,
     icon: Int,
-    content: @Composable () -> Unit
+    usedSize: Long,
+    maxSize: Long?,
+    progress: Float,
+    onClearClick: () -> Unit,
+    onManageClick: (() -> Unit)?,
+    extraContent: (@Composable () -> Unit)? = null
 ) {
-    var expanded by remember { mutableStateOf(true) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp)),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            onClick = { expanded = !expanded }
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Header con icono y título
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                    )
-                                ),
-                                CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(icon),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
 
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(start = 16.dp)
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            // Barra de progreso
+            if (usedSize > 0) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = formatFileSize(usedSize),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (maxSize != null) {
+                            Text(
+                                text = formatFileSize(maxSize),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else {
+                Text(
+                    text = stringResource(R.string.size_used, formatFileSize(0)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Contenido extra (ListPreference)
+            extraContent?.invoke()
+
+            // Botones de acción
+            if (usedSize > 0) {
+                HorizontalDivider(
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (onManageClick != null) {
+                        ActionButton(
+                            text = stringResource(R.string.manage),
+                            icon = R.drawable.settings,
+                            onClick = onManageClick,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    ActionButton(
+                        text = stringResource(R.string.clear),
+                        icon = R.drawable.delete,
+                        onClick = onClearClick,
+                        modifier = Modifier.weight(1f),
+                        isDestructive = true
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActionButton(
+    text: String,
+    icon: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isDestructive: Boolean = false
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (isDestructive)
+                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                else
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = if (isDestructive)
+                    MaterialTheme.colorScheme.error
+                else
+                    MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (isDestructive)
+                    MaterialTheme.colorScheme.error
+                else
+                    MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalCoilApi::class)
+@Composable
+private fun CachedSongsBottomSheet(
+    playerCache: androidx.media3.datasource.cache.Cache,
+    viewModel: HistoryViewModel,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val coroutineScope = rememberCoroutineScope()
+    val events by viewModel.events.collectAsState()
+
+    // Obtener IDs de canciones en caché
+    val cachedSongIds = remember(playerCache) {
+        playerCache.keys.map { it.toString() }.toSet()
+    }
+
+    // Obtener canciones completas desde el historial (similar a CachePlaylistScreen)
+    val cachedSongs = remember(events, cachedSongIds) {
+        events.values.flatten()
+            .map { it.song }
+            .distinctBy { it.id }
+            .filter { it.id in cachedSongIds }
+    }
+
+    // Obtener tamaños de caché
+    val cachedSongsWithSize = remember(cachedSongs, playerCache) {
+        cachedSongs.map { song ->
+            CachedSongInfo(
+                song = song,
+                size = tryOrNull {
+                    playerCache.getCachedBytes(song.id, 0, Long.MAX_VALUE)
+                } ?: 0L
+            )
+        }.sortedByDescending { it.size }
+    }
+
+    var displayedSongs by remember { mutableStateOf(cachedSongsWithSize) }
+
+    LaunchedEffect(cachedSongsWithSize) {
+        displayedSongs = cachedSongsWithSize
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(32.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                )
+            }
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.cached_playlist),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.n_song,
+                            displayedSongs.size,
+                            displayedSongs.size
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                Icon(
-                    painter = painterResource(if (expanded) R.drawable.expand_less else R.drawable.expand_more),
-                    contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (displayedSongs.isNotEmpty()) {
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch(Dispatchers.IO) {
+                                playerCache.keys.forEach { key ->
+                                    playerCache.removeResource(key)
+                                }
+                                displayedSongs = emptyList()
+                            }
+                        },
+                        onLongClick = { /* No action on long click */ }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.delete),
+                            contentDescription = stringResource(R.string.clear_all_downloads),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
-        }
 
-        AnimatedVisibility(
-            visible = expanded,
-            enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
-            exit = fadeOut(animationSpec = tween(300)) + shrinkVertically(animationSpec = tween(300))
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            // Lista de canciones
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    content()
+                items(displayedSongs, key = { it.song.id }) { songInfo ->
+                    CachedSongItem(
+                        songInfo = songInfo,
+                        onDeleteClick = {
+                            coroutineScope.launch(Dispatchers.IO) {
+                                playerCache.removeResource(songInfo.song.id)
+                                displayedSongs = displayedSongs.filter { it.song.id != songInfo.song.id }
+                            }
+                        }
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -523,95 +553,72 @@ fun StorageSection(
 }
 
 @Composable
-fun StorageItem(
-    title: String,
-    icon: Int,
-    size: Long,
-    progress: Float,
-    maxSize: Long?
+private fun CachedSongItem(
+    songInfo: CachedSongInfo,
+    onDeleteClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Column(
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp)
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            LinearProgressIndicator(
-                progress = { progress / 100f },
+            // Thumbnail
+            AsyncImage(
+                model = songInfo.song.thumbnailUrl,
+                contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                color = MaterialTheme.colorScheme.primary,
-                strokeCap = StrokeCap.Round
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            // Info
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = songInfo.song.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1
+                )
+                Text(
+                    text = songInfo.song.artists.joinToString(", ") { it.name },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+                Text(
+                    text = formatFileSize(songInfo.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
 
-            Text(
-                text = if (maxSize != null) {
-                    "${formatFileSize(size)} / ${formatFileSize(maxSize)}"
-                } else {
-                    formatFileSize(size)
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            // Delete button
+            IconButton(onClick = onDeleteClick,onLongClick = { /* No action on long click */ }) {
+                Icon(
+                    painter = painterResource(R.drawable.delete),
+                    contentDescription = stringResource(R.string.clear_song_cache),
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
-
-        Text(
-            text = "${progress.toInt()}%",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 8.dp),
-            textAlign = TextAlign.End
-        )
     }
 }
 
-@Composable
-fun ConfirmationDialog(
-    title: String,
-    message: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = title) },
-        text = { Text(text = message) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(
-                    text = stringResource(R.string.confirm),
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.cancel))
-            }
-        }
-    )
-}
+private data class CachedSongInfo(
+    val song: Song,
+    val size: Long
+)
