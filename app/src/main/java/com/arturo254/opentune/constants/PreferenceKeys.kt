@@ -54,6 +54,14 @@ val StopMusicOnTaskClearKey = booleanPreferencesKey("stopMusicOnTaskClear")
 val MaxImageCacheSizeKey = intPreferencesKey("maxImageCacheSize")
 val MaxSongCacheSizeKey = intPreferencesKey("maxSongCacheSize")
 
+val DisableLoadMoreWhenRepeatAllKey = booleanPreferencesKey("disableLoadMoreWhenRepeatAll")
+val ScrobbleDelayPercentKey = floatPreferencesKey("scrobbleDelayPercent")
+val ScrobbleMinSongDurationKey = intPreferencesKey("scrobbleMinSongDuration")
+val ScrobbleDelaySecondsKey = intPreferencesKey("scrobbleDelaySeconds")
+val EnableLastFMScrobblingKey = booleanPreferencesKey("enableLastFMScrobbling")
+val LastFMUseNowPlaying = booleanPreferencesKey("lastFMUseNowPlaying")
+val AudioOffload = booleanPreferencesKey("audioOffload")
+
 val PlayerTextAlignmentKey = stringPreferencesKey("playerTextAlignment")
 
 val RotateBackgroundKey = booleanPreferencesKey("rotate_background")

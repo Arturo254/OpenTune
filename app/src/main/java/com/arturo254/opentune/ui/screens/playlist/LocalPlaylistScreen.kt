@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -139,10 +140,8 @@ import com.arturo254.opentune.viewmodels.LocalPlaylistViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.detectReorder
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-import org.burnoutcrew.reorderable.reorderable
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import java.time.LocalDateTime
 
 
@@ -374,25 +373,25 @@ fun LocalPlaylistScreen(
     }
 
     val headerItems = 2
-    val reorderableState =
-        rememberReorderableLazyListState(
-            onMove = { from, to ->
-                if (to.index >= headerItems && from.index >= headerItems) {
-                    mutableSongs.move(from.index - headerItems, to.index - headerItems)
-                }
-            },
-            onDragEnd = { fromIndex, toIndex ->
-                val from = if (fromIndex < 2) 2 else fromIndex
-                val to = if (toIndex < 2) 2 else toIndex
+    val lazyListState = rememberLazyListState()
+    val reorderableState = rememberReorderableLazyListState(
+        lazyListState = lazyListState,
+        onMove = { from, to ->
+            if (to.index >= headerItems && from.index >= headerItems) {
+                mutableSongs.move(from.index - headerItems, to.index - headerItems)
+
+                val safeFrom = (from.index - headerItems).coerceIn(0, mutableSongs.lastIndex)
+                val safeTo = (to.index - headerItems).coerceIn(0, mutableSongs.lastIndex)
                 database.transaction {
-                    move(viewModel.playlistId, from - headerItems, to - headerItems)
+                    move(viewModel.playlistId, safeFrom, safeTo)
                 }
-            },
-        )
+            }
+        }
+    )
 
     val showTopBarTitle by remember {
         derivedStateOf {
-            reorderableState.listState.firstVisibleItemIndex > 0
+            lazyListState.firstVisibleItemIndex > 0
         }
     }
 
@@ -401,17 +400,15 @@ fun LocalPlaylistScreen(
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
-        // VerticalFastScroller envuelve el LazyColumn
         VerticalFastScroller(
-            listState = reorderableState.listState,
+            listState = lazyListState,
             topContentPadding = 16.dp,
             endContentPadding = 0.dp
         ) {
             LazyColumn(
-                state = reorderableState.listState,
+                state = lazyListState,
                 contentPadding = LocalPlayerAwareWindowInsets.current.union(WindowInsets.ime)
                     .asPaddingValues(),
-                modifier = Modifier.reorderable(reorderableState),
             ) {
                 playlist?.let { playlist ->
                     if (playlist.songCount == 0 && playlist.playlist.remoteSongCount == 0) {
@@ -483,7 +480,7 @@ fun LocalPlaylistScreen(
                         key = { _, song -> song.map.id },
                     ) { index, song ->
                         ReorderableItem(
-                            reorderableState = reorderableState,
+                            state = reorderableState,
                             key = song.map.id,
                         ) {
                             val currentItem by rememberUpdatedState(song)
@@ -577,7 +574,7 @@ fun LocalPlaylistScreen(
                                         if (sortType == PlaylistSongSortType.CUSTOM && !locked && !selection && !isSearching) {
                                             IconButton(
                                                 onClick = { },
-                                                modifier = Modifier.detectReorder(reorderableState),
+                                                modifier = Modifier.draggableHandle(),
                                             ) {
                                                 Icon(
                                                     painter = painterResource(R.drawable.drag_handle),
@@ -634,7 +631,7 @@ fun LocalPlaylistScreen(
                         key = { _, song -> song.item.map.id },
                     ) { index, songWrapper ->
                         ReorderableItem(
-                            reorderableState = reorderableState,
+                            state = reorderableState,
                             key = songWrapper.item.map.id,
                         ) {
                             val currentItem by rememberUpdatedState(songWrapper.item)
@@ -714,7 +711,7 @@ fun LocalPlaylistScreen(
                                         if (sortType == PlaylistSongSortType.CUSTOM && !locked && !selection && !isSearching) {
                                             IconButton(
                                                 onClick = { },
-                                                modifier = Modifier.detectReorder(reorderableState),
+                                                modifier = Modifier.draggableHandle(),
                                             ) {
                                                 Icon(
                                                     painter = painterResource(R.drawable.drag_handle),
@@ -929,7 +926,6 @@ fun LocalPlaylistHeader(
     val liked = playlist.playlist.bookmarkedAt != null
     val editable: Boolean = playlist.playlist.isEditable == true
 
-    // 📸 Miniatura personalizada
     var customThumbnailUri by rememberSaveable {
         mutableStateOf<Uri?>(getPlaylistImageUri(context, playlist.playlist.id))
     }
@@ -978,10 +974,8 @@ fun LocalPlaylistHeader(
                 }
 
             Box(modifier = imageModifier) {
-                // Estado para controlar la visibilidad de los iconos
                 var showEditButtons by remember { mutableStateOf(false) }
 
-                // Modificador para detectar el long press
                 val longPressModifier = Modifier.pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = { showEditButtons = !showEditButtons }
@@ -997,7 +991,7 @@ fun LocalPlaylistHeader(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                                .then(longPressModifier) // Agregamos el detector de long press
+                                .then(longPressModifier)
                         )
                     }
 
@@ -1009,7 +1003,7 @@ fun LocalPlaylistHeader(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                                .then(longPressModifier) // Agregamos el detector de long press
+                                .then(longPressModifier)
                         )
                     }
 
@@ -1018,7 +1012,7 @@ fun LocalPlaylistHeader(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .then(longPressModifier)
-                        ) { // Agregamos el detector de long press
+                        ) {
                             listOf(
                                 Alignment.TopStart,
                                 Alignment.TopEnd,
@@ -1044,7 +1038,7 @@ fun LocalPlaylistHeader(
                             modifier = Modifier
                                 .size(48.dp)
                                 .align(Alignment.Center)
-                                .then(longPressModifier), // Agregamos el detector de long press
+                                .then(longPressModifier),
                             tint = if (editable)
                                 MaterialTheme.colorScheme.primary
                             else
@@ -1053,7 +1047,6 @@ fun LocalPlaylistHeader(
                     }
                 }
 
-                // Mostramos los botones solo si showEditButtons es true y editable es true
                 if (editable && showEditButtons) {
                     Row(
                         modifier = Modifier
@@ -1080,7 +1073,7 @@ fun LocalPlaylistHeader(
                                     deletePlaylistImage(context, playlist.playlist.id)
                                     customThumbnailUri = null
                                     showEditButtons =
-                                        false // Ocultar los botones después de eliminar
+                                        false
                                 },
                                 modifier = Modifier.size(24.dp)
                             ) {

@@ -105,7 +105,7 @@ import com.arturo254.opentune.viewmodels.AutoPlaylistViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -248,25 +248,19 @@ fun AutoPlaylistScreen(
     val state = rememberLazyListState()
     val database = LocalDatabase.current
     val headerItems = 2
-    val reorderableState =
-        rememberReorderableLazyListState(
-            onMove = { from, to ->
-                if (to.index >= headerItems && from.index >= headerItems) {
-                    mutableSongs.move(from.index - headerItems, to.index - headerItems)
-                }
-            },
-            onDragEnd = { fromIndex, toIndex ->
-                val from = if (fromIndex < 2) 2 else fromIndex
-                val to = if (toIndex < 2) 2 else toIndex
-                database.transaction {
-                    move(viewModel.playlist, from - headerItems, to - headerItems)
-                }
-            },
-        )
+    val lazyListState = rememberLazyListState()
+    val reorderableState = rememberReorderableLazyListState(
+        lazyListState = lazyListState,
+        onMove = { from, to ->
+            if (to.index >= headerItems && from.index >= headerItems) {
+                mutableSongs.move(from.index - headerItems, to.index - headerItems)
+            }
+        }
+    )
 
     val showTopBarTitle by remember {
         derivedStateOf {
-            reorderableState.listState.firstVisibleItemIndex > 0
+            lazyListState.firstVisibleItemIndex > 0
         }
     }
 
@@ -278,7 +272,7 @@ fun AutoPlaylistScreen(
     ) {
         // VerticalFastScroller envuelve el LazyColumn
         VerticalFastScroller(
-            listState = reorderableState.listState,
+            listState = lazyListState,
             topContentPadding = 16.dp,
             endContentPadding = 0.dp
         ) {
