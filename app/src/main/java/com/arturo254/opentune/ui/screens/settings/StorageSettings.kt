@@ -73,6 +73,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoilApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -154,8 +155,12 @@ fun StorageSettings(
                 progress = if (downloadCacheSize > 0) animatedDownloadCacheSize else 0f,
                 onClearClick = {
                     coroutineScope.launch(Dispatchers.IO) {
-                        downloadCache.keys.forEach { key ->
-                            downloadCache.removeResource(key)
+                        try {
+                            downloadCache.keys.toList().forEach { key ->
+                                tryOrNull { downloadCache.removeResource(key) }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
                     }
                 },
@@ -171,8 +176,12 @@ fun StorageSettings(
                 progress = animatedPlayerCacheSize,
                 onClearClick = {
                     coroutineScope.launch(Dispatchers.IO) {
-                        playerCache.keys.forEach { key ->
-                            playerCache.removeResource(key)
+                        try {
+                            playerCache.keys.toList().forEach { key ->
+                                tryOrNull { playerCache.removeResource(key) }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
                     }
                 },
@@ -200,7 +209,11 @@ fun StorageSettings(
                 progress = animatedImageCacheSize,
                 onClearClick = {
                     coroutineScope.launch(Dispatchers.IO) {
-                        imageDiskCache.clear()
+                        try {
+                            imageDiskCache.clear()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
                 },
                 onManageClick = null,
@@ -444,15 +457,16 @@ private fun CachedSongsBottomSheet(
             .filter { it.id in cachedSongIds }
     }
 
-    // Obtener tamaños de caché
+    // Obtener tamaños de caché - MEJORA: Filtrar canciones con tamaño 0
     val cachedSongsWithSize = remember(cachedSongs, playerCache) {
-        cachedSongs.map { song ->
-            CachedSongInfo(
-                song = song,
-                size = tryOrNull {
-                    playerCache.getCachedBytes(song.id, 0, Long.MAX_VALUE)
-                } ?: 0L
-            )
+        cachedSongs.mapNotNull { song ->
+            val size = tryOrNull {
+                playerCache.getCachedBytes(song.id, 0, Long.MAX_VALUE)
+            } ?: 0L
+
+            if (size > 0) {
+                CachedSongInfo(song = song, size = size)
+            } else null
         }.sortedByDescending { it.size }
     }
 
@@ -516,10 +530,18 @@ private fun CachedSongsBottomSheet(
                     IconButton(
                         onClick = {
                             coroutineScope.launch(Dispatchers.IO) {
-                                playerCache.keys.forEach { key ->
-                                    playerCache.removeResource(key)
+                                try {
+                                    // MEJORA: Conversión a lista antes de iterar
+                                    playerCache.keys.toList().forEach { key ->
+                                        tryOrNull { playerCache.removeResource(key) }
+                                    }
+                                    // MEJORA: Actualización del UI con withContext
+                                    withContext(Dispatchers.Main) {
+                                        displayedSongs = emptyList()
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
                                 }
-                                displayedSongs = emptyList()
                             }
                         },
                         onLongClick = { /* No action on long click */ }
@@ -543,8 +565,25 @@ private fun CachedSongsBottomSheet(
                         songInfo = songInfo,
                         onDeleteClick = {
                             coroutineScope.launch(Dispatchers.IO) {
-                                playerCache.removeResource(songInfo.song.id)
-                                displayedSongs = displayedSongs.filter { it.song.id != songInfo.song.id }
+                                try {
+                                    // MEJORA: Búsqueda correcta de keys por canción
+                                    val keysToRemove = playerCache.keys.filter { key ->
+                                        key.contains(songInfo.song.id)
+                                    }
+
+                                    keysToRemove.forEach { key ->
+                                        tryOrNull { playerCache.removeResource(key) }
+                                    }
+
+                                    // MEJORA: Actualización del UI con withContext
+                                    withContext(Dispatchers.Main) {
+                                        displayedSongs = displayedSongs.filter {
+                                            it.song.id != songInfo.song.id
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
                             }
                         }
                     )
@@ -612,7 +651,10 @@ private fun CachedSongItem(
             }
 
             // Delete button
-            IconButton(onClick = onDeleteClick,onLongClick = { /* No action on long click */ }) {
+            IconButton(
+                onClick = onDeleteClick,
+                onLongClick = { /* No action on long click */ }
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.delete),
                     contentDescription = stringResource(R.string.clear_song_cache),
