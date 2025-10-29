@@ -1,4 +1,4 @@
-package com.arturo254.opentune.ui.screens.playlist
+package com.arturo254.opentune.ui.screens.library
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
