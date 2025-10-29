@@ -784,8 +784,7 @@ class MainActivity : ComponentActivity() {
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     val context = LocalContext.current
-                                                    val viewModel: NewReleaseViewModel =
-                                                        hiltViewModel()
+                                                    val viewModel: NewReleaseViewModel = hiltViewModel()
                                                     val hasNewReleases by viewModel.hasNewReleases.collectAsState()
 
                                                     // Ícono de notificación para nuevos lanzamientos
@@ -810,9 +809,7 @@ class MainActivity : ComponentActivity() {
                                                         ) {
                                                             Icon(
                                                                 painter = painterResource(R.drawable.notification_on),
-                                                                contentDescription = stringResource(
-                                                                    R.string.new_release_albums
-                                                                ),
+                                                                contentDescription = stringResource(R.string.new_release_albums),
                                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
                                                         }
@@ -902,8 +899,16 @@ class MainActivity : ComponentActivity() {
                                                 onClick = {
                                                     when {
                                                         active -> onActiveChange(false)
-                                                        !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } -> {
-                                                            navController.navigateUp()
+                                                        !isInNavigationItems -> {
+                                                            try {
+                                                                navController.navigateUp()
+                                                            } catch (e: Exception) {
+                                                                Log.e(
+                                                                    "Navigation",
+                                                                    "Error navigating up",
+                                                                    e
+                                                                )
+                                                            }
                                                         }
 
                                                         else -> onActiveChange(true)
@@ -911,25 +916,41 @@ class MainActivity : ComponentActivity() {
                                                 },
                                                 onLongClick = {
                                                     when {
-                                                        active -> {}
-                                                        !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } -> {
-                                                            navController.backToMain()
+                                                        active -> { /* No action */
                                                         }
-                                                        else -> {}
+
+                                                        !isInNavigationItems -> {
+                                                            try {
+                                                                navController.backToMain()
+                                                            } catch (e: Exception) {
+                                                                Log.e(
+                                                                    "Navigation",
+                                                                    "Error navigating to main",
+                                                                    e
+                                                                )
+                                                            }
+                                                        }
+
+                                                        else -> { /* No action */
+                                                        }
                                                     }
                                                 },
                                             ) {
                                                 Icon(
                                                     painterResource(
-                                                        if (active ||
-                                                            !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }
-                                                        ) {
+                                                        if (active || !isInNavigationItems) {
                                                             R.drawable.arrow_back
                                                         } else {
                                                             R.drawable.search
-                                                        },
+                                                        }
                                                     ),
-                                                    contentDescription = null,
+                                                    contentDescription = stringResource(
+                                                        if (active || !isInNavigationItems) {
+                                                            R.string.back
+                                                        } else {
+                                                            R.string.search
+                                                        }
+                                                    ),
                                                 )
                                             }
                                         },

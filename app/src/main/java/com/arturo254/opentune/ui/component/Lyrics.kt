@@ -554,20 +554,19 @@ fun Lyrics(
                     AsyncImage(
                         model = metadata.thumbnailUrl,
                         contentDescription = null,
-                        contentScale = ContentScale.FillBounds,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
-                            .blur(50.dp)
-                            .then(
+                            .graphicsLayer {
+                                // Escalar más para cubrir bordes durante la rotación
+                                scaleX = 1.8f
+                                scaleY = 1.8f
                                 if (rotateBackground) {
-                                    Modifier.graphicsLayer {
-                                        rotationZ = rotation
-                                        transformOrigin = TransformOrigin.Center
-                                    }
-                                } else {
-                                    Modifier
+                                    rotationZ = rotation
+                                    transformOrigin = TransformOrigin.Center
                                 }
-                            )
+                            }
+                            .blur(50.dp)
                     )
 
                     Box(
