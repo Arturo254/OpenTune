@@ -89,11 +89,11 @@ fun StorageSettings(
     val coroutineScope = rememberCoroutineScope()
     val (maxImageCacheSize, onMaxImageCacheSizeChange) = rememberPreference(
         key = MaxImageCacheSizeKey,
-        defaultValue = 512
+        defaultValue = -1
     )
     val (maxSongCacheSize, onMaxSongCacheSizeChange) = rememberPreference(
         key = MaxSongCacheSizeKey,
-        defaultValue = 1024
+        defaultValue = -1
     )
 
     var imageCacheSize by remember { mutableLongStateOf(imageDiskCache.size) }
@@ -101,9 +101,11 @@ fun StorageSettings(
     var downloadCacheSize by remember { mutableLongStateOf(tryOrNull { downloadCache.cacheSpace } ?: 0) }
 
     val animatedImageCacheSize by animateFloatAsState(
-        targetValue = (imageCacheSize.toFloat() / imageDiskCache.maxSize).coerceIn(0f, 1f),
+        targetValue = if (maxImageCacheSize == -1) 0f
+        else (imageCacheSize.toFloat() / (maxImageCacheSize * 1024 * 1024L)).coerceIn(0f, 1f),
         label = "imageCacheProgress",
     )
+
     val animatedPlayerCacheSize by animateFloatAsState(
         targetValue = if (maxSongCacheSize == -1) 0f
         else (playerCacheSize.toFloat() / (maxSongCacheSize * 1024 * 1024L)).coerceIn(0f, 1f),
@@ -165,7 +167,7 @@ fun StorageSettings(
                 title = stringResource(R.string.song_cache),
                 icon = R.drawable.music_note,
                 usedSize = playerCacheSize,
-                maxSize = if (maxSongCacheSize == -1) null else maxSongCacheSize * 1024 * 1024L,
+                maxSize = if (maxSongCacheSize == -1) -1L else maxSongCacheSize * 1024 * 1024L,
                 progress = animatedPlayerCacheSize,
                 onClearClick = {
                     coroutineScope.launch(Dispatchers.IO) {
@@ -179,7 +181,7 @@ fun StorageSettings(
                     ListPreference(
                         title = { Text(stringResource(R.string.max_cache_size)) },
                         selectedValue = maxSongCacheSize,
-                        values = listOf(128, 256, 512, 1024, 2048, 4096, 8192, -1),
+                        values = listOf(-1, 128, 256, 512, 1024, 2048, 4096, 8192),
                         valueText = {
                             if (it == -1) stringResource(R.string.unlimited)
                             else formatFileSize(it * 1024 * 1024L)
@@ -194,7 +196,7 @@ fun StorageSettings(
                 title = stringResource(R.string.image_cache),
                 icon = R.drawable.image,
                 usedSize = imageCacheSize,
-                maxSize = imageDiskCache.maxSize,
+                maxSize = if (maxImageCacheSize == -1) -1L else maxImageCacheSize * 1024 * 1024L,
                 progress = animatedImageCacheSize,
                 onClearClick = {
                     coroutineScope.launch(Dispatchers.IO) {
@@ -206,8 +208,11 @@ fun StorageSettings(
                     ListPreference(
                         title = { Text(stringResource(R.string.max_cache_size)) },
                         selectedValue = maxImageCacheSize,
-                        values = listOf(128, 256, 512, 1024, 2048, 4096, 8192),
-                        valueText = { formatFileSize(it * 1024 * 1024L) },
+                        values = listOf(-1, 128, 256, 512, 1024, 2048, 4096, 8192),
+                        valueText = {
+                            if (it == -1) stringResource(R.string.unlimited)
+                            else formatFileSize(it * 1024 * 1024L)
+                        },
                         onValueSelected = onMaxImageCacheSizeChange,
                     )
                 }
@@ -314,7 +319,8 @@ private fun StorageCard(
                         )
                         if (maxSize != null) {
                             Text(
-                                text = formatFileSize(maxSize),
+                                text = if (maxSize == -1L) stringResource(R.string.unlimited)
+                                else formatFileSize(maxSize),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
