@@ -557,16 +557,16 @@ fun Lyrics(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
+                            .blur(50.dp) // Blur ANTES del graphicsLayer
                             .graphicsLayer {
-                                // Escalar más para cubrir bordes durante la rotación
-                                scaleX = 1.8f
-                                scaleY = 1.8f
+                                // Escala mucho más agresiva para compensar el blur y rotación
+                                scaleX = 2.5f
+                                scaleY = 2.5f
                                 if (rotateBackground) {
                                     rotationZ = rotation
                                     transformOrigin = TransformOrigin.Center
                                 }
                             }
-                            .blur(50.dp)
                     )
 
                     Box(

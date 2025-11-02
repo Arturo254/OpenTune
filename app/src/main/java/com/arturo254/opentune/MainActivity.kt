@@ -1700,4 +1700,3 @@ fun ProfileIconWithUpdateBadge(
         }
     }
 }
-
