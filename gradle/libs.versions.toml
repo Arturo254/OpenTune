@@ -21,6 +21,8 @@ extractor = "06b7ae2"
 composeReorderable = "3.0.0"
 uiAndroid = "1.9.2"
 materialIconsExtended = "1.7.6"
+glanceAppwidget = "1.1.1"
+glanceMaterial3 = "1.1.1"
 
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -95,6 +97,8 @@ material-ripple = { group = "androidx.compose.material", name = "material-ripple
 room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
 ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glanceAppwidget" }
+glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glanceMaterial3" }
 
 [plugins]
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

@@ -129,6 +129,8 @@ dependencies {
     implementation(libs.material.ripple)
     implementation(libs.room.runtime.android)
     implementation(libs.material.icons.extended)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
