@@ -170,7 +170,7 @@ fun BottomSheetPlayer(
 
     val playerTextAlignment by rememberEnumPreference(
         PlayerTextAlignmentKey,
-        PlayerTextAlignment.SIDED
+        PlayerTextAlignment.CENTER
     )
 
     val playerBackground by rememberEnumPreference(
@@ -216,7 +216,7 @@ fun BottomSheetPlayer(
 
     val showLyrics by rememberPreference(ShowLyricsKey, defaultValue = false)
 
-    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.DEFAULT)
+    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.SQUIGGLY)
 
     var position by rememberSaveable(playbackState) {
         mutableLongStateOf(playerConnection.player.currentPosition)
@@ -265,7 +265,7 @@ fun BottomSheetPlayer(
 
     val playerButtonsStyle by rememberEnumPreference(
         key = PlayerButtonsStyleKey,
-        defaultValue = PlayerButtonsStyle.DEFAULT
+        defaultValue = PlayerButtonsStyle.SECONDARY
     )
     if (!canSkipNext && automix.isNotEmpty()) {
         playerConnection.service.addToQueueAutomix(automix[0], 0)
