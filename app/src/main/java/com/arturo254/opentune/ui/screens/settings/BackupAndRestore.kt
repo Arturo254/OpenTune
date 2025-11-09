@@ -193,36 +193,6 @@ fun BackupAndRestore(
                 }
             )
 
-            // Sección: Importar Playlists
-            SectionHeader(
-                icon = painterResource(R.drawable.playlist_add),
-                title = "Importar Playlists"
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                CompactActionCard(
-                    modifier = Modifier.weight(1f),
-                    icon = painterResource(R.drawable.playlist_add),
-                    title = "M3U",
-                    onClick = {
-                        importM3uLauncherOnline.launch(arrayOf("audio/*"))
-                    }
-                )
-
-                CompactActionCard(
-                    modifier = Modifier.weight(1f),
-                    icon = painterResource(R.drawable.playlist_add),
-                    title = "CSV",
-                    onClick = {
-                        importPlaylistFromCsv.launch(arrayOf("text/csv"))
-                    }
-                )
-            }
 
             // Sección: VISITOR_DATA
             SectionHeader(

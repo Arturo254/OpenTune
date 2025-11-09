@@ -60,6 +60,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -99,6 +101,20 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.net.URL
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 
 
 @SuppressLint("ObsoleteSdkInt")
@@ -547,198 +563,252 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 24.dp),
+                .padding(vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (isLoggedIn) {
                 var imageLoadError by remember { mutableStateOf(false) }
                 var isImageLoading by remember { mutableStateOf(false) }
 
+                // Avatar con efecto de ondas y sombra suave
                 Box(
-                    modifier = Modifier
-                        .size(112.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                )
-                            )
-                        )
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                            shape = CircleShape
-                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    when {
-                        currentSelection is AvatarSelection.Custom && !imageLoadError -> {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data((currentSelection as AvatarSelection.Custom).uri.toUri())
-                                    .crossfade(true)
-                                    .listener(
-                                        onStart = { isImageLoading = true },
-                                        onSuccess = { _, _ ->
-                                            isImageLoading = false
-                                            imageLoadError = false
-                                        },
-                                        onError = { _, _ ->
-                                            isImageLoading = false
-                                            imageLoadError = true
-                                        }
+
+                    // Avatar principal
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(
+                                width = 3.dp,
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f)
                                     )
-                                    .build(),
-                                contentDescription = "Avatar de $accountName",
-                                modifier = Modifier
-                                    .size(104.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-
-                            if (isImageLoading) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(104.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                        }
-
-                        currentSelection is AvatarSelection.DiceBear && !imageLoadError -> {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data((currentSelection as AvatarSelection.DiceBear).url)
-                                    .crossfade(true)
-                                    .listener(
-                                        onStart = { isImageLoading = true },
-                                        onSuccess = { _, _ ->
-                                            isImageLoading = false
-                                            imageLoadError = false
-                                        },
-                                        onError = { _, _ ->
-                                            isImageLoading = false
-                                            imageLoadError = true
-                                        }
-                                    )
-                                    .build(),
-                                contentDescription = "Avatar DiceBear de $accountName",
-                                modifier = Modifier
-                                    .size(104.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-
-                            if (isImageLoading) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(104.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                        }
-
-                        else -> {
-                            val initials = remember(accountName) {
-                                val cleanName = accountName.replace("@", "").trim()
-                                when {
-                                    cleanName.isEmpty() -> "?"
-                                    cleanName.contains(" ") -> {
-                                        val parts = cleanName.split(" ")
-                                        "${
-                                            parts.first().firstOrNull()?.uppercase() ?: ""
-                                        }${parts.last().firstOrNull()?.uppercase() ?: ""}"
-                                    }
-
-                                    else -> cleanName.take(2).uppercase()
-                                }
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .size(104.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        brush = Brush.radialGradient(
-                                            colors = listOf(
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                                                MaterialTheme.colorScheme.primary
-                                            )
+                                ),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when {
+                            currentSelection is AvatarSelection.Custom && !imageLoadError -> {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data((currentSelection as AvatarSelection.Custom).uri.toUri())
+                                        .crossfade(true)
+                                        .listener(
+                                            onStart = { isImageLoading = true },
+                                            onSuccess = { _, _ ->
+                                                isImageLoading = false
+                                                imageLoadError = false
+                                            },
+                                            onError = { _, _ ->
+                                                isImageLoading = false
+                                                imageLoadError = true
+                                            }
                                         )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = initials,
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold
+                                        .build(),
+                                    contentDescription = "Avatar de $accountName",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
                                 )
+
+                                if (isImageLoading) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
+
+                            currentSelection is AvatarSelection.DiceBear && !imageLoadError -> {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data((currentSelection as AvatarSelection.DiceBear).url)
+                                        .crossfade(true)
+                                        .listener(
+                                            onStart = { isImageLoading = true },
+                                            onSuccess = { _, _ ->
+                                                isImageLoading = false
+                                                imageLoadError = false
+                                            },
+                                            onError = { _, _ ->
+                                                isImageLoading = false
+                                                imageLoadError = true
+                                            }
+                                        )
+                                        .build(),
+                                    contentDescription = "Avatar DiceBear de $accountName",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+
+                                if (isImageLoading) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
+
+                            else -> {
+                                val initials = remember(accountName) {
+                                    val cleanName = accountName.replace("@", "").trim()
+                                    when {
+                                        cleanName.isEmpty() -> "?"
+                                        cleanName.contains(" ") -> {
+                                            val parts = cleanName.split(" ")
+                                            "${parts.first().firstOrNull()?.uppercase() ?: ""}${
+                                                parts.last().firstOrNull()?.uppercase() ?: ""
+                                            }"
+                                        }
+                                        else -> cleanName.take(2).uppercase()
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(
+                                                    MaterialTheme.colorScheme.primary,
+                                                    MaterialTheme.colorScheme.tertiary
+                                                ),
+                                                start = Offset(0f, 0f),
+                                                end = Offset(100f, 100f)
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = initials,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }
+
+                    // Indicador de estado online (opcional)
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .offset(x = 32.dp, y = 32.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(3.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = accountName.replace("@", "").takeIf { it.isNotBlank() } ?: "",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                )
-                            )
-                        )
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.opentune_monochrome),
-                        contentDescription = "Logo de OpenTune",
-                        modifier = Modifier.fillMaxSize(),
-                        tint = MaterialTheme.colorScheme.primary
+                // Nombre con animación sutil
+                AnimatedContent(
+                    targetState = accountName.replace("@", "").takeIf { it.isNotBlank() } ?: "",
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "username"
+                ) { name ->
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "OpenTune",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
+
+
+            } else {
+                // Estado no logueado - más compacto y elegante
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Logo con efecto glassmorphism
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                    )
+                                )
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                shape = CircleShape
+                            )
+                            .padding(20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.opentune_monochrome),
+                            contentDescription = "Logo de OpenTune",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "OpenTune",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Text(
+                            text = "Tu música, sin límites",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
 
