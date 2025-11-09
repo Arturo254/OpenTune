@@ -1278,53 +1278,58 @@ fun BottomSheetPlayer(
                             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                             .padding(bottom = queueSheetState.collapsedBound + 48.dp),
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.weight(1f),
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.weight(1f)
                     ) {
-                        val screenWidth = LocalConfiguration.current.screenWidthDp
-                        val thumbnailSize = (screenWidth * 0.4).dp
-
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.weight(1f),
                         ) {
-                            // Texto "Reproduciendo desde:"
-                            val queueTitle by playerConnection.queueTitle.collectAsState()
-                            AnimatedVisibility(
-                                visible = !queueTitle.isNullOrEmpty(),
-                                enter = fadeIn() + expandVertically(),
-                                exit = fadeOut() + shrinkVertically()
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.padding(bottom = 16.dp)
+                                // Texto "Reproduciendo desde:" - DENTRO del Box y ARRIBA de la imagen
+                                val queueTitle by playerConnection.queueTitle.collectAsState()
+                                AnimatedVisibility(
+                                    visible = !queueTitle.isNullOrEmpty(),
+                                    enter = fadeIn() + expandVertically(),
+                                    exit = fadeOut() + shrinkVertically()
                                 ) {
-                                    Text(
-                                        text = stringResource(R.string.playing_from),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = onBackgroundColor.copy(alpha = 0.7f),
-                                        fontSize = 12.sp
-                                    )
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.padding(bottom = 8.dp) // Espacio entre texto e imagen
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.playing_from),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = onBackgroundColor.copy(alpha = 0.7f),
+                                            fontSize = 12.sp
+                                        )
 
-                                    Text(
-                                        text = queueTitle.orEmpty(),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = onBackgroundColor,
-                                        fontWeight = FontWeight.SemiBold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier
-                                            .padding(horizontal = 16.dp)
-                                            .basicMarquee()
-                                    )
+                                        Text(
+                                            text = queueTitle.orEmpty(),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = onBackgroundColor,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier
+                                                .padding(horizontal = 16.dp)
+                                                .basicMarquee()
+                                        )
+                                    }
                                 }
-                            }
 
-                            Thumbnail(
-                                sliderPositionProvider = { sliderPosition },
-                                onOpenFullscreenLyrics = onOpenFullscreenLyrics,
-                                modifier = Modifier.size(thumbnailSize)
-                            )
+                                val screenWidth = LocalConfiguration.current.screenWidthDp
+                                val thumbnailSize = (screenWidth * 0.4).dp
+
+                                Thumbnail(
+                                    sliderPositionProvider = { sliderPosition },
+                                    onOpenFullscreenLyrics = onOpenFullscreenLyrics,
+                                    modifier = Modifier.size(thumbnailSize)
+                                )
+                            }
                         }
                     }
                     Column(
@@ -1353,41 +1358,6 @@ fun BottomSheetPlayer(
                             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                             .padding(bottom = queueSheetState.collapsedBound),
                 ) {
-                    // AÑADIR Espacio en la parte superior antes del texto
-                    Spacer(Modifier.height(35.dp)) // Añadido espacio superior
-
-                    // Texto "Reproduciendo desde:" movido FUERA del Box
-                    val queueTitle by playerConnection.queueTitle.collectAsState()
-                    AnimatedVisibility(
-                        visible = !queueTitle.isNullOrEmpty(),
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically()
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(bottom = 16.dp) // Aumentado bottom padding
-                        ) {
-                            Text(
-                                text = stringResource(R.string.playing_from),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = onBackgroundColor.copy(alpha = 0.7f),
-                                fontSize = 12.sp
-                            )
-
-                            Text(
-                                text = queueTitle.orEmpty(),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = onBackgroundColor,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .padding(horizontal = 32.dp)
-                                    .basicMarquee()
-                            )
-                        }
-                    }
-
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.weight(1f),
@@ -1396,9 +1366,41 @@ fun BottomSheetPlayer(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection)
                         ) {
-                            // Solo la portada aquí, sin el texto "Reproduciendo desde"
+                            // Texto "Reproduciendo desde:" - DENTRO del Box y ARRIBA de la imagen
+                            val queueTitle by playerConnection.queueTitle.collectAsState()
+                            AnimatedVisibility(
+                                visible = !queueTitle.isNullOrEmpty(),
+                                enter = fadeIn() + expandVertically(),
+                                exit = fadeOut() + shrinkVertically()
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(bottom = 16.dp) // Espacio entre texto e imagen
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.playing_from),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = onBackgroundColor.copy(alpha = 0.7f),
+                                        fontSize = 12.sp
+                                    )
+
+                                    Text(
+                                        text = queueTitle.orEmpty(),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = onBackgroundColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier
+                                            .padding(horizontal = 32.dp)
+                                            .basicMarquee()
+                                    )
+                                }
+                            }
+
                             Thumbnail(
                                 sliderPositionProvider = { sliderPosition },
+                                modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
                                 onOpenFullscreenLyrics = onOpenFullscreenLyrics,
                             )
                         }
@@ -1408,7 +1410,7 @@ fun BottomSheetPlayer(
                         controlsContent(it)
                     }
 
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(30.dp))
                 }
             }
         }

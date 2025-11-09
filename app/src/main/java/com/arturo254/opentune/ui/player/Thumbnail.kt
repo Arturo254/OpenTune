@@ -8,11 +8,9 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -72,16 +70,13 @@ fun Thumbnail(
             visible = !showLyrics && error == null,
             enter = fadeIn(),
             exit = fadeOut(),
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding(),
+            modifier = Modifier, // QUITADO: .fillMaxSize() y .statusBarsPadding()
         ) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier =
                     Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth() // SOLO ancho completo, no altura
                         .padding(horizontal = PlayerHorizontalPadding)
                         .pointerInput(Unit) {
                             detectHorizontalDragGestures(
