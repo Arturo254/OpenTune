@@ -536,6 +536,10 @@
     <string name="error_generating_image">Error al generar la imagen</string>
     <string name="cover_color">Portada en color</string>
     <string name="Rotatelyricsbackground">Girar el fondo de la letra</string>
+    <string name="playlist_add_local_to_synced_note">Nota: No se admite añadir canciones locales a listas de reproducción sincronizadas/remotas. Cualquier otra combinación es válida.</string>
+    <string name="manage">Administrar</string>
+    <string name="clear">Borrar</string>
+    <string name="playing_from">"Reproduciendo desde: "</string>
 
 
 </resources>

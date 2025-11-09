@@ -570,4 +570,5 @@
     <string name="playlist_add_local_to_synced_note">Note: Adding local songs to synced/remote playlists is unsupported. Any other combination is valid</string>
     <string name="manage">Manage</string>
     <string name="clear">Clear</string>
+    <string name="playing_from">"Playing from: "</string>
 </resources>

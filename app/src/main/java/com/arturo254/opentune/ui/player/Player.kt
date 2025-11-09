@@ -13,8 +13,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -1283,11 +1285,47 @@ fun BottomSheetPlayer(
                         val screenWidth = LocalConfiguration.current.screenWidthDp
                         val thumbnailSize = (screenWidth * 0.4).dp
 
-                        Thumbnail(
-                            sliderPositionProvider = { sliderPosition },
-                            onOpenFullscreenLyrics = onOpenFullscreenLyrics, // Pasar la función
-                            modifier = Modifier.size(thumbnailSize)
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Texto "Reproduciendo desde:"
+                            val queueTitle by playerConnection.queueTitle.collectAsState()
+                            AnimatedVisibility(
+                                visible = !queueTitle.isNullOrEmpty(),
+                                enter = fadeIn() + expandVertically(),
+                                exit = fadeOut() + shrinkVertically()
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(bottom = 35.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.playing_from),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = onBackgroundColor.copy(alpha = 0.7f),
+                                        fontSize = 12.sp
+                                    )
+
+                                    Text(
+                                        text = queueTitle.orEmpty(),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = onBackgroundColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .basicMarquee()
+                                    )
+                                }
+                            }
+
+                            Thumbnail(
+                                sliderPositionProvider = { sliderPosition },
+                                onOpenFullscreenLyrics = onOpenFullscreenLyrics,
+                                modifier = Modifier.size(thumbnailSize)
+                            )
+                        }
                     }
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1319,11 +1357,47 @@ fun BottomSheetPlayer(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Thumbnail(
-                            sliderPositionProvider = { sliderPosition },
-                            modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
-                            onOpenFullscreenLyrics = onOpenFullscreenLyrics, // Pasar la función del parámetro
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection)
+                        ) {
+                            // Texto "Reproduciendo desde:"
+                            val queueTitle by playerConnection.queueTitle.collectAsState()
+                            AnimatedVisibility(
+                                visible = !queueTitle.isNullOrEmpty(),
+                                enter = fadeIn() + expandVertically(),
+                                exit = fadeOut() + shrinkVertically()
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(bottom = 12.dp, top = 65.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.playing_from),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = onBackgroundColor.copy(alpha = 0.7f),
+                                        fontSize = 12.sp
+                                    )
+
+                                    Text(
+                                        text = queueTitle.orEmpty(),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = onBackgroundColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier
+                                            .padding(horizontal = 32.dp)
+                                            .basicMarquee()
+                                    )
+                                }
+                            }
+
+                            Thumbnail(
+                                sliderPositionProvider = { sliderPosition },
+                                onOpenFullscreenLyrics = onOpenFullscreenLyrics,
+                            )
+                        }
                     }
 
                     mediaMetadata?.let {
