@@ -114,7 +114,7 @@ fun OnlineSearchScreen(
     ) {
         item {
             Text(
-                text = (stringResource(R.string.SearchHistory)),
+                text = (stringResource(R.string.search_history)),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -151,7 +151,7 @@ fun OnlineSearchScreen(
         if (viewState.suggestions.isNotEmpty()) {
             item {
                 Text(
-                    text = (stringResource(R.string.Sujestions)),
+                    text = (stringResource(R.string.suggestions)),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -186,7 +186,7 @@ fun OnlineSearchScreen(
         if (viewState.items.isNotEmpty()) {
             item {
                 Text(
-                    text = (stringResource(R.string.SearchResutls)),
+                    text = (stringResource(R.string.search_results)),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

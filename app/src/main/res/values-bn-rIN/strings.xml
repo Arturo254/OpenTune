@@ -161,7 +161,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">আমদানি করা প্লেলিস্ট</string>
     <string name="removed_song_from_playlist">প্লেলিস্ট থেকে \"%s\" সরানো হয়েছে</string>
     <string name="playlist_synced">সিঙ্ক্রোনাইজ করা প্লেলিস্ট</string>
     <string name="undo">বাতিল করুন</string>
@@ -205,7 +204,6 @@
     <string name="dark_theme_follow_system">সিস্টেম অনুসরণ করুন</string>
     <string name="pure_black">কালো</string>
     <string name="default_open_tab">ডিফল্ট প্রধান ট্যাব</string>
-    <string name="customize_navigation_tabs">নেভিগেশন ট্যাব কাস্টমাইজ করুন</string>
     <string name="lyrics_text_position">গানের কথার অবস্থান</string>
     <string name="left">বাম</string>
     <string name="center">কেন্দ্র</string>
@@ -219,7 +217,6 @@
     <string name="enable_proxy">প্রক্সি সক্রিয় করুন</string>
     <string name="proxy_type">প্রক্সি ধরণ</string>
     <string name="proxy_url">প্রক্সি URL</string>
-    <string name="restart_to_take_effect">পরিবর্তনগুলি প্রয়োগ করতে অ্যাপটি পুনরায় চালু করুন</string>
 
     <string name="player_and_audio">প্লেয়ার এবং অডিও</string>
     <string name="audio_quality">অডিওর মান</string>
@@ -256,7 +253,6 @@
     <string name="backup_restore">ব্যাকআপ এবং পুনঃস্থাপন</string>
     <string name="backup">ব্যাকআপ</string>
     <string name="restore">পুনঃস্থাপন</string>
-    <string name="imported_playlist">আমদানি করা প্লেলিস্ট</string>
     <string name="backup_create_success">ব্যাকআপ সফলভাবে তৈরি করা হয়েছে</string>
     <string name="backup_create_failed">ব্যাকআপ করতে অক্ষম</string>
     <string name="restore_failed">ব্যাকআপ থেকে পুনরুদ্ধার করতে অক্ষম</string>
@@ -265,6 +261,5 @@
     <string name="app_version">অ্যাপ সংস্করণ</string>
 
     <string name="new_version_available">New version available</string>
-    <string name="translation_models">Translation Models</string>
     <string name="clear_translation_models">Clear translation models</string>
 </resources>

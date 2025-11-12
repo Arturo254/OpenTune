@@ -211,8 +211,6 @@
         <item quantity="other">%d разів</item>
     </plurals>
     <!-- Snackbar -->
-    <string name="playlist_imported">Плейлист імпортовано</string>
-    <string name="imported_playlist">Імпортований плейлист</string>
     <string name="removed_song_from_playlist">Видалено \"%s\" з плейлиста</string>
     <string name="playlist_synced">Плейлист синхронізовано</string>
     <string name="undo">Скасувати</string>
@@ -230,8 +228,6 @@
     <string name="error_no_internet">Немає з\'єднання з мережею</string>
     <string name="error_timeout">Час очікування вичерпано</string>
     <string name="error_unknown">Невідома помилка</string>
-    <string name="seek_backward">5 секунд назад</string>
-    <string name="seek_forward">5 сек вперед</string>
     <!-- Player action -->
     <string name="action_like">Вподобати</string>
     <string name="action_remove_like">Прибрати вподобання</string>
@@ -266,7 +262,6 @@
     <string name="enable_squiggly_slider">Увімкнути хвилястий повзунок</string>
     <string name="enable_swipe_thumbnail">Увімкнути свайп для зміни пісні</string>
     <string name="pure_black">Справжній чорний</string>
-    <string name="customize_navigation_tabs">Налаштувати вкладки навігації</string>
     <string name="player">Плеєр</string>
     <string name="player_text_alignment">Вирівнювання тексту в плеєрі</string>
     <string name="lyrics_text_position">Позиція тексту пісні</string>
@@ -307,13 +302,9 @@
     <string name="default_lib_chips">Змінити типовий фільтр бібліотеки</string>
     <string name="set_quick_picks">Налаштувати швидкий вибір</string>
     <string name="last_song_listened">На основі останньої прослуханої пісні</string>
-    <string name="restart_to_take_effect">Перезапустіть для застосування змін</string>
     <string name="app_language">Мова додатка (Бета)</string>
     <string name="configure_app_language">Налаштувати мову додатка</string>
-    <string name="intent_app_language_not_found">Не вдалося знайти налаштування мови додатка, будь ласка, налаштуйте їх вручну</string>
-    <string name="open_supported_links">Відкривати підтримувані посилання за замовчуванням</string>
     <string name="configure_supported_links">Налаштувати підтримувані посилання</string>
-    <string name="intent_supported_links_not_found">Не вдалося знайти налаштування підтримуваних посилань, будь ласка, налаштуйте їх вручну</string>
     <string name="enable_kugou">Увімкнути постачальника текстів KuGou</string>
     <string name="enable_lrclib">Увімкнути постачальника текстів LrcLib</string>
     <string name="set_first_lyrics_provider">Пріоритетний постачальник текстів</string>
@@ -374,12 +365,10 @@
     <string name="login_failed">Не вдалося увійти</string>
     <string name="enable_discord_rpc">Увімкнути Rich Presence</string>
     <string name="default_links">Відкривати підтримувані посилання</string>
-    <string name="open_app_settings_error">Не вдалося відкрити налаштування додатка</string>
     <string name="release_notes">Примітки до випуску</string>
     <string name="about">Про додаток</string>
     <string name="app_version">Версія додатка</string>
     <string name="new_version_available">Доступна нова версія</string>
-    <string name="translation_models">Моделі перекладу</string>
     <string name="clear_translation_models">Очистити моделі перекладу</string>
     <string name="all_time">За весь час</string>
     <string name="past_24_hours">За останні 24 години</string>
@@ -389,18 +378,17 @@
     <string name="top_length">Довжина списку мого топу</string>
     <string name="history_duration">Тривалість зберігання історії</string>
     <string name="contributors">учасники</string>
-    <string name="Donate">Підтримати</string>
-    <string name="Telegramchanel">Telegram канал</string>
+    <string name="donate">Підтримати</string>
+    <string name="telegram_channel">Telegram канал</string>
     <string name="contribution">Внесок</string>
-    <string name="Hi">Привіт</string>
-    <string name="NewVersion">NewVersion:</string>
-    <string name="Changelog">Список змін</string>
+    <string name="new_version">NewVersion:</string>
+    <string name="changelog">Список змін</string>
     <string name="changelogs">списки змін</string>
     <string name="no_changes">немає змін</string>
-    <string name="Translate">Перекласти</string>
-    <string name="Redirección">Перенаправлення</string>
+    <string name="translate">Перекласти</string>
+    <string name="redirect">Перенаправлення</string>
     <string name="poeditor_redirect">Зараз вас буде перенаправлено на poeditor.com</string>
-    <string name="barwar">Увага: при відновленні з резервних копій раніше завантажені пісні не завантажуються. НАСТІЙНО РЕКОМЕНДУЄТЬСЯ відтворити відновлені пісні, щоб уникнути помилок із завантаженням.</string>
+    <string name="backup_restore_warning">Увага: при відновленні з резервних копій раніше завантажені пісні не завантажуються. НАСТІЙНО РЕКОМЕНДУЄТЬСЯ відтворити відновлені пісні, щоб уникнути помилок із завантаженням.</string>
     <string name="backup_link_title">Резервну копію завантажено успішно!</string>
     <string name="backup_link_description">Ваша резервна копія буде доступна протягом 14 днів.</string>
     <string name="copy_link">Копіювати посилання</string>
@@ -416,17 +404,13 @@
     <string name="mute">Вимкнути звук</string>
     <string name="explore">Огляд</string>
     <string name="custom_avatar">"Власний аватар "</string>
-    <string name="custom_avatar_beta">Власний аватар</string>
     <string name="select_image">Вибрати зображення</string>
     <string name="default_avatar">Типовий аватар</string>
     <string name="restore_default_avatar">Відновити типовий аватар</string>
-    <string name="SearchResutls">Результати пошуку</string>
-    <string name="Sujestions">Пропозиції</string>
-    <string name="SearchHistory">Історія пошуку</string>
+    <string name="search_results">Результати пошуку</string>
+    <string name="suggestions">Пропозиції</string>
     <string name="collapse">Згорнути</string>
     <string name="expand">Розгорнути</string>
-    <string name="reset_to_default">Відновити типові</string>
-    <string name="Presets">Шаблони</string>
     <string name="custom">Користувацька</string>
     <string name="close">Закрити</string>
     <string name="custom_value">Довільне значення</string>
@@ -438,11 +422,11 @@
     <string name="secondary_color_style">Вторинний колір</string>
     <string name="update_version">Оновити%1$s</string>
     <string name="download_question">Завантажити нову версію?</string>
-    <string name="downloadup">Звантажити</string>
-    <string name="downloadingup">Завантаження оновлення...</string>
+    <string name="update_download">Звантажити</string>
+    <string name="update_downloading">Завантаження оновлення...</string>
     <string name="download_completed">Завантаження завершено</string>
     <string name="install">Інсталювати</string>
-    <string name="download_errorup">Помилка завантаження оновлення</string>
+    <string name="update_download_error">Помилка завантаження оновлення</string>
     <string name="tap_to_update">Торкніться, щоб оновити</string>
     <string name="info_title">Інформація про нас</string>
     <string name="info_description">У цьому розділі відомості про процес резервного копіювання та відновлення, включаючи безпеку ваших даних і те, як забезпечити вашу інформацію безпечним і легко доступним.</string>
@@ -451,8 +435,7 @@
     <string name="backup_description">Створити файл резервної копії поточних даних</string>
     <string name="restore_description">Відновити свої дані з файлу резервної копії</string>
     <string name="link_copied">Лінк скопійовано</string>
-    <string name="redireccion">Перенаправлення</string>
-    <string name="Version">Версія</string>
+    <string name="version">Версія</string>
     <string name="notification">Активувати сповіщення</string>
     <string name="cached_playlist">Кешовані</string>
     <string name="added_to_queue">додано до черги</string>

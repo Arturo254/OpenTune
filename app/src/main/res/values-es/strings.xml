@@ -181,7 +181,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">Lista de reproducción importada</string>
     <string name="removed_song_from_playlist">Eliminado \"%s\" de la lista de reproducción</string>
     <string name="playlist_synced">Lista de reproducción sincronizada</string>
     <string name="undo">Deshacer</string>
@@ -201,7 +200,6 @@
     <string name="error_unknown">Error desconocido</string>
 
     <!-- Player action -->
-    <string name="seek_forward">5 segundos hacia adelante</string>
     <string name="action_like">Dar me gusta</string>
     <string name="action_remove_like">Quitar me gusta</string>
     <string name="action_shuffle_on">Shuffle on</string>
@@ -232,7 +230,6 @@
     <string name="pure_black">Negro puro</string>
     <string name="misc">Otros</string>
     <string name="default_open_tab">Pestaña de inicio por defecto</string>
-    <string name="customize_navigation_tabs">Personalizar pestañas de navegación</string>
     <string name="player_text_alignment">Alineación del texto del reproductor</string>
     <string name="lyrics_text_position">Posición del texto de las letras</string>
     <string name="sided">Lateral</string>
@@ -253,7 +250,6 @@
     <string name="proxy_type">Tipo de proxy</string>
     <string name="proxy_url">URL del proxy</string>
     <string name="last_song_listened">Basado en la última canción escuchada</string>
-    <string name="restart_to_take_effect">Reinicia para aplicar los cambios</string>
 
     <string name="set_first_lyrics_provider">Proveedor de letras preferido</string>
     <string name="player_and_audio">Reproductor y sonido</string>
@@ -291,14 +287,12 @@
     <string name="pause_search_history">Pausar historial de búsquedas</string>
     <string name="clear_search_history">Borrar historial de búsquedas</string>
     <string name="clear_search_history_confirm">¿Estás seguro de que quieres borrar todo el historial de búsquedas?</string>
-    <string name="intent_supported_links_not_found">No se han encontrado enlaces compatibles, por favor configúrelos manualmente.</string>
     <string name="enable_kugou">Habilitar el proveedor de letras KuGou</string>
 
     <string name="hide_explicit">Ocultar contenido explícito</string>
     <string name="backup_restore">Copias de seguridad y restauración</string>
     <string name="backup">Hacer copia de seguridad</string>
     <string name="restore">Restaurar</string>
-    <string name="imported_playlist">Lista de reproducción importada</string>
     <string name="backup_create_success">Copia de seguridad creada con éxito</string>
     <string name="backup_create_failed">No se ha podido crear la copia de seguridad</string>
     <string name="restore_failed">Error al restaurar la copia de seguridad</string>
@@ -308,7 +302,6 @@
     <string name="app_version">Versión de la app</string>
 
     <string name="new_version_available">New version available</string>
-    <string name="translation_models">Translation Models</string>
     <string name="clear_translation_models">Clear translation models</string>
     <string name="forgotten_favorites">Favoritos olvidados</string>
     <string name="similar_to">Similar a</string>
@@ -333,7 +326,6 @@
     <string name="skip_duplicates">Omitir duplicados</string>
     <string name="add_anyway">Añadir de todos modos</string>
     <string name="duplicates_description_single">La canción ya está en tu lista</string>
-    <string name="seek_backward">5 segundos hacia atrás</string>
     <string name="login_settings">Ajustes de inicio de sesión</string>
     <string name="use_login_for_browse">Utilice el inicio de sesión para navegar por los contenidos premium</string>
     <string name="use_login_for_browse_desc">Esto puede mostrar álbumes sólo premium si está conectado con una cuenta Premium</string>
@@ -363,8 +355,6 @@
     <string name="set_quick_picks">Establecer selecciones rápidas</string>
     <string name="app_language">Idioma de la aplicación (Beta)</string>
     <string name="configure_app_language">Configurar los idiomas de la aplicación</string>
-    <string name="intent_app_language_not_found">No se han encontrado los ajustes de idioma de la aplicación, configúrelos manualmente.</string>
-    <string name="open_supported_links">Abrir por defecto un enlace compatible</string>
     <string name="configure_supported_links">Configurar los enlaces compatibles</string>
     <string name="enable_lrclib">Activar el proveedor de letras LrcLib</string>
     <string name="persistent_queue_desc">Restaurar la última cola al iniciar la aplicación</string>
@@ -384,7 +374,6 @@
     <string name="login_failed">"Error de inicio de sesión "</string>
     <string name="enable_discord_rpc">"Activar Rich Presence "</string>
     <string name="default_links">"Abrir enlaces compatibles "</string>
-    <string name="open_app_settings_error">"No se ha podido abrir la configuración de la aplicación "</string>
     <string name="all_time">Todo el tiempo</string>
     <string name="past_24_hours">Últimas 24 horas</string>
     <string name="past_week">Última semana</string>
@@ -393,18 +382,17 @@
     <string name="top_length">Duración de mi lista</string>
     <string name="history_duration">Duración del historial</string>
     <string name="contributors">Colaboradores</string>
-    <string name="Donate">Donar</string>
-    <string name="Telegramchanel">Canal de Telegram</string>
+    <string name="donate">Donar</string>
+    <string name="telegram_channel">Canal de Telegram</string>
     <string name="contribution">Contribución</string>
-    <string name="Hi">Hola</string>
-    <string name="NewVersion">Nueva Versión</string>
-    <string name="Changelog">Registro de cambios</string>
+    <string name="new_version">Nueva Versión</string>
+    <string name="changelog">Registro de cambios</string>
     <string name="changelogs">registro de cambios</string>
     <string name="no_changes">sin cambios</string>
-    <string name="Translate">Traducir</string>
-    <string name="Redirección">Redirección</string>
+    <string name="translate">Traducir</string>
+    <string name="redirect">Redirección</string>
     <string name="poeditor_redirect">Estás a punto de ser redirigido a poeditor.com</string>
-    <string name="barwar">Atención al restaurar las copias de seguridad, las canciones previamente descargadas no se descargan. es ALTAMENTE RECOMENDABLE reproducir las canciones restauradas para evitar errores de descarga.</string>
+    <string name="backup_restore_warning">Atención al restaurar las copias de seguridad, las canciones previamente descargadas no se descargan. es ALTAMENTE RECOMENDABLE reproducir las canciones restauradas para evitar errores de descarga.</string>
     <string name="backup_link_title">¡Copia de seguridad cargada correctamente!</string>
     <string name="backup_link_description">Tu copia de seguridad estará disponible durante 14 días.</string>
     <string name="copy_link">Copiar enlace</string>
@@ -414,18 +402,14 @@
     <string name="mute">Silencio</string>
     <string name="explore">Explorar</string>
     <string name="custom_avatar">Avatar personalizado</string>
-    <string name="custom_avatar_beta">"Avatar personalizado "</string>
     <string name="select_image">Seleccionar imagen</string>
     <string name="default_avatar">Avatar por defecto</string>
     <string name="restore_default_avatar">Restaurar avatar por defecto</string>
-    <string name="SearchResutls">Resultados de búsqueda</string>
-    <string name="Sujestions">Sugerencias</string>
-    <string name="SearchHistory">Historial de búsqueda</string>
+    <string name="search_results">Resultados de búsqueda</string>
+    <string name="suggestions">Sugerencias</string>
     <string name="apply">Aplicar</string>
     <string name="collapse">Contraer</string>
     <string name="expand">Expandir</string>
-    <string name="reset_to_default">Restablecer valores predeterminados</string>
-    <string name="Presets">Preajustes</string>
     <string name="custom">Personalizado</string>
     <string name="close">Cerrar</string>
     <string name="custom_value">Valor personalizado</string>
@@ -441,16 +425,15 @@
     <string name="backup_description">Cree una copia de seguridad de sus datos actuales</string>
     <string name="update_version">Actualizar v%1$s</string>
     <string name="download_question">¿Desea descargar la nueva versión?</string>
-    <string name="downloadup">Descargar</string>
-    <string name="downloadingup">Descargando actualización...</string>
+    <string name="update_download">Descargar</string>
+    <string name="update_downloading">Descargando actualización...</string>
     <string name="download_completed">Descarga completada</string>
     <string name="install">Instalar</string>
-    <string name="download_errorup">Error al descargar la actualización</string>
+    <string name="update_download_error">Error al descargar la actualización</string>
     <string name="tap_to_update">Pulse para actualizar</string>
     <string name="info_title">Información</string>
     <string name="info_description">Esta sección proporciona detalles clave sobre el proceso de copia de seguridad y restauración, incluyendo la seguridad de sus datos y cómo garantizar que su información permanezca segura y sea fácilmente accesible.</string>
-    <string name="redireccion">Redireccion</string>
-    <string name="Version">Versión</string>
+    <string name="version">Versión</string>
     <string name="notification">Activar notificaciones</string>
     <string name="cached_playlist">En caché</string>
     <string name="added_to_queue">Añadido a la cola</string>
@@ -463,7 +446,6 @@
     <string name="clear_song_cache_confirmation">¿Estás seguro de que quieres borrar la caché de canciones? Esto liberará espacio pero puede afectar temporalmente al rendimiento de la reproducción.</string>
     <string name="clear_image_cache_confirmation">¿Estás seguro de que quieres borrar la caché de imágenes? La carátula del álbum y las imágenes del artista tendrán que ser descargadas de nuevo.</string>
     <string name="confirm">Confirmar</string>
-    <string name="problem_solver">Solucionador de problemas</string>
     <string name="action_login">Iniciar sesión</string>
     <string name="generating_image">Generando imagen</string>
     <string name="please_wait">Por favor, espere</string>
@@ -475,7 +457,6 @@
     <string name="customize_colors">Personalizar colores</string>
     <string name="more_options">Más opciones</string>
     <string name="text_color">Color del texto</string>
-    <string name="secondary_text_color">Color secundario del texto</string>
     <string name="background_color">Color de fondo</string>
 
     <string name="visitor_data_title">Solución de problemas</string>
@@ -503,43 +484,29 @@
     <string name="selection_mode_active">Modo de selección activo</string>
     <string name="avatar_selection">Selección de avatar</string>
     <string name="choose_predefined_avatar">Elige un avatar predefinido</string>
-    <string name="geometric_avatar_1">Avatar geométrico 1</string>
-    <string name="geometric_avatar_2">Avatar geométrico 2</string>
-    <string name="geometric_avatar_3">Avatar geométrico 3</string>
-    <string name="geometric_avatar_4">Avatar geométrico 4</string>
-    <string name="geometric_avatar_5">Avatar geométrico 5</string>
-    <string name="geometric_avatar_6">Avatar geométrico 6</string>
-    <string name="purple_initial_avatar">Avatar con iniciales moradas</string>
     <string name="blue_initial_avatar">Avatar con iniciales azules</string>
-    <string name="green_initial_avatar">Avatar con iniciales verdes</string>
-    <string name="orange_initial_avatar">Avatar con iniciales naranjas</string>
-    <string name="red_initial_avatar">Avatar con iniciales rojas</string>
-    <string name="teal_initial_avatar">Avatar con iniciales verde azulado</string>
-    <string name="dots_pattern_avatar">Avatar con patrón de puntos</string>
-    <string name="waves_pattern_avatar">Avatar con patrón de ondas</string>
-    <string name="gradient_pattern_avatar">Avatar con patrón degradado</string>
     <string name="music_note_avatar">Avatar con nota musical</string>
-    <string name="equalizer_avatar">Avatar con ecualizador</string>
-    <string name="headphones_avatar">Avatar con audífonos</string>
     <string name="discord_use_details">Usar detalles en lugar del estado</string>
     <string name="discord_use_details_description">Mostrar el título de la canción de forma destacada en lugar de los nombres de los artistas</string>
     <string name="community">Comunidad</string>
     <string name="app_info">Información de la aplicación</string>
     <string name="hide_controls">Ocultar controles</string>
     <string name="show_controls">Mostrar controles</string>
-    <string name="customize_lyrics_image">Personalizar imagen de la letra</string>
     <string name="customize_image">Personalizar imagen</string>
     <string name="select_theme">Seleccionar tema</string>
     <string name="from_cover">Desde la portada</string>
-    <string name="presets">Temas predefinidos</string>
+    <string name="preset_themes">Temas predefinidos</string>
     <string name="share_lyrics_image">Compartir la letra como imagen</string>
-    <string name="error_generating_image">Error al generar la imagen</string>
     <string name="cover_color">Portada en color</string>
-    <string name="Rotatelyricsbackground">Girar el fondo de la letra</string>
+    <string name="rotate_lyrics_background">Girar el fondo de la letra</string>
     <string name="playlist_add_local_to_synced_note">Nota: No se admite añadir canciones locales a listas de reproducción sincronizadas/remotas. Cualquier otra combinación es válida.</string>
     <string name="manage">Administrar</string>
     <string name="clear">Borrar</string>
     <string name="playing_from">"Reproduciendo desde: "</string>
+    <string name="app_logo">Logo de OpenTune</string>
+    <string name="app_motto">Tu música, sin límites</string>
+    <string name="icon_save_img">Guardar imagen en galería</string>
+    <string name="song_and_artists_content_desc">Canción: %1$s, Artistas: %2$s</string>
 
 
 </resources>

@@ -196,8 +196,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">"プレイリストをインポートしました"</string>
-    <string name="imported_playlist">"インポートしたプレイリスト"</string>
     <string name="removed_song_from_playlist">"プレイリストから「%s」を削除しました"</string>
     <string name="playlist_synced">"プレイリストを同期しました"</string>
     <string name="undo">"元に戻す"</string>
@@ -213,8 +211,6 @@
     <string name="error_no_internet">"インターネット接続がありません"</string>
     <string name="error_timeout">"タイムアウト"</string>
     <string name="error_unknown">"不明なエラー"</string>
-    <string name="seek_backward">"5秒戻る"</string>
-    <string name="seek_forward">"5秒進む"</string>
 
     <!-- Player action -->
     <string name="action_like">"いいね"</string>
@@ -253,7 +249,6 @@
     <string name="enable_squiggly_slider">"波線形式のスライダーを有効化"</string>
     <string name="enable_swipe_thumbnail">"スワイプして楽曲を変更するようにする"</string>
     <string name="pure_black">"ピュアブラックな外観"</string>
-    <string name="customize_navigation_tabs">"ナビゲーションタブをカスタマイズ"</string>
     <string name="player">"プレイヤー"</string>
     <string name="player_text_alignment">"プレイヤーの文字配置"</string>
     <string name="lyrics_text_position">"歌詞の文字配置"</string>
@@ -294,13 +289,9 @@
     <string name="default_lib_chips">"デフォルトのライブラリのチップを変更"</string>
     <string name="set_quick_picks">"クイックピックを設定"</string>
     <string name="last_song_listened">"最後に聴いた曲に基づいて"</string>
-    <string name="restart_to_take_effect">"再起動により有効化されます"</string>
     <string name="app_language">"アプリの言語(ベータ版)"</string>
     <string name="configure_app_language">"アプリの言語設定"</string>
-    <string name="intent_app_language_not_found">"アプリの言語設定が見つかりません、手動で設定を行ってください。"</string>
-    <string name="open_supported_links">"サポートされたリンクはデフォルトで開く"</string>
     <string name="configure_supported_links">"サポートされたリンクを構成する"</string>
-    <string name="intent_supported_links_not_found">"リンク設定が見つかりません、手動で設定を行ってください。"</string>
     <string name="enable_kugou">"KuGouの歌詞プロバイダーを使用する"</string>
     <string name="enable_lrclib">"LrcLibの歌詞プロバイダーを使用する"</string>
     <string name="set_first_lyrics_provider">"推奨された歌詞プロバイダーを使用する"</string>
@@ -361,12 +352,10 @@
     <string name="login_failed">"ログインに失敗しました"</string>
     <string name="enable_discord_rpc">"Discordのリッチプレゼンスを使用"</string>
     <string name="default_links">"サポートされたリンクを開く"</string>
-    <string name="open_app_settings_error">"アプリの設定を開けませんでした"</string>
     <string name="release_notes">"更新履歴"</string>
     <string name="about">"アプリについて"</string>
     <string name="app_version">"アプリのバージョン"</string>
     <string name="new_version_available">"アプリが更新できます"</string>
-    <string name="translation_models">"翻訳モデル"</string>
     <string name="clear_translation_models">"翻訳モデルを削除"</string>
     <string name="all_time">"全て"</string>
     <string name="past_24_hours">"24時間以内"</string>
@@ -376,18 +365,17 @@
     <string name="top_length">"一番長いリスト"</string>
     <string name="history_duration">"履歴の期間"</string>
     <string name="contributors">"貢献者"</string>
-    <string name="Donate">"寄付する"</string>
-    <string name="Telegramchanel">"テレグラムのチャンネル"</string>
+    <string name="donate">"寄付する"</string>
+    <string name="telegram_channel">"テレグラムのチャンネル"</string>
     <string name="contribution">"貢献する"</string>
-    <string name="Hi">"こんにちは"</string>
-    <string name="NewVersion">"新しいバージョン"</string>
-    <string name="Changelog">"変更履歴"</string>
+    <string name="new_version">"新しいバージョン"</string>
+    <string name="changelog">"変更履歴"</string>
     <string name="changelogs">"複数の変更履歴"</string>
     <string name="no_changes">"変更なし"</string>
-    <string name="Translate">"翻訳を手伝う"</string>
-    <string name="Redirección">"転送"</string>
+    <string name="translate">"翻訳を手伝う"</string>
+    <string name="redirect">"転送"</string>
     <string name="poeditor_redirect">"poeditor.comにアクセスします"</string>
-    <string name="barwar">"バックアップを復元する際にご注意ください。以前にダウンロードした曲はダウンロードされません。ダウンロードエラーの回避のために、復元した曲を再生することを強くお勧めします。"</string>
+    <string name="backup_restore_warning">"バックアップを復元する際にご注意ください。以前にダウンロードした曲はダウンロードされません。ダウンロードエラーの回避のために、復元した曲を再生することを強くお勧めします。"</string>
     <string name="backup_link_title">"バックアップのアップロードに成功しました"</string>
     <string name="backup_link_description">"バックアップは14日間利用できます。"</string>
     <string name="copy_link">"リンクをコピーする"</string>
@@ -400,17 +388,13 @@
     <string name="mute">"ミュート"</string>
     <string name="explore">"探索する"</string>
     <string name="custom_avatar">"カスタムアバター(ベータ版)"</string>
-    <string name="custom_avatar_beta">"カスタムアバター(ベータ版)"</string>
     <string name="select_image">"画像を選択"</string>
     <string name="default_avatar">"デフォルトのアバター"</string>
     <string name="restore_default_avatar">"デフォルトのアバターを復元"</string>
-    <string name="SearchResutls">"検索結果"</string>
-    <string name="Sujestions">"提案"</string>
-    <string name="SearchHistory">"検索履歴"</string>
+    <string name="search_results">"検索結果"</string>
+    <string name="suggestions">"提案"</string>
     <string name="collapse">"崩壊"</string>
     <string name="expand">"拡大"</string>
-    <string name="reset_to_default">"デフォルトに戻す"</string>
-    <string name="Presets">"プリセット"</string>
     <string name="custom">"カスタム"</string>
     <string name="close">"閉める"</string>
     <string name="custom_value">"カスタムの値"</string>
@@ -422,11 +406,11 @@
     <string name="secondary_color_style">"2つの色のスタイル"</string>
     <string name="update_version">"アップデートバージョン %1$s"</string>
     <string name="download_question">"新しいバージョンをダウンロードしますか？"</string>
-    <string name="downloadup">"ダウンロード"</string>
-    <string name="downloadingup">"アップデートをダウンロード中..."</string>
+    <string name="update_download">"ダウンロード"</string>
+    <string name="update_downloading">"アップデートをダウンロード中..."</string>
     <string name="download_completed">"ダウンロード完了"</string>
     <string name="install">"インストール"</string>
-    <string name="download_errorup">"アップデートのダウンロードでエラーが発生しました"</string>
+    <string name="update_download_error">"アップデートのダウンロードでエラーが発生しました"</string>
     <string name="tap_to_update">"タップでアップデート"</string>
     <string name="info_title">"情報"</string>
     <string name="info_description">"ここでは、データのセキュリティや、情報の安全性を維持し、簡単にアクセスできるようにする方法など、バックアップと復元のプロセスに関する重要な詳細について説明します。"</string>
@@ -436,8 +420,7 @@
     <string name="restore_description">"バックアップからデータを上書き"</string>
     <string name="keep_listening">"聴き続ける"</string>
     <string name="link_copied">"リンクをコピーしました"</string>
-    <string name="redireccion">"転送"</string>
-    <string name="Version">"バージョン"</string>
+    <string name="version">"バージョン"</string>
     <string name="notification">"通知"</string>
     <string name="cached_playlist">"プレイリストのキャッシュ"</string>
     <string name="added_to_queue">"キューに追加"</string>
@@ -450,7 +433,6 @@
     <string name="clear_song_cache_confirmation">"楽曲のキャッシュの確認を削除"</string>
     <string name="clear_image_cache_confirmation">"画像キャッシュの確認を削除"</string>
     <string name="confirm">"確認"</string>
-    <string name="problem_solver">"問題を解決"</string>
     <string name="action_login">"ログイン方法"</string>
     <string name="generating_image">"画像を生成"</string>
     <string name="please_wait">"お待ち下さい"</string>
@@ -462,10 +444,9 @@
     <string name="customize_colors">"色のカスタマイズ"</string>
     <string name="more_options">"その他の設定"</string>
     <string name="text_color">"テキストの色"</string>
-    <string name="secondary_text_color">"2つ目のテキストの色"</string>
     <string name="background_color">"背景色"</string>
     <string name="back">"戻る"</string>
-    <string name="navigation_error"></string>
+    <string name="error_navigation"></string>
     <string name="notifications_enabled">"Notificaciones habilitadas"</string>
     <string name="notifications_disabled">"Notificaciones desabilitadas"</string>
     <string name="visitor_data_title"></string>

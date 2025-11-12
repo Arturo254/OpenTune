@@ -144,7 +144,7 @@ fun BackupAndRestore(
                     ) {
                         Icon(
                             painterResource(R.drawable.arrow_back),
-                            contentDescription = "Volver"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -161,7 +161,7 @@ fun BackupAndRestore(
             // Sección: Backup y Restore
             SectionHeader(
                 icon = painterResource(R.drawable.backup),
-                title = "Respaldo y Restauración"
+                title = stringResource(R.string.backup_restore)
             )
 
             ActionCard(
@@ -440,7 +440,7 @@ private fun VisitorDataCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Info")
+                    Text(stringResource(R.string.visitor_data_info_button))
                 }
 
                 FilledTonalButton(
@@ -454,7 +454,7 @@ private fun VisitorDataCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Resetear")
+                    Text(stringResource(R.string.visitor_data_reset_confirm))
                 }
             }
         }
@@ -514,7 +514,7 @@ private fun UploadStatusSection(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "¡Backup exitoso!",
+                            text = stringResource(R.string.backup_link_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -546,7 +546,7 @@ private fun UploadStatusSection(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Copiar enlace")
+                        Text(stringResource(R.string.copy_link))
                     }
                 }
             }
@@ -572,7 +572,7 @@ private fun UploadStatusSection(
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Error al subir el backup",
+                        text = stringResource(R.string.backup_upload_failed),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
@@ -607,7 +607,7 @@ private fun LoadingOverlay(progress: Int) {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Procesando...",
+                text = stringResource(R.string.processing),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
@@ -648,7 +648,7 @@ private fun VisitorDataInfoDialog(onDismiss: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Entendido")
+                Text(stringResource(R.string.visitor_data_info_confirm))
             }
         },
         shape = RoundedCornerShape(24.dp)
@@ -683,12 +683,12 @@ private fun VisitorDataResetDialog(
                 onClick = onConfirm,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Resetear")
+                Text(stringResource(R.string.visitor_data_reset_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(R.string.visitor_data_reset_cancel))
             }
         },
         shape = RoundedCornerShape(24.dp)

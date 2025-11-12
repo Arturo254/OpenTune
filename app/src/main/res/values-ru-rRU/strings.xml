@@ -211,8 +211,6 @@
         <item quantity="other">%d раз</item>
     </plurals>
     <!-- Snackbar -->
-    <string name="playlist_imported">Плейлист импортирован</string>
-    <string name="imported_playlist">Импортированный плейлист</string>
     <string name="removed_song_from_playlist">«%s» удален из плейлиста</string>
     <string name="playlist_synced">Плейлист синхронизирован</string>
     <string name="undo">Отменить</string>
@@ -230,8 +228,6 @@
     <string name="error_no_internet">Нет подключения к сети</string>
     <string name="error_timeout">Время ожидания истекло</string>
     <string name="error_unknown">Неизвестная ошибка</string>
-    <string name="seek_backward">5 секунд назад</string>
-    <string name="seek_forward">5 секунд вперед</string>
     <!-- Player action -->
     <string name="action_like">Поставить «Нравится»</string>
     <string name="action_remove_like">Убрать «Нравится»</string>
@@ -266,7 +262,6 @@
     <string name="enable_squiggly_slider">Включить волнистый ползунок</string>
     <string name="enable_swipe_thumbnail">Переключать треки свайпом</string>
     <string name="pure_black">Режим чистого черного цвета</string>
-    <string name="customize_navigation_tabs">Настроить вкладки навигации</string>
     <string name="player">Плеер</string>
     <string name="player_text_alignment">Выравнивание текста плеера</string>
     <string name="lyrics_text_position">Выравнивание текста песни</string>
@@ -307,13 +302,9 @@
     <string name="default_lib_chips">Изменить библиотеку по умолчанию</string>
     <string name="set_quick_picks">Настроить быстрый выбор</string>
     <string name="last_song_listened">На основе последних прослушиваний</string>
-    <string name="restart_to_take_effect">Перезапустите для применения изменений</string>
     <string name="app_language">Язык приложения (beta)</string>
     <string name="configure_app_language">Настроить язык приложения</string>
-    <string name="intent_app_language_not_found">Не удалось обнаружить языковые настройки. Пожалуйста, настройте вручную.</string>
-    <string name="open_supported_links">Открывать поддерживаемые ссылки по умолчанию</string>
     <string name="configure_supported_links">Настроить поддерживаемые ссылки</string>
-    <string name="intent_supported_links_not_found">Не удалось обнаружить настройки поддерживаемых ссылок. Пожалуйста, настройте вручную.</string>
     <string name="enable_kugou">Включить провайдера текстов KuGou</string>
     <string name="enable_lrclib">Включить провайдера текстов LrcLib</string>
     <string name="set_first_lyrics_provider">Предпочитаемый провайдер текстов</string>
@@ -374,12 +365,10 @@
     <string name="login_failed">Ошибка входа</string>
     <string name="enable_discord_rpc">Включить Rich Presence</string>
     <string name="default_links">Открывать поддерживаемые ссылки</string>
-    <string name="open_app_settings_error">Не удалось открыть настройки приложения</string>
     <string name="release_notes">Примечания к выпуску</string>
     <string name="about">О приложении</string>
     <string name="app_version">Версия приложения</string>
     <string name="new_version_available">Доступна новая версия</string>
-    <string name="translation_models">Модели перевода</string>
     <string name="clear_translation_models">Очистить модели перевода</string>
     <string name="all_time">Все время</string>
     <string name="past_24_hours">Последние 24 часа</string>
@@ -389,18 +378,17 @@
     <string name="top_length">Размер моего Топ-листа</string>
     <string name="history_duration">Время прослушивания в истории</string>
     <string name="contributors">авторы</string>
-    <string name="Donate">Пожертвование</string>
-    <string name="Telegramchanel">Telegram</string>
+    <string name="donate">Пожертвование</string>
+    <string name="telegram_channel">Telegram</string>
     <string name="contribution">Участие</string>
-    <string name="Hi">Привет</string>
-    <string name="NewVersion">Новая версия</string>
-    <string name="Changelog">История изменений</string>
+    <string name="new_version">Новая версия</string>
+    <string name="changelog">История изменений</string>
     <string name="changelogs">история изменений</string>
     <string name="no_changes">нет изменений</string>
-    <string name="Translate">Перевод</string>
-    <string name="Redirección">Перенаправление</string>
+    <string name="translate">Перевод</string>
+    <string name="redirect">Перенаправление</string>
     <string name="poeditor_redirect">Вы будете перенаправлены на poeditor.com</string>
-    <string name="barwar">Внимание! При восстановлении из резервной копии, ранее загруженные треки не скачиваются. Настоятельно рекомендуется воспроизвести восстановленные треки, чтобы избежать ошибок загрузки.</string>
+    <string name="backup_restore_warning">Внимание! При восстановлении из резервной копии, ранее загруженные треки не скачиваются. Настоятельно рекомендуется воспроизвести восстановленные треки, чтобы избежать ошибок загрузки.</string>
     <string name="backup_link_title">Резервная копия успешно загружена!</string>
     <string name="backup_link_description">Ваша резервная копия будет доступна в течение 14 дней.</string>
     <string name="copy_link">Копировать ссылку</string>
@@ -416,17 +404,13 @@
     <string name="mute">Отключить звук</string>
     <string name="explore">Навигатор</string>
     <string name="custom_avatar">"Пользовательский аватар"</string>
-    <string name="custom_avatar_beta">Пользовательский аватар (beta)</string>
     <string name="select_image">Выбрать изображение</string>
     <string name="default_avatar">Аватар по умолчанию</string>
     <string name="restore_default_avatar">Восстановить аватар по умолчанию</string>
-    <string name="SearchResutls">Результаты поиска</string>
-    <string name="Sujestions">Предложения</string>
-    <string name="SearchHistory">История поиска</string>
+    <string name="search_results">Результаты поиска</string>
+    <string name="suggestions">Предложения</string>
     <string name="collapse">Свернуть</string>
     <string name="expand">Развернуть</string>
-    <string name="reset_to_default">Сброс к умолчанию</string>
-    <string name="Presets">Пресеты</string>
     <string name="custom">Пользовательский</string>
     <string name="close">Закрыть</string>
     <string name="custom_value">Значение</string>
@@ -438,11 +422,11 @@
     <string name="secondary_color_style">Вторичный цветовой стиль</string>
     <string name="update_version">Обновление v%1$s</string>
     <string name="download_question">Хотите загрузить новую версию?</string>
-    <string name="downloadup">Загрузить</string>
-    <string name="downloadingup">Загрузка обновления...</string>
+    <string name="update_download">Загрузить</string>
+    <string name="update_downloading">Загрузка обновления...</string>
     <string name="download_completed">Загрузка завершена</string>
     <string name="install">Установить</string>
-    <string name="download_errorup">Ошибка загрузки обновления</string>
+    <string name="update_download_error">Ошибка загрузки обновления</string>
     <string name="tap_to_update">Нажмите, чтобы обновить</string>
     <string name="info_title">Информация</string>
     <string name="info_description">Этот раздел содержит сведения о резервном копировании и восстановлении, включая безопасность ваших данных и обеспечение сохранности и легкого доступа к вашей информации.</string>
@@ -451,8 +435,7 @@
     <string name="backup_description">Создать резервную копию текущих данных</string>
     <string name="restore_description">Восстановить данные из файла резервной копии</string>
     <string name="link_copied">Ссылка скопирована</string>
-    <string name="redireccion">Перенаправление</string>
-    <string name="Version">Версия</string>
+    <string name="version">Версия</string>
     <string name="notification">Активировать уведомления</string>
     <string name="cached_playlist">Кэшировано</string>
     <string name="added_to_queue">добавлен в очередь</string>

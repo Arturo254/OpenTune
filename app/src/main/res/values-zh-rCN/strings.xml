@@ -196,8 +196,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">"已导入播放列表"</string>
-    <string name="imported_playlist">"导入的播放列表"</string>
     <string name="removed_song_from_playlist">"从播放列表中删除了“%s”"</string>
     <string name="playlist_synced">"播放列表已同步"</string>
     <string name="undo">"撤消"</string>
@@ -213,8 +211,6 @@
     <string name="error_no_internet">"没有网络连接"</string>
     <string name="error_timeout">"超时"</string>
     <string name="error_unknown">"未知错误"</string>
-    <string name="seek_backward">"倒退 5 秒"</string>
-    <string name="seek_forward">"快进5秒"</string>
 
     <!-- Player action -->
     <string name="action_like">"喜欢"</string>
@@ -253,7 +249,6 @@
     <string name="enable_squiggly_slider">"启用波浪滑块"</string>
     <string name="enable_swipe_thumbnail">"启用滑动来更改歌曲"</string>
     <string name="pure_black">"纯黑色"</string>
-    <string name="customize_navigation_tabs">"自定义导航选项卡"</string>
     <string name="player">"玩家"</string>
     <string name="player_text_alignment">"播放器文本对齐"</string>
     <string name="lyrics_text_position">"歌词文本位置"</string>
@@ -294,13 +289,9 @@
     <string name="default_lib_chips">"Cambiar el chip de biblioteca por defecto"</string>
     <string name="set_quick_picks">"设置推荐"</string>
     <string name="last_song_listened">"根据上次听的歌曲"</string>
-    <string name="restart_to_take_effect">"重启生效"</string>
     <string name="app_language">"APP内语言（测试功能）"</string>
     <string name="configure_app_language">"配置APP语言"</string>
-    <string name="intent_app_language_not_found">"找不到APP语言设置，请手动配置"</string>
-    <string name="open_supported_links">"默认打开支持的链接"</string>
     <string name="configure_supported_links">"配置支持的链接"</string>
-    <string name="intent_supported_links_not_found">"找不到支持的链接设置，请手动配置"</string>
     <string name="enable_kugou">"启用酷狗歌词源"</string>
     <string name="enable_lrclib">"启用 LrcLib 歌词源"</string>
     <string name="set_first_lyrics_provider">"首选歌词源"</string>
@@ -361,12 +352,10 @@
     <string name="login_failed">"登录失败"</string>
     <string name="enable_discord_rpc">"启用 Rich Presence"</string>
     <string name="default_links">"打开支持的链接"</string>
-    <string name="open_app_settings_error">"无法打开应用设置"</string>
     <string name="release_notes">"发行说明"</string>
     <string name="about">"关于"</string>
     <string name="app_version">"应用程序版本"</string>
     <string name="new_version_available">"新版本可用"</string>
-    <string name="translation_models">"翻译模型"</string>
     <string name="clear_translation_models">"清晰的翻译模型"</string>
     <string name="all_time">"所有时间"</string>
     <string name="past_24_hours">"过去 24 小时"</string>
@@ -376,18 +365,17 @@
     <string name="top_length">"我的热门列表长度"</string>
     <string name="history_duration">"历史持续时间"</string>
     <string name="contributors">"贡献者"</string>
-    <string name="Donate">"捐赠"</string>
-    <string name="Telegramchanel">"电报频道"</string>
+    <string name="donate">"捐赠"</string>
+    <string name="telegram_channel">"电报频道"</string>
     <string name="contribution">"贡献"</string>
-    <string name="Hi">"你好"</string>
-    <string name="NewVersion">"新版本"</string>
-    <string name="Changelog">"变更日志"</string>
+    <string name="new_version">"新版本"</string>
+    <string name="changelog">"变更日志"</string>
     <string name="changelogs">"变更日志"</string>
     <string name="no_changes">"没有变化"</string>
-    <string name="Translate">"翻译"</string>
-    <string name="Redirección">"重定向"</string>
+    <string name="translate">"翻译"</string>
+    <string name="redirect">"重定向"</string>
     <string name="poeditor_redirect">"您即将被重定向到 poeditor.com"</string>
-    <string name="barwar">"注意，恢复备份时，不会下载以前下载的歌曲。强烈建议播放恢复的歌曲，以避免任何下载错误。"</string>
+    <string name="backup_restore_warning">"注意，恢复备份时，不会下载以前下载的歌曲。强烈建议播放恢复的歌曲，以避免任何下载错误。"</string>
     <string name="backup_link_title">"备份上传成功！"</string>
     <string name="backup_link_description">"您的备份将保留 14 天。"</string>
     <string name="copy_link">"复制链接"</string>
@@ -400,17 +388,13 @@
     <string name="mute">"静音"</string>
     <string name="explore">"探索"</string>
     <string name="custom_avatar">"自定义头像（测试功能）"</string>
-    <string name="custom_avatar_beta">"自定义头像（测试功能）"</string>
     <string name="select_image">"选择图像"</string>
     <string name="default_avatar">"默认头像"</string>
     <string name="restore_default_avatar">"恢复默认头像"</string>
-    <string name="SearchResutls">"搜索结果"</string>
-    <string name="Sujestions">"建议"</string>
-    <string name="SearchHistory">"搜索历史"</string>
+    <string name="search_results">"搜索结果"</string>
+    <string name="suggestions">"建议"</string>
     <string name="collapse">"收起"</string>
     <string name="expand">"展开"</string>
-    <string name="reset_to_default">"重置为默认值"</string>
-    <string name="Presets">"预设"</string>
     <string name="custom">"自定义"</string>
     <string name="close">"关闭"</string>
     <string name="custom_value">"自定义值"</string>
@@ -422,11 +406,11 @@
     <string name="secondary_color_style">"辅助颜色样式"</string>
     <string name="update_version">"更新 v%1$s"</string>
     <string name="download_question">"您想下载新版本吗？"</string>
-    <string name="downloadup">"下载"</string>
-    <string name="downloadingup">"正在下载更新..."</string>
+    <string name="update_download">"下载"</string>
+    <string name="update_downloading">"正在下载更新..."</string>
     <string name="download_completed">"下载完成"</string>
     <string name="install">"安装"</string>
-    <string name="download_errorup">"下载更新时出错"</string>
+    <string name="update_download_error">"下载更新时出错"</string>
     <string name="tap_to_update">"点击更新"</string>
     <string name="info_title">"信息"</string>
     <string name="info_description">"本章提供有关备份和恢复过程的关键细节，包括数据的安全性以及如何确保您的信息保持安全且易于访问。"</string>
@@ -436,8 +420,7 @@
     <string name="restore_description">"从备份文件中恢复数据"</string>
     <string name="keep_listening">"seguir_escucha"</string>
     <string name="link_copied">"link_copiado"</string>
-    <string name="redireccion">"重定向"</string>
-    <string name="Version">"Version"</string>
+    <string name="version">"Version"</string>
     <string name="notification">"notification"</string>
     <string name="cached_playlist">"listas en cache"</string>
     <string name="added_to_queue">"añadir a la cola"</string>
@@ -450,7 +433,6 @@
     <string name="clear_song_cache_confirmation"></string>
     <string name="clear_image_cache_confirmation"></string>
     <string name="confirm"></string>
-    <string name="problem_solver"></string>
     <string name="action_login"></string>
     <string name="generating_image"></string>
     <string name="please_wait"></string>
@@ -462,6 +444,5 @@
     <string name="customize_colors"></string>
     <string name="more_options"></string>
     <string name="text_color"></string>
-    <string name="secondary_text_color"></string>
     <string name="background_color"></string>
 </resources>

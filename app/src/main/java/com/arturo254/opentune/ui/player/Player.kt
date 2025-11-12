@@ -851,10 +851,10 @@ fun BottomSheetPlayer(
                     Image(
                         painter = painterResource(iconResource),
                         contentDescription = when (download?.state) {
-                            Download.STATE_COMPLETED -> "Downloaded"
-                            Download.STATE_DOWNLOADING -> "Downloading..."
-                            Download.STATE_FAILED -> "Download failed"
-                            else -> "Download"
+                            Download.STATE_COMPLETED -> stringResource(R.string.downloaded)
+                            Download.STATE_DOWNLOADING -> stringResource(R.string.downloading)
+                            Download.STATE_FAILED -> stringResource(R.string.download_failed)
+                            else -> stringResource(R.string.download)
                         },
                         colorFilter = ColorFilter.tint(
                             when (download?.state) {

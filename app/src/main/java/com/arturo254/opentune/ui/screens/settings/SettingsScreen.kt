@@ -60,7 +60,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
@@ -102,19 +101,10 @@ import org.json.JSONObject
 import java.io.File
 import java.net.URL
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.offset
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 
 
 @SuppressLint("ObsoleteSdkInt")
@@ -155,7 +145,7 @@ fun VersionCard(uriHandler: UriHandler) {
                 title = {
                     Column {
                         Text(
-                            text = stringResource(R.string.Version),
+                            text = stringResource(R.string.version),
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
@@ -227,7 +217,7 @@ fun UpdateCard(latestVersion: String = "") {
             ) {
                 Spacer(Modifier.height(3.dp))
 
-                val newVersion = stringResource(R.string.NewVersion)
+                val newVersion = stringResource(R.string.new_version)
                 val tapToUpdate = stringResource(R.string.tap_to_update)
                 val warn = stringResource(R.string.warn)
 
@@ -338,7 +328,7 @@ fun UpdateDownloadDialog(
                     }
 
                     DownloadStatus.DOWNLOADING -> {
-                        Text(stringResource(R.string.downloadingup))
+                        Text(stringResource(R.string.update_downloading))
                         Spacer(modifier = Modifier.height(16.dp))
                         LinearProgressIndicator(
                             progress = { downloadProgress },
@@ -383,7 +373,7 @@ fun UpdateDownloadDialog(
                     }
 
                     DownloadStatus.ERROR -> {
-                        Text(stringResource(R.string.download_errorup))
+                        Text(stringResource(R.string.update_download_error))
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = onDismiss) {
                             Text(stringResource(R.string.close))
@@ -785,7 +775,7 @@ fun SettingsScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.opentune_monochrome),
-                            contentDescription = "Logo de OpenTune",
+                            contentDescription = stringResource(R.string.app_logo),
                             modifier = Modifier.fillMaxSize(),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -803,7 +793,7 @@ fun SettingsScreen(
                         )
 
                         Text(
-                            text = "Tu música, sin límites",
+                            text = stringResource(R.string.app_motto),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -858,7 +848,7 @@ fun SettingsScreen(
                 ),
                 SettingsCategoryItem(
                     icon = painterResource(R.drawable.translate),
-                    title = { Text(stringResource(R.string.Translate)) },
+                    title = { Text(stringResource(R.string.translate)) },
                     onClick = { showTranslateDialog = true }
                 )
             )
@@ -872,18 +862,18 @@ fun SettingsScreen(
             items = listOf(
                 SettingsCategoryItem(
                     icon = painterResource(R.drawable.schedule),
-                    title = { Text(stringResource(R.string.Changelog)) },
+                    title = { Text(stringResource(R.string.changelog)) },
                     onClick = { showChangelogSheet = true }
                 ),
                 SettingsCategoryItem(
                     icon = painterResource(R.drawable.paypal),
-                    title = { Text(stringResource(R.string.Donate)) },
+                    title = { Text(stringResource(R.string.donate)) },
                     isHighlighted = true,
                     onClick = { uriHandler.openUri("https://www.paypal.com/paypalme/opentune") }
                 ),
                 SettingsCategoryItem(
                     icon = painterResource(R.drawable.telegram),
-                    title = { Text(stringResource(R.string.Telegramchanel)) },
+                    title = { Text(stringResource(R.string.telegram_channel)) },
                     onClick = { uriHandler.openUri("https://t.me/opentune_updates") }
                 )
             )
@@ -904,7 +894,7 @@ fun SettingsScreen(
     if (showTranslateDialog) {
         AlertDialog(
             onDismissRequest = { showTranslateDialog = false },
-            title = { Text(stringResource(R.string.Redirección)) },
+            title = { Text(stringResource(R.string.redirect)) },
             text = { Text(stringResource(R.string.poeditor_redirect)) },
             confirmButton = {
                 TextButton(

@@ -210,7 +210,7 @@ fun AlbumScreen(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.download),
-                                    contentDescription = "Guardar imagen en galería",
+                                    contentDescription = stringResource(R.string.icon_save_img),
                                     tint = MaterialTheme.colorScheme.onSecondaryContainer // Color del ícono
                                 )
                             }
@@ -696,7 +696,7 @@ suspend fun saveAlbumImageToGallery(context: Context, imageUrl: String, albumTit
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         context,
-                        "Save Picture Success",
+                        context.getString(R.string.image_save_success),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -706,7 +706,7 @@ suspend fun saveAlbumImageToGallery(context: Context, imageUrl: String, albumTit
         withContext(Dispatchers.Main) {
             Toast.makeText(
                 context,
-                "X",
+                context.getString(R.string.image_save_failure),
                 Toast.LENGTH_SHORT
             ).show()
         }

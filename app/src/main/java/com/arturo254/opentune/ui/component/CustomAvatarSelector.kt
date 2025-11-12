@@ -353,7 +353,7 @@ fun AvatarSelector(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Avatars")
+                    Text(stringResource(R.string.avatars))
                 }
             }
 
@@ -462,7 +462,7 @@ private fun DiceBearAvatarDialog(
         ) {
             // Título
             Text(
-                text = "Selecciona un avatar",
+                text = stringResource(R.string.choose_predefined_avatar),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
@@ -491,7 +491,7 @@ private fun DiceBearAvatarDialog(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ia_icon),
-                        contentDescription = "Randomizar avatares"
+                        contentDescription = stringResource(R.string.randomize_avatars)
                     )
                 }
             }
@@ -555,7 +555,7 @@ private fun DiceBearAvatarDialog(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "Elige un estilo",
+                        text = stringResource(R.string.choose_a_style),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

@@ -196,8 +196,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">"playlist_imported"</string>
-    <string name="imported_playlist">"imported_playlist"</string>
     <string name="removed_song_from_playlist">"removed_song_from_playlist"</string>
     <string name="playlist_synced">"playlist_synced"</string>
     <string name="undo">"hoàn tác"</string>
@@ -213,8 +211,6 @@
     <string name="error_no_internet">"error_no_internet"</string>
     <string name="error_timeout">"error_timeout"</string>
     <string name="error_unknown">"error_unknown"</string>
-    <string name="seek_backward">"seek_backward"</string>
-    <string name="seek_forward">"seek_forward"</string>
 
     <!-- Player action -->
     <string name="action_like">"action_like"</string>
@@ -253,7 +249,6 @@
     <string name="enable_squiggly_slider">"enable_squiggly_slider"</string>
     <string name="enable_swipe_thumbnail">"enable_swipe_thumbnail"</string>
     <string name="pure_black">"pure_black"</string>
-    <string name="customize_navigation_tabs">"customize_navigation_tabs"</string>
     <string name="player">"cầu thủ"</string>
     <string name="player_text_alignment">"player_text_alignment"</string>
     <string name="lyrics_text_position">"lyrics_text_position"</string>
@@ -294,13 +289,9 @@
     <string name="default_lib_chips">"default_lib_chips"</string>
     <string name="set_quick_picks">"set_quick_picks"</string>
     <string name="last_song_listened">"last_song_listened"</string>
-    <string name="restart_to_take_effect">"restart_to_take_effect"</string>
     <string name="app_language">"app_language"</string>
     <string name="configure_app_language">"configure_app_language"</string>
-    <string name="intent_app_language_not_found">"intent_app_language_not_found"</string>
-    <string name="open_supported_links">"open_supported_links"</string>
     <string name="configure_supported_links">"configure_supported_links"</string>
-    <string name="intent_supported_links_not_found">"intent_supported_links_not_found"</string>
     <string name="enable_kugou">"enable_kugou"</string>
     <string name="enable_lrclib">"enable_lrclib"</string>
     <string name="set_first_lyrics_provider">"set_first_lyrics_provider"</string>
@@ -361,12 +352,10 @@
     <string name="login_failed">"login_failed"</string>
     <string name="enable_discord_rpc">"enable_discord_rpc"</string>
     <string name="default_links">"default_links"</string>
-    <string name="open_app_settings_error">"open_app_settings_error"</string>
     <string name="release_notes">"release_notes"</string>
     <string name="about">"về"</string>
     <string name="app_version">"app_version"</string>
     <string name="new_version_available">"new_version_available"</string>
-    <string name="translation_models">"translation_models"</string>
     <string name="clear_translation_models">"clear_translation_models"</string>
     <string name="all_time">"all_time"</string>
     <string name="past_24_hours">"past_24_hours"</string>
@@ -376,18 +365,17 @@
     <string name="top_length">"top_length"</string>
     <string name="history_duration">"history_duration"</string>
     <string name="contributors">"Đóng góp"</string>
-    <string name="Donate">"Góp"</string>
-    <string name="Telegramchanel">"Điện tínchanel"</string>
+    <string name="donate">"Góp"</string>
+    <string name="telegram_channel">"Điện tínchanel"</string>
     <string name="contribution">"đóng góp"</string>
-    <string name="Hi">"Chào bạn"</string>
-    <string name="NewVersion">"Phiên bản mới"</string>
-    <string name="Changelog">"Nhật ký thay đổi"</string>
+    <string name="new_version">"Phiên bản mới"</string>
+    <string name="changelog">"Nhật ký thay đổi"</string>
     <string name="changelogs">"nhật ký thay đổi"</string>
     <string name="no_changes">"no_changes"</string>
-    <string name="Translate">"Dịch"</string>
-    <string name="Redirección">"Redirección"</string>
+    <string name="translate">"Dịch"</string>
+    <string name="redirect">"Redirección"</string>
     <string name="poeditor_redirect">"poeditor_redirect"</string>
-    <string name="barwar">"Barwar"</string>
+    <string name="backup_restore_warning">"Barwar"</string>
     <string name="backup_link_title">"backup_link_title"</string>
     <string name="backup_link_description">"backup_link_description"</string>
     <string name="copy_link">"copy_link"</string>
@@ -400,17 +388,13 @@
     <string name="mute">"câm"</string>
     <string name="explore">"khám phá"</string>
     <string name="custom_avatar">"custom_avatar"</string>
-    <string name="custom_avatar_beta">"custom_avatar_beta"</string>
     <string name="select_image">"select_image"</string>
     <string name="default_avatar">"default_avatar"</string>
     <string name="restore_default_avatar">"restore_default_avatar"</string>
-    <string name="SearchResutls">"Tìm kiếmResutls"</string>
-    <string name="Sujestions">"Sujestions"</string>
-    <string name="SearchHistory">"Lịch sử tìm kiếm"</string>
+    <string name="search_results">"Tìm kiếmResutls"</string>
+    <string name="suggestions">"Sujestions"</string>
     <string name="collapse">"sụp đổ"</string>
     <string name="expand">"mở rộng"</string>
-    <string name="reset_to_default">"reset_to_default"</string>
-    <string name="Presets">"Presets"</string>
     <string name="custom">"phong tục"</string>
     <string name="close">"đóng"</string>
     <string name="custom_value">"custom_value"</string>
@@ -422,11 +406,11 @@
     <string name="secondary_color_style">"secondary_color_style"</string>
     <string name="update_version">"update_version"</string>
     <string name="download_question">"download_question"</string>
-    <string name="downloadup">"Tải xuống"</string>
-    <string name="downloadingup">"Tải về"</string>
+    <string name="update_download">"Tải xuống"</string>
+    <string name="update_downloading">"Tải về"</string>
     <string name="download_completed">"download_completed"</string>
     <string name="install">"cài đặt"</string>
-    <string name="download_errorup">"download_errorup"</string>
+    <string name="update_download_error">"download_errorup"</string>
     <string name="tap_to_update">"tap_to_update"</string>
     <string name="info_title">"Información"</string>
     <string name="info_description">"Esta sección proporciona detalles clave sobre el proceso de copia de seguridad y restauración, incluyendo la seguridad de sus datos y cómo garantizar que su información permanezca segura y sea fácilmente accesible."</string>
@@ -436,7 +420,6 @@
     <string name="restore_description">"Recupere sus datos desde una copia de seguridad."</string>
     <string name="keep_listening">"seguir_escucha"</string>
     <string name="link_copied">"link_copiado"</string>
-    <string name="redireccion"></string>
-    <string name="Version"></string>
+    <string name="version"></string>
     <string name="notification"></string>
 </resources>

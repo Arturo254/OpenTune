@@ -161,7 +161,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">Afspeellijst geimporteerd</string>
     <string name="removed_song_from_playlist">\"%s\" van afspeelijst verwijderd</string>
     <string name="playlist_synced">Playlist synced</string>
     <string name="undo">Ongedaan maken</string>
@@ -205,7 +204,6 @@
     <string name="dark_theme_follow_system">Volg systeem</string>
     <string name="pure_black">Zuiver zwart</string>
     <string name="default_open_tab">Standaard tabblad</string>
-    <string name="customize_navigation_tabs">Pas tabbladen aan</string>
     <string name="lyrics_text_position">Songtekst positie</string>
     <string name="left">Links</string>
     <string name="center">Midden</string>
@@ -219,7 +217,6 @@
     <string name="enable_proxy">Proxy inschakelen</string>
     <string name="proxy_type">Proxy type</string>
     <string name="proxy_url">Proxy URL</string>
-    <string name="restart_to_take_effect">Herstart om effect te hebben</string>
 
     <string name="player_and_audio">Speler en geluid</string>
     <string name="audio_quality">Geluidskwaliteit</string>
@@ -256,7 +253,6 @@
     <string name="backup_restore">Backup en herstel</string>
     <string name="backup">Backup</string>
     <string name="restore">Herstellen</string>
-    <string name="imported_playlist">Afspeellijst geimporteerd</string>
     <string name="backup_create_success">Back-up succesvol gemaakt.</string>
     <string name="backup_create_failed">Back-up maken mislukt.</string>
     <string name="restore_failed">Fout bij terugzetten back-up.</string>
@@ -265,6 +261,5 @@
     <string name="app_version">App versie</string>
 
     <string name="new_version_available">Nieuwe versie beschikbaar</string>
-    <string name="translation_models">Vertaalmodellen</string>
     <string name="clear_translation_models">Verwijder vertaalmodellen</string>
 </resources>

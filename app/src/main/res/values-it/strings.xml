@@ -191,8 +191,6 @@
         <item quantity="other">%d volte</item>
     </plurals>
     <!-- Snackbar -->
-    <string name="playlist_imported">Playlist importata</string>
-    <string name="imported_playlist">Playlist importata</string>
     <string name="removed_song_from_playlist">Rimosso \"%s\" dalla playlist</string>
     <string name="playlist_synced">Playlist sincronizzata</string>
     <string name="undo">Ripristina</string>
@@ -208,8 +206,6 @@
     <string name="error_no_internet">Nessuna connessione di rete</string>
     <string name="error_timeout">Tempo scaduto</string>
     <string name="error_unknown">Errore sconosciuto</string>
-    <string name="seek_backward">5 secondi indietro</string>
-    <string name="seek_forward">5 secondi avanti</string>
     <!-- Player action -->
     <string name="action_like">Mi piace</string>
     <string name="action_remove_like">Rimuovi mi piace</string>
@@ -244,7 +240,6 @@
     <string name="enable_squiggly_slider">Abilita slider squiggly</string>
     <string name="enable_swipe_thumbnail">Abilita lo scorrimento per cambiare brano</string>
     <string name="pure_black">Nero puro</string>
-    <string name="customize_navigation_tabs">Personalizza schede di navigazione</string>
     <string name="player">Player</string>
     <string name="player_text_alignment">Allineamento testo player</string>
     <string name="lyrics_text_position">Posizione testo liriche</string>
@@ -285,13 +280,9 @@
     <string name="default_lib_chips">Cambia chip libreria predefinito</string>
     <string name="set_quick_picks">Imposta selezioni rapide</string>
     <string name="last_song_listened">In base all\'ultima canzone ascoltata</string>
-    <string name="restart_to_take_effect">Riavvia per avere effetto</string>
     <string name="app_language">Lingua app (Beta)</string>
     <string name="configure_app_language">Configura lingue app</string>
-    <string name="intent_app_language_not_found">Impossibile trovare le impostazioni della lingua dell\'app, si prega di configurarle manualmente</string>
-    <string name="open_supported_links">Apri il link supportato per default</string>
     <string name="configure_supported_links">Configura link supportati</string>
-    <string name="intent_supported_links_not_found">Impossibile trovare le impostazioni dei link supportati, configurali manualmente</string>
     <string name="enable_kugou">Abilita provider di testi KuGou</string>
     <string name="enable_lrclib">Abilita provider di testi LrcLib</string>
     <string name="set_first_lyrics_provider">Provider di testi preferito</string>
@@ -352,12 +343,10 @@
     <string name="login_failed">Accesso fallito</string>
     <string name="enable_discord_rpc">Abilita Presenza Dettagliata</string>
     <string name="default_links">Apri link supportati</string>
-    <string name="open_app_settings_error">Impossibile aprire le impostazioni app</string>
     <string name="release_notes">Note di Versione</string>
     <string name="about">Info</string>
     <string name="app_version">Versione app</string>
     <string name="new_version_available">Nuova versione disponibile</string>
-    <string name="translation_models">Modelli di traduzione</string>
     <string name="clear_translation_models">Cancella modelli di traduzione</string>
     <string name="all_time">Sempre</string>
     <string name="past_24_hours">24 ore precedenti</string>
@@ -367,18 +356,17 @@
     <string name="top_length">Durata della mia Top list</string>
     <string name="history_duration">Durata cronologia</string>
     <string name="contributors">collaboratori</string>
-    <string name="Donate">Dona</string>
-    <string name="Telegramchanel">Canale Telegram</string>
+    <string name="donate">Dona</string>
+    <string name="telegram_channel">Canale Telegram</string>
     <string name="contribution">Contributo</string>
-    <string name="Hi">Ciao</string>
-    <string name="NewVersion">Nuova versione</string>
-    <string name="Changelog">Note di versione</string>
+    <string name="new_version">Nuova versione</string>
+    <string name="changelog">Note di versione</string>
     <string name="changelogs">note delle versioni</string>
     <string name="no_changes">nessun cambiamento</string>
-    <string name="Translate">Traduci</string>
-    <string name="Redirección">Reindirizzamento</string>
+    <string name="translate">Traduci</string>
+    <string name="redirect">Reindirizzamento</string>
     <string name="poeditor_redirect">Stai per essere reindirizzato su poeditor.com</string>
-    <string name="barwar">Attenzione durante il ripristino dei backup, le canzoni precedentemente scaricate non vengono scaricate. è ALTAMENTE CONSIGLIATO riprodurre le canzoni ripristinate al fine di evitare eventuali errori di download.</string>
+    <string name="backup_restore_warning">Attenzione durante il ripristino dei backup, le canzoni precedentemente scaricate non vengono scaricate. è ALTAMENTE CONSIGLIATO riprodurre le canzoni ripristinate al fine di evitare eventuali errori di download.</string>
     <string name="backup_link_title">Backup caricato con successo!</string>
     <string name="backup_link_description">Il tuo backup sarà disponibile per 14 giorni.</string>
     <string name="copy_link">Copia Link</string>
@@ -392,17 +380,13 @@
     <string name="mute">Silenzia</string>
     <string name="explore">Esplora</string>
     <string name="custom_avatar">"Avatar personalizzato (BETA)"</string>
-    <string name="custom_avatar_beta">Avatar personalizzato (BETA)</string>
     <string name="select_image">Seleziona immagine</string>
     <string name="default_avatar">Avatar di default</string>
     <string name="restore_default_avatar">Ripristina avatar di default</string>
-    <string name="SearchResutls">Risultati Della Ricerca</string>
-    <string name="Sujestions">Suggerimenti</string>
-    <string name="SearchHistory">Cronologia Ricerca</string>
+    <string name="search_results">Risultati Della Ricerca</string>
+    <string name="suggestions">Suggerimenti</string>
     <string name="collapse">Comprimi</string>
     <string name="expand">Espandi</string>
-    <string name="reset_to_default">Ripristina impostazioni predefinite</string>
-    <string name="Presets">Predefiniti</string>
     <string name="custom">Personalizzato</string>
     <string name="close">Chiudi</string>
     <string name="custom_value">Valore personalizzato</string>
@@ -414,11 +398,11 @@
     <string name="secondary_color_style">Stile di colore secondario</string>
     <string name="update_version">Aggiorna v%1$s</string>
     <string name="download_question">Vuoi scaricare la nuova versione?</string>
-    <string name="downloadup">Scarica</string>
-    <string name="downloadingup">Scaricamento aggiornamento...</string>
+    <string name="update_download">Scarica</string>
+    <string name="update_downloading">Scaricamento aggiornamento...</string>
     <string name="download_completed">Download completato</string>
     <string name="install">Installa</string>
-    <string name="download_errorup">Errore nel scaricare l\'aggiornamento</string>
+    <string name="update_download_error">Errore nel scaricare l\'aggiornamento</string>
     <string name="tap_to_update">Tocca per aggiornare</string>
     <string name="info_title">Informazioni</string>
     <string name="info_description">Questa sezione fornisce dettagli chiave sul processo di backup e ripristino, compresa la sicurezza dei vostri dati e come garantire che le vostre informazioni rimangano sicure e facilmente accessibili.</string>
@@ -427,8 +411,7 @@
     <string name="backup_description">Crea un file di backup dei tuoi dati correnti</string>
     <string name="restore_description">Recuperare i dati da un file di backup</string>
     <string name="link_copied">Link Copiato</string>
-    <string name="redireccion">Redireccion</string>
-    <string name="Version">Versione</string>
+    <string name="version">Versione</string>
     <string name="notification">Attiva Notifiche</string>
     <string name="cached_playlist">Cache</string>
     <string name="added_to_queue">aggiunto alla coda</string>

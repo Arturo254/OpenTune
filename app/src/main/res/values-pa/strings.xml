@@ -161,7 +161,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">ਪਲੇਲਿਸਟ ਅਯਾਤ ਕੀਤੀ ਗਈ</string>
     <string name="removed_song_from_playlist">Removed \"%s\" from playlist</string>
     <string name="playlist_synced">Playlist synced</string>
     <string name="undo">Undo</string>
@@ -205,7 +204,6 @@
     <string name="dark_theme_follow_system">ਸਿਸਟਮ ਦੀ ਪਾਲਣਾ ਕਰੋ</string>
     <string name="pure_black">ਸ਼ਾਹ ਕਾਲ੍ਹਾ</string>
     <string name="default_open_tab">ਡੀਫ਼ਾਲਟ ਟੈਬ</string>
-    <string name="customize_navigation_tabs">ਨੈਵੀਗੇਸ਼ਨ ਟੈਬਾਂ ਨੂੰ ਆਪਣੀ ਪਸੰਦ ਦਾ ਢਾਲੋ</string>
     <string name="lyrics_text_position">ਬੋਲਾਂ ਦੀ ਸਥਿਤੀ</string>
     <string name="left">ਖੱਬੇ</string>
     <string name="center">ਵਿਚਕਾਰ</string>
@@ -219,7 +217,6 @@
     <string name="enable_proxy">ਪ੍ਰੌਕਸੀ ਚਾਲੂ ਕਰੋ</string>
     <string name="proxy_type">ਪ੍ਰੌਕਸੀ ਕਿਸਮ</string>
     <string name="proxy_url">ਪ੍ਰੌਕਸੀ URL</string>
-    <string name="restart_to_take_effect">ਪ੍ਰਭਾਵੀ ਹੋਣ ਲਈ ਮੁੜ-ਚਾਲੂ ਕਰੋ</string>
 
     <string name="player_and_audio">ਪਲੇਅਰ ਅਤੇ ਆਡੀਓ</string>
     <string name="audio_quality">ਆਡੀਓ ਕੁਆਲਿਟੀ</string>
@@ -256,7 +253,6 @@
     <string name="backup_restore">ਬੈਕਅੱਪ ਅਤੇ ਰੀਸਟੋਰ</string>
     <string name="backup">ਬੈਕਅੱਪ</string>
     <string name="restore">ਰੀਸਟੋਰ</string>
-    <string name="imported_playlist">Imported playlist</string>
     <string name="backup_create_success">ਬੈਕਅੱਪ ਸਫਲਤਾਪੂਰਵਕ ਬਣਾਇਆ ਗਿਆ</string>
     <string name="backup_create_failed">ਬੈਕਅੱਪ ਨਹੀਂ ਬਣਾਇਆ ਜਾ ਸਕਿਆ</string>
     <string name="restore_failed">ਬੈਕਅੱਪ ਰੀਸਟੋਰ ਕਰਨਾ ਅਸਫਲ ਰਿਹਾ</string>
@@ -265,6 +261,5 @@
     <string name="app_version">ਐਪ ਸੰਸਕਰਣ</string>
 
     <string name="new_version_available">New version available</string>
-    <string name="translation_models">Translation Models</string>
     <string name="clear_translation_models">Clear translation models</string>
 </resources>

@@ -177,7 +177,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">Плей-ліст імпартаваны</string>
     <string name="removed_song_from_playlist">\"%s\" выдалена з плей-ліста</string>
     <string name="playlist_synced">Плей-ліст сінхранізаваны</string>
     <string name="undo">Адрабіць</string>
@@ -223,7 +222,6 @@
     <string name="dark_theme_follow_system">Прытрымлівацца сістэмнай каляровай тэмы</string>
     <string name="pure_black">Рэжым чыстага чорнага колеру</string>
     <string name="default_open_tab">Прадвызначаная укладка</string>
-    <string name="customize_navigation_tabs">Дапасаваць укладак</string>
     <string name="lyrics_text_position">Пазіцыя тэкста песні</string>
     <string name="left">Па левым краі</string>
     <string name="center">Па цэнтры</string>
@@ -237,7 +235,6 @@
     <string name="enable_proxy">Уключыць проксі</string>
     <string name="proxy_type">Тып проксі</string>
     <string name="proxy_url">URL проксі</string>
-    <string name="restart_to_take_effect">Перазапусціць каб ужыць змяненні</string>
 
     <string name="player_and_audio">Прайгравальнік ды аўдыя</string>
     <string name="audio_quality">Якасць аўдыя</string>
@@ -274,7 +271,6 @@
     <string name="backup_restore">Рэзервовае капіраванне ды аднеўленне </string>
     <string name="backup">Рэзервовае капіраванне</string>
     <string name="restore">Аднаўленне з рэзервовай копіі</string>
-    <string name="imported_playlist">Імпартаваны плей-ліст</string>
     <string name="backup_create_success">Рэзервовная копія паспяхова створана</string>
     <string name="backup_create_failed">Немагчыма стапрыць рэзервовую копію</string>
     <string name="restore_failed">Немагчыма ужывіць рэзервовую копію</string>
@@ -283,6 +279,5 @@
     <string name="app_version">Версія праграмы</string>
 
     <string name="new_version_available">Даступная новая версія</string>
-    <string name="translation_models">Мадэлі перакладу</string>
     <string name="clear_translation_models">Ачысціць мадэлі перакладу</string>
 </resources>

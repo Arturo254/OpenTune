@@ -270,7 +270,6 @@
     </plurals>
 
     <!-- شريط التنبيه -->
-    <string name="playlist_imported">تم استيراد قائمة التشغيل</string>
     <string name="removed_song_from_playlist">تمت إزالة \"%s\" من قائمة التشغيل</string>
     <string name="playlist_synced">تمت مزامنة قائمة التشغيل</string>
     <string name="undo">تراجع</string>
@@ -284,8 +283,6 @@
     <string name="error_no_internet">لا يوجد اتصال بالشبكة</string>
     <string name="error_timeout">انتهاء المهلة</string>
     <string name="error_unknown">خطأ غير معروف</string>
-    <string name="seek_backward">للخلف 5 ثواني</string>
-    <string name="seek_forward">للأمام 5 ثواني</string>
 
     <!-- إجراءات المشغل -->
     <string name="action_like">إعجاب</string>
@@ -325,7 +322,6 @@
     <string name="dark_theme_off">إيقاف</string>
     <string name="dark_theme_follow_system">اتباع النظام</string>
     <string name="pure_black">أسود نقي</string>
-    <string name="customize_navigation_tabs">تخصيص علامات التبويب</string>
     <string name="player_text_alignment">موضع إسم الفنان والأغنية</string>
     <string name="lyrics_text_position">موضع نص كلمات الأغاني</string>
     <string name="theme">السمة</string>
@@ -368,13 +364,9 @@
     <string name="default_lib_chips">تغيير الشريحة الافتراضية للمكتبة</string>
     <string name="set_quick_picks">ضبط الاختيارات السريعة</string>
     <string name="last_song_listened">بناءً على آخر أغنية تم الاستماع إليها</string>
-    <string name="restart_to_take_effect">أعد التشغيل لتفعيل التغييرات</string>
     <string name="app_language">لغة التطبيق</string>
     <string name="configure_app_language">تكوين لغة التطبيق</string>
-    <string name="intent_app_language_not_found">لم يتمكن التطبيق من العثور على إعدادات لغة التطبيق، يرجى تكوينها يدويًا</string>
-    <string name="open_supported_links">فتح الروابط المدعومة</string>
     <string name="configure_supported_links">تكوين الروابط المدعومة</string>
-    <string name="intent_supported_links_not_found">لم يتمكن التطبيق من العثور على الإعدادات ، يرجى تكوينها يدويًا</string>
 
     <string name="player_and_audio">المشغل والصوت</string>
     <string name="audio_quality">جودة الصوت</string>
@@ -431,7 +423,6 @@
     <string name="backup_restore">النسخ الاحتياطي والاستعادة</string>
     <string name="backup">نسخ احتياطي</string>
     <string name="restore">استعادة</string>
-    <string name="imported_playlist">قائمة التشغيل المستوردة</string>
     <string name="backup_create_success">تم إنشاء النسخ الاحتياطي بنجاح</string>
     <string name="backup_create_failed">تعذر إنشاء النسخ الاحتياطي</string>
     <string name="restore_failed">فشل في استعادة النسخ الاحتياطي</string>
@@ -445,14 +436,12 @@
     <string name="preview">معاينة</string>
 
     <string name="default_links">فتح الروابط المدعومة افتراضيًا</string>
-    <string name="open_app_settings_error">لم يتمكن التطبيق من فتح إعدادات التطبيق</string>
 
 
     <string name="about">حول</string>
     <string name="app_version">إصدار التطبيق</string>
 
     <string name="new_version_available">إصدار جديد متاح</string>
-    <string name="translation_models">نماذج الترجمة</string>
     <string name="clear_translation_models">مسح نماذج الترجمة</string>
 
     <string name="all_time">طوال الوقت</string>
