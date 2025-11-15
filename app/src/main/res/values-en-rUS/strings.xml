@@ -191,8 +191,6 @@
         <item quantity="other">%d times</item>
     </plurals>
     <!-- Snackbar -->
-    <string name="playlist_imported">Playlist imported</string>
-    <string name="imported_playlist">Imported playlist</string>
     <string name="removed_song_from_playlist">Removed \"%s\" from playlist</string>
     <string name="playlist_synced">Playlist synced</string>
     <string name="undo">Undo</string>
@@ -208,8 +206,6 @@
     <string name="error_no_internet">No network connection</string>
     <string name="error_timeout">Timeout</string>
     <string name="error_unknown">Unknown error</string>
-    <string name="seek_backward">5 seconds backward</string>
-    <string name="seek_forward">5 seconds forward</string>
     <!-- Player action -->
     <string name="action_like">Like</string>
     <string name="action_remove_like">Remove like</string>
@@ -244,7 +240,6 @@
     <string name="enable_squiggly_slider">Enable squiggly slider</string>
     <string name="enable_swipe_thumbnail">Enable swipe to change song</string>
     <string name="pure_black">Pure black</string>
-    <string name="customize_navigation_tabs">Customize navigation tabs</string>
     <string name="player">Player</string>
     <string name="player_text_alignment">Player text alignment</string>
     <string name="lyrics_text_position">Lyrics text position</string>
@@ -285,13 +280,9 @@
     <string name="default_lib_chips">Change default library chip</string>
     <string name="set_quick_picks">Set quick picks</string>
     <string name="last_song_listened">Based on last song listened</string>
-    <string name="restart_to_take_effect">Restart to take effect</string>
     <string name="app_language">App language (Beta)</string>
     <string name="configure_app_language">Configure app languages</string>
-    <string name="intent_app_language_not_found">Couldn\'t find app language settings, please configure them manually</string>
-    <string name="open_supported_links">Open supported link by default</string>
     <string name="configure_supported_links">Configure supported links</string>
-    <string name="intent_supported_links_not_found">Couldn\'t find supported links settings, please configure them manually</string>
     <string name="enable_kugou">Enable KuGou lyrics provider</string>
     <string name="enable_lrclib">Enable LrcLib lyrics provider</string>
     <string name="set_first_lyrics_provider">Preferred lyrics provider</string>
@@ -352,12 +343,10 @@
     <string name="login_failed">Login failed</string>
     <string name="enable_discord_rpc">Enable Rich Presence</string>
     <string name="default_links">Open supported links</string>
-    <string name="open_app_settings_error">Couldn\'t open app settings</string>
     <string name="release_notes">Release Notes</string>
     <string name="about">About</string>
     <string name="app_version">App version</string>
     <string name="new_version_available">New version available</string>
-    <string name="translation_models">Translation Models</string>
     <string name="clear_translation_models">Clear translation models</string>
     <string name="all_time">All time</string>
     <string name="past_24_hours">Past 24 hours</string>
@@ -367,18 +356,17 @@
     <string name="top_length">My Top list length</string>
     <string name="history_duration">History duration</string>
     <string name="contributors">contributors</string>
-    <string name="Donate">Donate</string>
-    <string name="Telegramchanel">Telegram Chanel</string>
+    <string name="donate">Donate</string>
+    <string name="telegram_channel">Telegram Chanel</string>
     <string name="contribution">Contribution</string>
-    <string name="Hi">Hi</string>
-    <string name="NewVersion">New Version</string>
-    <string name="Changelog">Changelog</string>
+    <string name="new_version">New Version</string>
+    <string name="changelog">Changelog</string>
     <string name="changelogs">changelogs</string>
     <string name="no_changes">no changes</string>
-    <string name="Translate">Translate</string>
-    <string name="Redirección">Redirección</string>
+    <string name="translate">Translate</string>
+    <string name="redirect">Redirección</string>
     <string name="poeditor_redirect">You are about to be redirected to poeditor.com</string>
-    <string name="barwar">Attention when restoring the backups, the previously downloaded songs are not downloaded. it is HIGHLY RECOMMENDED to play the restored songs in order to avoid any download errors.</string>
+    <string name="backup_restore_warning">Attention when restoring the backups, the previously downloaded songs are not downloaded. it is HIGHLY RECOMMENDED to play the restored songs in order to avoid any download errors.</string>
     <string name="backup_link_title">Backup uploaded successfully!</string>
     <string name="backup_link_description">Your backup will be available for 14 days.</string>
     <string name="copy_link">Copy Link</string>
@@ -392,19 +380,15 @@
     <string name="mute">Mute</string>
     <string name="explore">Explore</string>
     <string name="custom_avatar">Custom avatar (BETA)</string>
-    <string name="custom_avatar_beta">Custom avatar (BETA)</string>
     <string name="select_image">Select image</string>
     <string name="default_avatar">Default avatar</string>
     <string name="restore_default_avatar">Restore default avatar</string>
-    <string name="SearchResutls">Search Results</string>
-    <string name="Sujestions">Suggestions</string>
-    <string name="SearchHistory">Search History</string>
+    <string name="search_results">Search Results</string>
+    <string name="suggestions">Suggestions</string>
     <string name="secondary_color_style">Secondary color style</string>
     <string name="apply">Apply</string>
     <string name="collapse">Collapse</string>
     <string name="expand">Expand</string>
-    <string name="reset_to_default">Reset to default</string>
-    <string name="Presets">Presets</string>
     <string name="custom">Custom</string>
     <string name="close">Close</string>
     <string name="custom_value">Custom value</string>
@@ -420,11 +404,11 @@
     <string name="restore_description">Recover your data from a backup file</string>
     <string name="update_version">Update v%1$s</string>
     <string name="download_question">Would you like to download the new version?</string>
-    <string name="downloadup">Download</string>
-    <string name="downloadingup">Downloading update...</string>
+    <string name="update_download">Download</string>
+    <string name="update_downloading">Downloading update...</string>
     <string name="download_completed">Download completed</string>
     <string name="install">Install</string>
-    <string name="download_errorup">Error downloading the update</string>
+    <string name="update_download_error">Error downloading the update</string>
     <string name="tap_to_update">Tap to update</string>
     <string name="info_title">Information</string>
 </resources>

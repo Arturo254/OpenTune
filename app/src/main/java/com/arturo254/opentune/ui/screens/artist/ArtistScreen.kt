@@ -530,7 +530,7 @@ fun ArtistScreen(
                                                                     Log.w("ArtistScreen", "Album ID is empty")
                                                                     Toast.makeText(
                                                                         context,
-                                                                        "Error: Invalid album ID",
+                                                                        context.getString(R.string.error_invalid_album),
                                                                         Toast.LENGTH_SHORT
                                                                     ).show()
                                                                 }
@@ -538,7 +538,7 @@ fun ArtistScreen(
                                                                 Log.e("ArtistScreen", "Navigation error to album: ${item.id}", e)
                                                                 Toast.makeText(
                                                                     context,
-                                                                    "Navigation error",
+                                                                    context.getString(R.string.error_navigation),
                                                                     Toast.LENGTH_SHORT
                                                                 ).show()
                                                             }

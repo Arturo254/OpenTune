@@ -808,7 +808,7 @@ class MainActivity : ComponentActivity() {
                                                                     e.printStackTrace()
                                                                     Toast.makeText(
                                                                         context,
-                                                                        R.string.navigation_error,
+                                                                        R.string.error_navigation,
                                                                         Toast.LENGTH_SHORT
                                                                     ).show()
                                                                 }
@@ -860,7 +860,7 @@ class MainActivity : ComponentActivity() {
                                                                 e.printStackTrace()
                                                                 Toast.makeText(
                                                                     context,
-                                                                    R.string.navigation_error,
+                                                                    R.string.error_navigation,
                                                                     Toast.LENGTH_SHORT
                                                                 ).show()
                                                             }

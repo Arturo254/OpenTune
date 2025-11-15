@@ -206,8 +206,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">"प्लेलिस्ट आयात गरियो"</string>
-    <string name="imported_playlist">"आयात गरिएको प्लेलिस्ट"</string>
     <string name="removed_song_from_playlist">"प्लेलिस्टबाट \"%s\" हटाइयो"</string>
     <string name="playlist_synced">"प्लेलिस्ट सिंक गरियो"</string>
     <string name="undo">"पूर्ववत गर्नुहोस्"</string>
@@ -224,8 +222,6 @@
     <string name="error_no_internet">"नेटवर्क जडान छैन"</string>
     <string name="error_timeout">"समय सकियो"</string>
     <string name="error_unknown">"अज्ञात त्रुटि"</string>
-    <string name="seek_backward">"५ सेकेन्ड पछाडि"</string>
-    <string name="seek_forward">"५ सेकेन्ड अगाडि"</string>
 
     <!-- Player action -->
     <string name="action_like">"जस्तै"</string>
@@ -264,7 +260,6 @@
     <string name="enable_squiggly_slider">"स्क्विग्ली स्लाइडर सक्षम पार्नुहोस्"</string>
     <string name="enable_swipe_thumbnail">"गीत परिवर्तन गर्न स्वाइप सक्षम पार्नुहोस्"</string>
     <string name="pure_black">"शुद्ध कालो"</string>
-    <string name="customize_navigation_tabs">"नेभिगेसन ट्याबहरू अनुकूलित गर्नुहोस्"</string>
     <string name="player">"खेलाडी"</string>
     <string name="player_text_alignment">"खेलाडीको पाठ पङ्क्तिबद्धता"</string>
     <string name="lyrics_text_position">"गीतको पाठको स्थिति"</string>
@@ -305,13 +300,9 @@
     <string name="default_lib_chips">"पूर्वनिर्धारित लाइब्रेरी चिप परिवर्तन गर्नुहोस्"</string>
     <string name="set_quick_picks">"द्रुत छनौटहरू सेट गर्नुहोस्"</string>
     <string name="last_song_listened">"पछिल्लो पटक सुनेको गीतमा आधारित"</string>
-    <string name="restart_to_take_effect">"प्रभावकारी हुन पुनः सुरु गर्नुहोस्"</string>
     <string name="app_language">"एपको भाषा (बिटा)"</string>
     <string name="configure_app_language">"एपका भाषाहरू कन्फिगर गर्नुहोस्"</string>
-    <string name="intent_app_language_not_found">"एपको भाषा सेटिङहरू फेला पार्न सकिएन, कृपया तिनीहरूलाई म्यानुअल रूपमा कन्फिगर गर्नुहोस्।"</string>
-    <string name="open_supported_links">"पूर्वनिर्धारित रूपमा समर्थित लिङ्क खोल्नुहोस्"</string>
     <string name="configure_supported_links">"समर्थित लिङ्कहरू कन्फिगर गर्नुहोस्"</string>
-    <string name="intent_supported_links_not_found">"समर्थित लिङ्क सेटिङहरू फेला पार्न सकिएन, कृपया तिनीहरूलाई म्यानुअल रूपमा कन्फिगर गर्नुहोस्।"</string>
     <string name="enable_kugou">"KuGou गीत प्रदायक सक्षम गर्नुहोस्"</string>
     <string name="enable_lrclib">"LrcLib लिरिक्स प्रदायक सक्षम पार्नुहोस्"</string>
     <string name="set_first_lyrics_provider">"मनपर्ने गीत प्रदायक"</string>
@@ -372,12 +363,10 @@
     <string name="login_failed">"लगइन असफल भयो"</string>
     <string name="enable_discord_rpc">"रिच प्रेजेन्स सक्षम पार्नुहोस्"</string>
     <string name="default_links">"समर्थित लिङ्कहरू खोल्नुहोस्"</string>
-    <string name="open_app_settings_error">"एप सेटिङहरू खोल्न सकिएन"</string>
     <string name="release_notes">"रिलिज नोटहरू"</string>
     <string name="about">"बारेमा"</string>
     <string name="app_version">"एप संस्करण"</string>
     <string name="new_version_available">"नयाँ संस्करण उपलब्ध छ"</string>
-    <string name="translation_models">"अनुवाद मोडेलहरू"</string>
     <string name="clear_translation_models">"स्पष्ट अनुवाद मोडेलहरू"</string>
     <string name="all_time">"सबै समय"</string>
     <string name="past_24_hours">"विगत २४ घण्टा"</string>
@@ -387,18 +376,17 @@
     <string name="top_length">"मेरो शीर्ष सूचीको लम्बाइ"</string>
     <string name="history_duration">"इतिहास अवधि"</string>
     <string name="contributors">"योगदानकर्ताहरू"</string>
-    <string name="Donate">"दान गर्नुहोस्"</string>
-    <string name="Telegramchanel">"टेलिग्राम च्यानल"</string>
+    <string name="donate">"दान गर्नुहोस्"</string>
+    <string name="telegram_channel">"टेलिग्राम च्यानल"</string>
     <string name="contribution">"योगदान"</string>
-    <string name="Hi">"नमस्ते"</string>
-    <string name="NewVersion">"नयाँ संस्करण"</string>
-    <string name="Changelog">"परिवर्तन लग"</string>
+    <string name="new_version">"नयाँ संस्करण"</string>
+    <string name="changelog">"परिवर्तन लग"</string>
     <string name="changelogs">"परिवर्तन लगहरू"</string>
     <string name="no_changes">"कुनै परिवर्तन छैन"</string>
-    <string name="Translate">"अनुवाद गर्नुहोस्"</string>
-    <string name="Redirección">"पुन:निर्देशन"</string>
+    <string name="translate">"अनुवाद गर्नुहोस्"</string>
+    <string name="redirect">"पुन:निर्देशन"</string>
     <string name="poeditor_redirect">"तपाईंलाई poeditor.com मा रिडिरेक्ट गर्न लागिएको छ।"</string>
-    <string name="barwar">"ब्याकअपहरू पुनर्स्थापित गर्दा ध्यान दिनुहोस्, पहिले डाउनलोड गरिएका गीतहरू डाउनलोड गरिएका छैनन्। कुनै पनि डाउनलोड त्रुटिहरूबाट बच्नको लागि पुनर्स्थापित गीतहरू प्ले गर्न अत्यधिक सिफारिस गरिन्छ।"</string>
+    <string name="backup_restore_warning">"ब्याकअपहरू पुनर्स्थापित गर्दा ध्यान दिनुहोस्, पहिले डाउनलोड गरिएका गीतहरू डाउनलोड गरिएका छैनन्। कुनै पनि डाउनलोड त्रुटिहरूबाट बच्नको लागि पुनर्स्थापित गीतहरू प्ले गर्न अत्यधिक सिफारिस गरिन्छ।"</string>
     <string name="backup_link_title">"ब्याकअप सफलतापूर्वक अपलोड गरियो!"</string>
     <string name="backup_link_description">"तपाईंको ब्याकअप १४ दिनको लागि उपलब्ध हुनेछ।"</string>
     <string name="copy_link">"लिङ्क प्रतिलिपि गर्नुहोस्"</string>
@@ -412,17 +400,13 @@
     <string name="mute">"म्यूट गर्नुहोस्"</string>
     <string name="explore">"अन्वेषण गर्नुहोस्"</string>
     <string name="custom_avatar">"आफू अनुकूल अवतार (BETA)"</string>
-    <string name="custom_avatar_beta">"आफू अनुकूल अवतार (BETA)"</string>
     <string name="select_image">"छवि चयन गर्नुहोस्"</string>
     <string name="default_avatar">"पूर्वनिर्धारित अवतार"</string>
     <string name="restore_default_avatar">"पूर्वनिर्धारित अवतार पुनर्स्थापित गर्नुहोस्"</string>
-    <string name="SearchResutls">"खोज परिणामहरू"</string>
-    <string name="Sujestions">"सुझावहरू"</string>
-    <string name="SearchHistory">"खोज इतिहास"</string>
+    <string name="search_results">"खोज परिणामहरू"</string>
+    <string name="suggestions">"सुझावहरू"</string>
     <string name="collapse">"संक्षिप्त गर्नुहोस्"</string>
     <string name="expand">"विस्तार गर्नुहोस्"</string>
-    <string name="reset_to_default">"पूर्वनिर्धारितमा रिसेट गर्नुहोस्"</string>
-    <string name="Presets">"प्रिसेटहरू"</string>
     <string name="custom">"अनुकूलन"</string>
     <string name="close">"बन्द गर्नुहोस्"</string>
     <string name="custom_value">"आफू अनुकूल मान"</string>
@@ -434,11 +418,11 @@
     <string name="secondary_color_style">"माध्यमिक रङ शैली"</string>
     <string name="update_version">"v%1$s अपडेट गर्नुहोस्"</string>
     <string name="download_question">"के तपाईं नयाँ संस्करण डाउनलोड गर्न चाहनुहुन्छ?"</string>
-    <string name="downloadup">"डाउनलोड गर्नुहोस्"</string>
-    <string name="downloadingup">"अपडेट डाउनलोड गर्दै..."</string>
+    <string name="update_download">"डाउनलोड गर्नुहोस्"</string>
+    <string name="update_downloading">"अपडेट डाउनलोड गर्दै..."</string>
     <string name="download_completed">"डाउनलोड पूरा भयो"</string>
     <string name="install">"इन्स्टल गर्नुहोस्"</string>
-    <string name="download_errorup">"अपडेट डाउनलोड गर्दा त्रुटि भयो"</string>
+    <string name="update_download_error">"अपडेट डाउनलोड गर्दा त्रुटि भयो"</string>
     <string name="tap_to_update">"अद्यावधिक गर्न ट्याप गर्नुहोस्"</string>
     <string name="info_title">"जानकारी"</string>
     <string name="info_description">"यस खण्डले ब्याकअप र पुनर्स्थापना प्रक्रियाको बारेमा मुख्य विवरणहरू प्रदान गर्दछ, जसमा तपाईंको डेटाको सुरक्षा र तपाईंको जानकारी सुरक्षित र सजिलै पहुँचयोग्य छ भनी कसरी सुनिश्चित गर्ने भन्ने कुरा समावेश छ।"</string>
@@ -448,7 +432,6 @@
     <string name="restore_description">"ब्याकअप फाइलबाट आफ्नो डेटा पुन: प्राप्ति गर्नुहोस्"</string>
     <string name="keep_listening">"seguir_escucha"</string>
     <string name="link_copied">"link_copiado"</string>
-    <string name="redireccion"></string>
-    <string name="Version"></string>
+    <string name="version"></string>
     <string name="notification"></string>
 </resources>

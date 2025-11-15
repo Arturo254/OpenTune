@@ -161,7 +161,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">لیست‌پخش واردشد</string>
     <string name="removed_song_from_playlist">«%s» از لیست‌پخش حذف شد</string>
     <string name="playlist_synced">لیست‌پخش همگام‌شد</string>
     <string name="undo">واگرد</string>
@@ -205,7 +204,6 @@
     <string name="dark_theme_follow_system">پیروی از سیستم</string>
     <string name="pure_black">مشکی خالص</string>
     <string name="default_open_tab">زبانه باز پیش‌فرض</string>
-    <string name="customize_navigation_tabs">سفارشی‌کردن زبانه‌های ناوبری</string>
     <string name="lyrics_text_position">موقعیت متن ترانه</string>
     <string name="left">چپ</string>
     <string name="center">وسط</string>
@@ -219,7 +217,6 @@
     <string name="enable_proxy">فعال‌کردن پروکسی</string>
     <string name="proxy_type">نوع پروکسی</string>
     <string name="proxy_url">آدرس‌اینترنتی پروکسی</string>
-    <string name="restart_to_take_effect">راه‌اندازی‌مجدد برای اعمال اثر</string>
 
     <string name="player_and_audio">پخش‌کننده و صدا</string>
     <string name="audio_quality">کیفیت صدا</string>
@@ -256,7 +253,6 @@
     <string name="backup_restore">پشتیبان‌گیری و بازگردانی</string>
     <string name="backup">پشتیبان‌گیری</string>
     <string name="restore">بازگردانی</string>
-    <string name="imported_playlist">لیست‌پخش واردشد</string>
     <string name="backup_create_success">پشتیبان باموفقیت ایجادشد</string>
     <string name="backup_create_failed">پشتیبان ایجاد نشد</string>
     <string name="restore_failed">بازیابی پشتیبان انجام‌نشد</string>
@@ -265,6 +261,5 @@
     <string name="app_version">نسخه‌ی برنامه</string>
 
     <string name="new_version_available">نسخه‌ی جدید دردسترس‌است</string>
-    <string name="translation_models">نمونه‌های ترجمه</string>
     <string name="clear_translation_models">پاک‌کردن نمونه‌های ترجمه</string>
 </resources>

@@ -191,8 +191,6 @@
         <item quantity="other">%d mal</item>
     </plurals>
     <!-- Snackbar -->
-    <string name="playlist_imported">Playlist importiert</string>
-    <string name="imported_playlist">Importierte Playlist</string>
     <string name="removed_song_from_playlist">\"%s\" aus der Playlist entfernt</string>
     <string name="playlist_synced">Playlist synchronisiert</string>
     <string name="undo">Rückgängig</string>
@@ -208,8 +206,6 @@
     <string name="error_no_internet">Keine Netzwerkverbindung</string>
     <string name="error_timeout">Zeitüberschreitung</string>
     <string name="error_unknown">Unbekannter Fehler</string>
-    <string name="seek_backward">5 Sekunden zurück</string>
-    <string name="seek_forward">5 Sekunden vor</string>
     <!-- Player action -->
     <string name="action_like">Gefällt mir</string>
     <string name="action_remove_like">\"Gefällt mir\" entfernen</string>
@@ -244,7 +240,6 @@
     <string name="enable_squiggly_slider">Wellenslider aktivieren</string>
     <string name="enable_swipe_thumbnail">Wischen zum Ändern des Titels aktivieren</string>
     <string name="pure_black">Reines Schwarz</string>
-    <string name="customize_navigation_tabs">Navigationsleiste anpassen</string>
     <string name="player">Player</string>
     <string name="player_text_alignment">Textausrichtung des Players</string>
     <string name="lyrics_text_position">Position des Liedtextes</string>
@@ -285,13 +280,9 @@
     <string name="default_lib_chips">Standard-Bibliotheks-Chip ändern</string>
     <string name="set_quick_picks">Schnellauswahl festlegen</string>
     <string name="last_song_listened">Basierend auf dem zuletzt gehörtem Titel</string>
-    <string name="restart_to_take_effect">Neustarten, damit Änderungen wirksam werden</string>
     <string name="app_language">App-Sprache (Beta)</string>
     <string name="configure_app_language">App-Sprachen konfigurieren</string>
-    <string name="intent_app_language_not_found">Konnte die App-Spracheinstellungen nicht finden, bitte manuell konfigurieren</string>
-    <string name="open_supported_links">Standardmäßig unterstützte Links öffnen</string>
     <string name="configure_supported_links">Unterstützte Links konfigurieren</string>
-    <string name="intent_supported_links_not_found">Konnte die Einstellungen für unterstützten Links nicht finden, bitte manuell konfigurieren</string>
     <string name="enable_kugou">KuGou-Liedtextanbieter aktivieren</string>
     <string name="enable_lrclib">LrcLib-Liedtextanbieter aktivieren</string>
     <string name="set_first_lyrics_provider">Bevorzugter Liedtext-Anbieter</string>
@@ -352,12 +343,10 @@
     <string name="login_failed">Anmelden fehlgeschlagen</string>
     <string name="enable_discord_rpc">Aktivitätsstatus aktivieren</string>
     <string name="default_links">Unterstützte Links öffnen</string>
-    <string name="open_app_settings_error">Konnte die App-Einstellungen nicht öffnen</string>
     <string name="release_notes">Neuigkeiten</string>
     <string name="about">Über</string>
     <string name="app_version">App-Version</string>
     <string name="new_version_available">Neue Version verfügbar</string>
-    <string name="translation_models">Übersetzungsmodelle</string>
     <string name="clear_translation_models">Übersetzungsmodelle leeren</string>
     <string name="all_time">Allzeit</string>
     <string name="past_24_hours">Letzten 24 Stunden</string>
@@ -367,18 +356,17 @@
     <string name="top_length">Länge meiner Top-Liste</string>
     <string name="history_duration">Zeitraum des Verlaufs</string>
     <string name="contributors">Mitwirkende</string>
-    <string name="Donate">Spenden</string>
-    <string name="Telegramchanel">Telegramm-Channel</string>
+    <string name="donate">Spenden</string>
+    <string name="telegram_channel">Telegramm-Channel</string>
     <string name="contribution">Mitwirken</string>
-    <string name="Hi">Hi</string>
-    <string name="NewVersion">Neue Version</string>
-    <string name="Changelog">Änderungsverlauf</string>
+    <string name="new_version">Neue Version</string>
+    <string name="changelog">Änderungsverlauf</string>
     <string name="changelogs">Änderungsverläufe</string>
     <string name="no_changes">Keine Änderungen</string>
-    <string name="Translate">Übersetzen</string>
-    <string name="Redirección">Umleitung</string>
+    <string name="translate">Übersetzen</string>
+    <string name="redirect">Umleitung</string>
     <string name="poeditor_redirect">Sie sind dabei auf poeditor.com umgeleitet zu werden</string>
-    <string name="barwar">Bei der Wiederherstellung der Sicherungen werden die zuvor heruntergeladenen Titel nicht heruntergeladen. Es ist DRINGEND EMPFOHLEN, die wiederhergestellten Titel in Reihenfolge abzuspielen, um Downloadfehler zu vermeiden.</string>
+    <string name="backup_restore_warning">Bei der Wiederherstellung der Sicherungen werden die zuvor heruntergeladenen Titel nicht heruntergeladen. Es ist DRINGEND EMPFOHLEN, die wiederhergestellten Titel in Reihenfolge abzuspielen, um Downloadfehler zu vermeiden.</string>
     <string name="backup_link_title">Sicherung erfolgreich hochgeladen!</string>
     <string name="backup_link_description">Ihre Sicherung wird 14 Tage lang verfügbar sein.</string>
     <string name="copy_link">Link kopieren</string>
@@ -392,17 +380,13 @@
     <string name="mute">Stummschaltung</string>
     <string name="explore">Entdecken</string>
     <string name="custom_avatar">"Eigener Avatar "</string>
-    <string name="custom_avatar_beta">Eigener Avatar</string>
     <string name="select_image">Bild auswählen</string>
     <string name="default_avatar">Standard-Avatar</string>
     <string name="restore_default_avatar">Standard-Avatar wiederherstellen</string>
-    <string name="SearchResutls">Suchergebnisse</string>
-    <string name="Sujestions">Vorschläge</string>
-    <string name="SearchHistory">Suchverlauf</string>
+    <string name="search_results">Suchergebnisse</string>
+    <string name="suggestions">Vorschläge</string>
     <string name="collapse">Einklappen</string>
     <string name="expand">Erweitern</string>
-    <string name="reset_to_default">Auf Standard zurücksetzen</string>
-    <string name="Presets">Vorlagen</string>
     <string name="custom">Eigene</string>
     <string name="close">Schließen</string>
     <string name="custom_value">Eigener Wert</string>
@@ -414,11 +398,11 @@
     <string name="secondary_color_style">Sekundärer Farbstil</string>
     <string name="update_version">Aktualisiere v%1$s</string>
     <string name="download_question">Möchten Sie die neue Version herunterladen?</string>
-    <string name="downloadup">Download</string>
-    <string name="downloadingup">Update wird heruntergeladen...</string>
+    <string name="update_download">Download</string>
+    <string name="update_downloading">Update wird heruntergeladen...</string>
     <string name="download_completed">Download abgeschlossen</string>
     <string name="install">Installieren</string>
-    <string name="download_errorup">Fehler beim Herunterladen des Updates</string>
+    <string name="update_download_error">Fehler beim Herunterladen des Updates</string>
     <string name="tap_to_update">Zum Aktualisieren tippen</string>
     <string name="info_title">Informationen</string>
     <string name="info_description">Dieser Abschnitt enthält wichtige Details zum Backup-und Wiederherstellungsprozess einschließlich der Sicherheit Ihrer Daten und der Sicherstellung Ihrer Informationen bleibt sicher und leicht zugänglich.</string>
@@ -427,8 +411,7 @@
     <string name="backup_description">Erstellen Sie eine Sicherungsdatei Ihrer aktuellen Daten</string>
     <string name="restore_description">Daten aus einer Sicherungsdatei wiederherstellen</string>
     <string name="link_copied">Link kopiert</string>
-    <string name="redireccion">Umleitung</string>
-    <string name="Version">Version</string>
+    <string name="version">Version</string>
     <string name="notification">Benachrichtigungen aktivieren</string>
     <string name="cached_playlist">Zwischengespeichert</string>
     <string name="added_to_queue">zur Warteschlange hinzugefügt</string>

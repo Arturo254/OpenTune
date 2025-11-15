@@ -226,8 +226,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">"Playlista zaimportowana"</string>
-    <string name="imported_playlist">"Importowana playlista"</string>
     <string name="removed_song_from_playlist">"Usunięto \"%s\" utworów z playlisty"</string>
     <string name="playlist_synced">"Playlista zsynchronizowana"</string>
     <string name="undo">"Cofnij"</string>
@@ -246,8 +244,6 @@
     <string name="error_no_internet">"Brak połączenia sieciowego"</string>
     <string name="error_timeout">"Przekroczono limit czasu"</string>
     <string name="error_unknown">"Nieznany błąd"</string>
-    <string name="seek_backward">"5 sekund wstecz"</string>
-    <string name="seek_forward">"5 sekund do przodu"</string>
 
     <!-- Player action -->
     <string name="action_like">"Polub"</string>
@@ -286,7 +282,6 @@
     <string name="enable_squiggly_slider">"Włącz kręcony suwak"</string>
     <string name="enable_swipe_thumbnail">"Zmieniaj utwór przesuwając palcem"</string>
     <string name="pure_black">"Czysta czerń"</string>
-    <string name="customize_navigation_tabs">"Dostosuj zakładki nawigacji"</string>
     <string name="player">"Odtwarzacz"</string>
     <string name="player_text_alignment">"Ustawienie tekstu odtwarzacza"</string>
     <string name="lyrics_text_position">"Pozycja tekstu"</string>
@@ -327,13 +322,9 @@
     <string name="default_lib_chips">"Zmień domyślny czip biblioteki"</string>
     <string name="set_quick_picks">"Ustaw szybki wybór"</string>
     <string name="last_song_listened">"Na podstawie poprzednio słuchanego utworu"</string>
-    <string name="restart_to_take_effect">"Zrestartuj, aby zastosować zmiany"</string>
     <string name="app_language">"Język aplikacji (Beta)"</string>
     <string name="configure_app_language">"Konfiguruj język aplikacji"</string>
-    <string name="intent_app_language_not_found">"Nie znalazłem aplikacji dla ustawień języka, proszę skonfiguruj je manualnie"</string>
-    <string name="open_supported_links">"Otwórz wspierany link domyślnie"</string>
     <string name="configure_supported_links">"Konfiguruj wspierane linki"</string>
-    <string name="intent_supported_links_not_found">"Nie znalazłem aplikacji dla ustawień linków, proszę skonfiguruj je manualnie"</string>
     <string name="enable_kugou">"Włącz szukanie tekstu w KuGou"</string>
     <string name="enable_lrclib">"Włącz szukanie tekstu w LrcLib"</string>
     <string name="set_first_lyrics_provider">"Preferowany dostawca tekstów"</string>
@@ -394,12 +385,10 @@
     <string name="login_failed">"Logowanie nieudane"</string>
     <string name="enable_discord_rpc">"Włącz Rich Presence"</string>
     <string name="default_links">"Otwórz wspierane linki"</string>
-    <string name="open_app_settings_error">"Nie udało się otworzyć ustawień aplikacji"</string>
     <string name="release_notes">"Informacje o wydaniach"</string>
     <string name="about">"O projekcie"</string>
     <string name="app_version">"Wersja aplikacji"</string>
     <string name="new_version_available">"Nowsza wersja dostępna"</string>
-    <string name="translation_models">"Modele tłumaczeń"</string>
     <string name="clear_translation_models">"Wyczyść modele tłumaczeń"</string>
     <string name="all_time">"Cały czas"</string>
     <string name="past_24_hours">"Ostatnie 24 godziny"</string>
@@ -409,18 +398,17 @@
     <string name="top_length">"Długość listy Moje Top"</string>
     <string name="history_duration">"Długość historii"</string>
     <string name="contributors">"Kontrybutorzy"</string>
-    <string name="Donate">"Darowizna"</string>
-    <string name="Telegramchanel">"Kanał Telegram"</string>
+    <string name="donate">"Darowizna"</string>
+    <string name="telegram_channel">"Kanał Telegram"</string>
     <string name="contribution">"Kontrybutorzy"</string>
-    <string name="Hi">"Cześć"</string>
-    <string name="NewVersion">"Nowa wersja"</string>
-    <string name="Changelog">"Lista zmian"</string>
+    <string name="new_version">"Nowa wersja"</string>
+    <string name="changelog">"Lista zmian"</string>
     <string name="changelogs">"Listy zmian"</string>
     <string name="no_changes">"Bez zmian"</string>
-    <string name="Translate">"Tłumaczenie"</string>
-    <string name="Redirección">"Przekierowanie"</string>
+    <string name="translate">"Tłumaczenie"</string>
+    <string name="redirect">"Przekierowanie"</string>
     <string name="poeditor_redirect">"Zostaniesz przekierowany na poeditor.com"</string>
-    <string name="barwar">"Uwaga jeśli przywracasz kopie zapasową, wcześniej pobrane utwory nie zostaną pobrane. ZALECA SIĘ odtworzenie przywróconych utworów w celu uniknięcia błędów pobierania."</string>
+    <string name="backup_restore_warning">"Uwaga jeśli przywracasz kopie zapasową, wcześniej pobrane utwory nie zostaną pobrane. ZALECA SIĘ odtworzenie przywróconych utworów w celu uniknięcia błędów pobierania."</string>
     <string name="backup_link_title">"Kopia opublikowana poprawnie!"</string>
     <string name="backup_link_description">"Twoja kopia będzie dostępna przez 14 dni."</string>
     <string name="copy_link">"Kopiuj link"</string>
@@ -436,17 +424,13 @@
     <string name="mute">"Wycisz"</string>
     <string name="explore">"Odkrywaj"</string>
     <string name="custom_avatar">"Własny awatar (BETA)"</string>
-    <string name="custom_avatar_beta">"Własny awatar (BETA)"</string>
     <string name="select_image">"Wybierz obraz"</string>
     <string name="default_avatar">"Domyślny awatar"</string>
     <string name="restore_default_avatar">"Przywróć domyślny awatar"</string>
-    <string name="SearchResutls">"Wyniki wyszukiwania"</string>
-    <string name="Sujestions">"Sugestie"</string>
-    <string name="SearchHistory">"Historia wyszukiwania"</string>
+    <string name="search_results">"Wyniki wyszukiwania"</string>
+    <string name="suggestions">"Sugestie"</string>
     <string name="collapse">"Zminimalizuj"</string>
     <string name="expand">"Rozwiń"</string>
-    <string name="reset_to_default">"Resetuj do ustawień domyślnych"</string>
-    <string name="Presets">"Presety"</string>
     <string name="custom">"Własne"</string>
     <string name="close">"Zamknij"</string>
     <string name="custom_value">"Własna wartość"</string>
@@ -458,11 +442,11 @@
     <string name="secondary_color_style">"Drugi kolor"</string>
     <string name="update_version">"Wersja v%1$s"</string>
     <string name="download_question">"Czy chcesz pobrać nową wersję?"</string>
-    <string name="downloadup">"Pobierz"</string>
-    <string name="downloadingup">"Pobieranie aktualizacji..."</string>
+    <string name="update_download">"Pobierz"</string>
+    <string name="update_downloading">"Pobieranie aktualizacji..."</string>
     <string name="download_completed">"Pobieranie ukończone"</string>
     <string name="install">"Zainstaluj"</string>
-    <string name="download_errorup">"Błąd pobierania aktualizacji"</string>
+    <string name="update_download_error">"Błąd pobierania aktualizacji"</string>
     <string name="tap_to_update">"Kliknij, aby zaktualizować"</string>
     <string name="info_title">"Informacje"</string>
     <string name="info_description">"W tej sekcji znajdziesz najważniejsze informacje o procesie tworzenia kopii zapasowej i przywracania danych, w tym o bezpieczeństwie danych oraz sposobie zapewnienia, że ​​informacje pozostaną bezpieczne i łatwo dostępne."</string>
@@ -472,8 +456,7 @@
     <string name="restore_description">"Przywróc swoje dane z kopii zapasowej"</string>
     <string name="keep_listening">"słuchaj_dalej"</string>
     <string name="link_copied">"Link skopiowany"</string>
-    <string name="redireccion">"Przekierowanie"</string>
-    <string name="Version">"Wersja"</string>
+    <string name="version">"Wersja"</string>
     <string name="notification">"Powiadomienie"</string>
     <string name="cached_playlist">"Playlista pamięci tymczasowej"</string>
     <string name="added_to_queue">"Dodano do kolejki"</string>
@@ -486,7 +469,6 @@
     <string name="clear_song_cache_confirmation">"usuń_pamięć_tymczasową_utworu"</string>
     <string name="clear_image_cache_confirmation">"usuń_pamięć_tymczasową_obrazu"</string>
     <string name="confirm">"Potwierdź"</string>
-    <string name="problem_solver">"usun_problemy"</string>
 
     <!-- Fuzzy -->
     <string name="action_login">"akcja_login"</string>
@@ -500,10 +482,9 @@
     <string name="customize_colors">"dostosuj_kolory"</string>
     <string name="more_options">"więcej_opcji"</string>
     <string name="text_color">"kolor_tekstu"</string>
-    <string name="secondary_text_color">"drugi_kolor_tekstu"</string>
     <string name="background_color">"kolor_tła"</string>
     <string name="back">"powrót"</string>
-    <string name="navigation_error">"błąd_nawigacji"</string>
+    <string name="error_navigation">"błąd_nawigacji"</string>
     <string name="notifications_enabled">"powiadomienia_włączone"</string>
     <string name="notifications_disabled">"powiadomienia_wyłączone"</string>
     <string name="visitor_data_title">"dane_tytułowe_wizytora"</string>

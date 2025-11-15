@@ -191,8 +191,6 @@
         <item quantity="other">%d zamanlar</item>
     </plurals>
     <!-- Snackbar -->
-    <string name="playlist_imported">Oynatma listesi içe aktarıldı</string>
-    <string name="imported_playlist">İçe aktarılan oynatma listesi</string>
     <string name="removed_song_from_playlist">\"%s\" Oynatma listesinden kaldırıldı</string>
     <string name="playlist_synced">Oynatma listesi eşitlendi</string>
     <string name="undo">Geri al</string>
@@ -208,8 +206,6 @@
     <string name="error_no_internet">İnternet bağlantısı yok</string>
     <string name="error_timeout">Zaman aşımı</string>
     <string name="error_unknown">Bilinmeyen hata</string>
-    <string name="seek_backward">5 saniye geri</string>
-    <string name="seek_forward">5 saniye ileri</string>
     <!-- Player action -->
     <string name="action_like">Beğen</string>
     <string name="action_remove_like">Beğeniyi kaldır</string>
@@ -244,7 +240,6 @@
     <string name="enable_squiggly_slider">Kıvrımlı kaydırıcıyı etkinleştir</string>
     <string name="enable_swipe_thumbnail">Şarkıyı değiştirmek için kaydırmayı etkinleştir</string>
     <string name="pure_black">Doğal siyah</string>
-    <string name="customize_navigation_tabs">Gezinme sekmelerini özelleştirin</string>
     <string name="player">Oynatıcı</string>
     <string name="player_text_alignment">Oynatıcı metin hizalaması</string>
     <string name="lyrics_text_position">Şarkı sözü metni konumu</string>
@@ -285,13 +280,9 @@
     <string name="default_lib_chips">Varsayılan kütüphane simgesini değiştir</string>
     <string name="set_quick_picks">Hızlı seçimi ayarla</string>
     <string name="last_song_listened">Son dinlenen şarkıya göre</string>
-    <string name="restart_to_take_effect">Etkinleştirmek için yeniden başlat</string>
     <string name="app_language">Uygulama dili (Beta)</string>
     <string name="configure_app_language">Uygulama dillerini yapılandırın</string>
-    <string name="intent_app_language_not_found">Uygulama dil ayarlarını bulamadım, lütfen bunları manuel olarak yapılandırın</string>
-    <string name="open_supported_links">Desteklenen bağlantıyı varsayılan olarak aç</string>
     <string name="configure_supported_links">Desteklenen bağlantıları yapılandırın</string>
-    <string name="intent_supported_links_not_found">Desteklenen bağlantı ayarları bulunamadı, lütfen bunları manuel olarak yapılandırın</string>
     <string name="enable_kugou">KuGou şarkı sözü sağlayıcısını etkinleştir</string>
     <string name="enable_lrclib">LrcLib şarkı sözü sağlayıcısını etkinleştir</string>
     <string name="set_first_lyrics_provider">Tercih edilen şarkı sözü sağlayıcısı</string>
@@ -352,12 +343,10 @@
     <string name="login_failed">Oturum açma başarısız oldu</string>
     <string name="enable_discord_rpc">Gelişmiş Durumu Etkinleştir</string>
     <string name="default_links">Desteklenen bağlantıları aç</string>
-    <string name="open_app_settings_error">Uygulama ayarları açılamadı</string>
     <string name="release_notes">Sürüm Notları</string>
     <string name="about">Hakkında</string>
     <string name="app_version">Uygulama versiyonu</string>
     <string name="new_version_available">Yeni sürüm mevcut</string>
-    <string name="translation_models">Çeviri modelleri</string>
     <string name="clear_translation_models">Çeviri modellerini sil</string>
     <string name="all_time">Tüm zamanlar</string>
     <string name="past_24_hours">Son 24 saat</string>
@@ -367,18 +356,17 @@
     <string name="top_length">En iyi listemin süresi</string>
     <string name="history_duration">Geçmiş süre</string>
     <string name="contributors">katkıda bulunanlar</string>
-    <string name="Donate">Bağış yap</string>
-    <string name="Telegramchanel">Telegram Kanalı</string>
+    <string name="donate">Bağış yap</string>
+    <string name="telegram_channel">Telegram Kanalı</string>
     <string name="contribution">Katkıda bulun</string>
-    <string name="Hi">Selam</string>
-    <string name="NewVersion">Yeni sürüm</string>
-    <string name="Changelog">Değişiklik günlüğü</string>
+    <string name="new_version">Yeni sürüm</string>
+    <string name="changelog">Değişiklik günlüğü</string>
     <string name="changelogs">değişikliklikler</string>
     <string name="no_changes">değişiklik yok</string>
-    <string name="Translate">Çeviri</string>
-    <string name="Redirección">Yönlendirme</string>
+    <string name="translate">Çeviri</string>
+    <string name="redirect">Yönlendirme</string>
     <string name="poeditor_redirect">Poeditor.com\'a yönlendiriliyor</string>
-    <string name="barwar">Yedekleri geri yüklerken dikkatli olun, daha önce indirilen şarkılar tekrar indirilmez. Herhangi bir indirme hatası yaşamamak için geri yüklenen şarkıları çalmanız ŞİDDETLE TAVSİYE EDİLİR.</string>
+    <string name="backup_restore_warning">Yedekleri geri yüklerken dikkatli olun, daha önce indirilen şarkılar tekrar indirilmez. Herhangi bir indirme hatası yaşamamak için geri yüklenen şarkıları çalmanız ŞİDDETLE TAVSİYE EDİLİR.</string>
     <string name="backup_link_title">Yedekleme başarıyla yüklendi!</string>
     <string name="backup_link_description">Yedeklemeniz 14 gün boyunca kullanılabilir olacaktır.</string>
     <string name="copy_link">Bağlantıyı kopyala</string>
@@ -392,17 +380,13 @@
     <string name="mute">Sessiz</string>
     <string name="explore">Keşfet</string>
     <string name="custom_avatar">Özel avatar (BETA)</string>
-    <string name="custom_avatar_beta">Özel avatar (BETA)</string>
     <string name="select_image">Görseli seç</string>
     <string name="default_avatar">Varsayılan avatar</string>
     <string name="restore_default_avatar">Varsayılan avatarı geri yükle</string>
-    <string name="SearchResutls">Sonuçlarda ara</string>
-    <string name="Sujestions">Öneriler</string>
-    <string name="SearchHistory">Arama geçmişi</string>
+    <string name="search_results">Sonuçlarda ara</string>
+    <string name="suggestions">Öneriler</string>
     <string name="collapse">Daralt</string>
     <string name="expand">Genişlet</string>
-    <string name="reset_to_default">Varsayılana sıfırla</string>
-    <string name="Presets">Ön ayarlar</string>
     <string name="custom">Özel</string>
     <string name="close">Kapalı</string>
     <string name="custom_value">Özel değerler</string>
@@ -414,11 +398,11 @@
     <string name="secondary_color_style">İkincil renk stili</string>
     <string name="update_version">Versiyon%1$s</string>
     <string name="download_question">Yeni sürümü indirmek ister misiniz?</string>
-    <string name="downloadup">İndir</string>
-    <string name="downloadingup">Güncellenme indiriliyor...</string>
+    <string name="update_download">İndir</string>
+    <string name="update_downloading">Güncellenme indiriliyor...</string>
     <string name="download_completed">İndirme tamamlandı</string>
     <string name="install">Yükle</string>
-    <string name="download_errorup">Güncelleme indirilirken hata oluştu</string>
+    <string name="update_download_error">Güncelleme indirilirken hata oluştu</string>
     <string name="tap_to_update">Güncellemek için dokun</string>
     <string name="info_title">Bilgilendirme</string>
     <string name="info_description">Bu bölümde, verilerinizin güvenliği ve bilgilerinizin güvenli ve kolay erişilebilir kalmasının nasıl sağlanacağı da dahil olmak üzere yedekleme ve geri yükleme süreci hakkında önemli ayrıntılar sağlanmaktadır.</string>
@@ -427,7 +411,6 @@
     <string name="backup_description">Mevcut verilerinizin bir yedek dosyasını oluşturun</string>
     <string name="restore_description">Verilerinizi bir yedekleme dosyasından kurtarın</string>
     <string name="link_copied">Bağlantı kopyalandı</string>
-    <string name="redireccion">Yönlendirme</string>
-    <string name="Version">Sürüm</string>
+    <string name="version">Sürüm</string>
     <string name="notification">Bildirimleri Etkinleştir</string>
 </resources>

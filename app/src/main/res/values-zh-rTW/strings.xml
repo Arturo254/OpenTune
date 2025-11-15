@@ -181,8 +181,6 @@
         <item quantity="other">%d 次</item>
     </plurals>
     <!-- Snackbar -->
-    <string name="playlist_imported">已匯入此播放清單</string>
-    <string name="imported_playlist">已匯入的播放清單</string>
     <string name="removed_song_from_playlist">已將「%s」從播放清單移除</string>
     <string name="playlist_synced">播放清單已同步</string>
     <string name="undo">復原</string>
@@ -197,8 +195,6 @@
     <string name="error_no_internet">沒有網路連線</string>
     <string name="error_timeout">連線逾時</string>
     <string name="error_unknown">未知的錯誤</string>
-    <string name="seek_backward">倒退5秒</string>
-    <string name="seek_forward">快進5秒</string>
     <!-- Player action -->
     <string name="action_like">按讚</string>
     <string name="action_remove_like">收回讚</string>
@@ -233,7 +229,6 @@
     <string name="enable_squiggly_slider">啟用波浪滑桿</string>
     <string name="enable_swipe_thumbnail">啟用滑動切歌</string>
     <string name="pure_black">純黑</string>
-    <string name="customize_navigation_tabs">自訂導覽列</string>
     <string name="player">播放器</string>
     <string name="player_text_alignment">播放器文字對齊</string>
     <string name="lyrics_text_position">歌詞文字位置</string>
@@ -274,13 +269,9 @@
     <string name="default_lib_chips">更換預設的媒體庫片段</string>
     <string name="set_quick_picks">設定快速選擇</string>
     <string name="last_song_listened">根據最近聽過的歌曲</string>
-    <string name="restart_to_take_effect">重啟以套用變更</string>
     <string name="app_language">應用程式語言（測試版）</string>
     <string name="configure_app_language">配置應用程式語言</string>
-    <string name="intent_app_language_not_found">無法找到應用程式語言設定，請手動配置它們</string>
-    <string name="open_supported_links">預設打開支援的連結</string>
     <string name="configure_supported_links">配置支援的連結</string>
-    <string name="intent_supported_links_not_found">無法找到應用程式語言設定，請手動配置它們</string>
     <string name="enable_kugou">使用酷狗音樂提供歌詞</string>
     <string name="enable_lrclib">使用 LrcLib 提供歌詞</string>
     <string name="set_first_lyrics_provider">首選歌詞來源</string>
@@ -341,12 +332,10 @@
     <string name="login_failed">登入失敗</string>
     <string name="enable_discord_rpc">啟用 Rich Presense</string>
     <string name="default_links">開啟支援的連結</string>
-    <string name="open_app_settings_error">無法打開應用程式設定</string>
     <string name="release_notes">版本資訊</string>
     <string name="about">關於</string>
     <string name="app_version">應用程式版本</string>
     <string name="new_version_available">發現新版本</string>
-    <string name="translation_models">翻譯模型</string>
     <string name="clear_translation_models">清除翻譯模型</string>
     <string name="all_time">所有時間</string>
     <string name="past_24_hours">過去 24 小時</string>
@@ -356,18 +345,17 @@
     <string name="top_length">我的排名清單長度</string>
     <string name="history_duration">播放紀錄時長</string>
     <string name="contributors">貢獻者</string>
-    <string name="Donate">贊助</string>
-    <string name="Telegramchanel">Telegram 頻道</string>
+    <string name="donate">贊助</string>
+    <string name="telegram_channel">Telegram 頻道</string>
     <string name="contribution">貢獻</string>
-    <string name="Hi">你好</string>
-    <string name="NewVersion">新版本</string>
-    <string name="Changelog">更新日誌</string>
+    <string name="new_version">新版本</string>
+    <string name="changelog">更新日誌</string>
     <string name="changelogs">更新日誌</string>
     <string name="no_changes">沒有變更</string>
-    <string name="Translate">翻譯</string>
-    <string name="Redirección">重新導向</string>
+    <string name="translate">翻譯</string>
+    <string name="redirect">重新導向</string>
     <string name="poeditor_redirect">您將被重新導向到 poeditor.com</string>
-    <string name="barwar">請注意，在還原備份時，先前下載的曲目不會被下載。强烈推薦按順序播放還原的曲目，以避免任何下載錯誤。</string>
+    <string name="backup_restore_warning">請注意，在還原備份時，先前下載的曲目不會被下載。强烈推薦按順序播放還原的曲目，以避免任何下載錯誤。</string>
     <string name="backup_link_title">備份上傳成功！</string>
     <string name="backup_link_description">您的備份在 14 天內可供使用。</string>
     <string name="copy_link">複製連結</string>
@@ -380,17 +368,13 @@
     <string name="mute">靜音</string>
     <string name="explore">探索</string>
     <string name="custom_avatar">"自定頭像 "</string>
-    <string name="custom_avatar_beta">自定頭像</string>
     <string name="select_image">選擇圖片</string>
     <string name="default_avatar">預設頭像</string>
     <string name="restore_default_avatar">恢復預設頭像</string>
-    <string name="SearchResutls">搜尋結果</string>
-    <string name="Sujestions">建議</string>
-    <string name="SearchHistory">搜尋記錄</string>
+    <string name="search_results">搜尋結果</string>
+    <string name="suggestions">建議</string>
     <string name="collapse">收合</string>
     <string name="expand">展開</string>
-    <string name="reset_to_default">重設為預設值</string>
-    <string name="Presets">預設值</string>
     <string name="custom">自訂</string>
     <string name="close">關閉</string>
     <string name="custom_value">自訂值</string>
@@ -402,11 +386,11 @@
     <string name="secondary_color_style">次要色彩樣式</string>
     <string name="update_version">V%1$sを更新</string>
     <string name="download_question">要下載新版本嗎？</string>
-    <string name="downloadup">下載</string>
-    <string name="downloadingup">正在下載更新……</string>
+    <string name="update_download">下載</string>
+    <string name="update_downloading">正在下載更新……</string>
     <string name="download_completed">下載完成</string>
     <string name="install">安裝</string>
-    <string name="download_errorup">下載更新時出錯</string>
+    <string name="update_download_error">下載更新時出錯</string>
     <string name="tap_to_update">點擊以更新</string>
     <string name="info_title">資訊</string>
     <string name="info_description">本節提供有關備份和恢復過程的關鍵細節，包括您的資料安全性以及如何確保您的資訊保持安全並易於存取。</string>
@@ -415,8 +399,7 @@
     <string name="backup_description">建立目前資料的備份文件</string>
     <string name="restore_description">從備份檔案恢復您的資料</string>
     <string name="link_copied">已複製連結</string>
-    <string name="redireccion">重定向</string>
-    <string name="Version">版本</string>
+    <string name="version">版本</string>
     <string name="notification">啟用通知</string>
     <string name="cached_playlist">快取</string>
     <string name="added_to_queue">已加入待播清單</string>

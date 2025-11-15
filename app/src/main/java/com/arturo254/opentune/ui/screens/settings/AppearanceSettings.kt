@@ -432,7 +432,7 @@ fun AppearanceSettings(
         )
 
         SwitchPreference(
-            title = { Text(stringResource(R.string.Rotatelyricsbackground)) },
+            title = { Text(stringResource(R.string.rotate_lyrics_background)) },
             description = null,
             icon = { Icon(painterResource(R.drawable.album), null) },
             checked = rotateBackground,

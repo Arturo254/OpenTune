@@ -191,8 +191,6 @@
         <item quantity="other">%d alkalom</item>
     </plurals>
     <!-- Snackbar -->
-    <string name="playlist_imported">Lejátszási lista importálva</string>
-    <string name="imported_playlist">Importált lejátszási lista</string>
     <string name="removed_song_from_playlist">\"%s\" eltávolítva a lejátszási listából</string>
     <string name="playlist_synced">Lejátszási lista szinkronizálva</string>
     <string name="undo">Visszavon</string>
@@ -208,8 +206,6 @@
     <string name="error_no_internet">Nincs hálózati kapcsolat</string>
     <string name="error_timeout">Időtúllépés</string>
     <string name="error_unknown">Ismeretlen hiba</string>
-    <string name="seek_backward">5 másodperc vissza</string>
-    <string name="seek_forward">5 másodperc előre</string>
     <!-- Player action -->
     <string name="action_like">Tetszik</string>
     <string name="action_remove_like">Tesztés eltávolítás</string>
@@ -244,7 +240,6 @@
     <string name="enable_squiggly_slider">Hernyó sáv engedélyezése</string>
     <string name="enable_swipe_thumbnail">Félrehúzással válthat dalt</string>
     <string name="pure_black">OLED fekete</string>
-    <string name="customize_navigation_tabs">Navigációs lapok testreszabása</string>
     <string name="player">Lejátszó</string>
     <string name="player_text_alignment">Lejátszó szöveg igazítás</string>
     <string name="lyrics_text_position">Dalszöveg igazítás</string>
@@ -285,13 +280,9 @@
     <string name="default_lib_chips">Alapértelmezett könyvtár chip módosítás</string>
     <string name="set_quick_picks">Gyors választások beállítása</string>
     <string name="last_song_listened">Utoljára hallgatott dal alapján</string>
-    <string name="restart_to_take_effect">Az alkalmazáshoz újraindítás szükséges</string>
     <string name="app_language">App nyelv (Béta)</string>
     <string name="configure_app_language">App nyelv beállítása</string>
-    <string name="intent_app_language_not_found">Nem található app nyelv érték, kérem állítsa be kézzel</string>
-    <string name="open_supported_links">Alapból nyissa meg a támogatott hivatkozásokat</string>
     <string name="configure_supported_links">Támogatott hivatkozások beállítása</string>
-    <string name="intent_supported_links_not_found">Nem található támogatott hivatkozás érték, kérem állítsa be kézzel</string>
     <string name="enable_kugou">KuGou dalszöveg szolgáltató engedélyezése</string>
     <string name="enable_lrclib">LrcLib dalszöveg szolgáltató engedélyezése</string>
     <string name="set_first_lyrics_provider">Preferált dalszöveg szolgáltató</string>
@@ -352,12 +343,10 @@
     <string name="login_failed">Sikertelen bejelentkezés</string>
     <string name="enable_discord_rpc">Rich Presence engedélyezése</string>
     <string name="default_links">Támogatott hivatkozások megnyitása</string>
-    <string name="open_app_settings_error">Nem nyitható meg az app beállítás</string>
     <string name="release_notes">Verziónapló</string>
     <string name="about">Névjegy</string>
     <string name="app_version">App verzió</string>
     <string name="new_version_available">Új verzió elérhető</string>
-    <string name="translation_models">Fordítási modellek</string>
     <string name="clear_translation_models">Fordítási modellek ürítése</string>
     <string name="all_time">Mindenkori</string>
     <string name="past_24_hours">Utolsó 24 óra</string>
@@ -367,18 +356,17 @@
     <string name="top_length">A Top listám hossza</string>
     <string name="history_duration">Előzmény hossz</string>
     <string name="contributors">közreműködők</string>
-    <string name="Donate">Adományozás</string>
-    <string name="Telegramchanel">Telegram csatorna</string>
+    <string name="donate">Adományozás</string>
+    <string name="telegram_channel">Telegram csatorna</string>
     <string name="contribution">Közreműködés</string>
-    <string name="Hi">Hali</string>
-    <string name="NewVersion">Új verzió</string>
-    <string name="Changelog">Változásnapló</string>
+    <string name="new_version">Új verzió</string>
+    <string name="changelog">Változásnapló</string>
     <string name="changelogs">változásnaplók</string>
     <string name="no_changes">nincs változás</string>
-    <string name="Translate">Fordítás</string>
-    <string name="Redirección">Átirányítás</string>
+    <string name="translate">Fordítás</string>
+    <string name="redirect">Átirányítás</string>
     <string name="poeditor_redirect">Átirányításra kerül a poeditor.com-ra</string>
-    <string name="barwar">Amikor a biztonsági mentések visszaállításra kerülnek, a korábban letöltött dalok nem kerülnek vissza. ERŐSEN AJÁNLOTT, hogy újra lejátsza a visszaállított zenéket a hibák elkerülése érdekében.</string>
+    <string name="backup_restore_warning">Amikor a biztonsági mentések visszaállításra kerülnek, a korábban letöltött dalok nem kerülnek vissza. ERŐSEN AJÁNLOTT, hogy újra lejátsza a visszaállított zenéket a hibák elkerülése érdekében.</string>
     <string name="backup_link_title">Mentés sikeresen felöltve!</string>
     <string name="backup_link_description">A mentése elérhető lesz 14 napig.</string>
     <string name="copy_link">Hivatkozás másolása</string>
@@ -392,17 +380,13 @@
     <string name="mute">Némítás</string>
     <string name="explore">Felfedezés</string>
     <string name="custom_avatar">"Egyedi profilkép "</string>
-    <string name="custom_avatar_beta">Egyedi profilkép</string>
     <string name="select_image">Kép kiválasztása</string>
     <string name="default_avatar">Alap profilkép</string>
     <string name="restore_default_avatar">Alap profilkép visszaállítása</string>
-    <string name="SearchResutls">Keresési eredmények</string>
-    <string name="Sujestions">Ajánlások</string>
-    <string name="SearchHistory">Keresési előzmények</string>
+    <string name="search_results">Keresési eredmények</string>
+    <string name="suggestions">Ajánlások</string>
     <string name="collapse">Összecsuk</string>
     <string name="expand">Kinyit</string>
-    <string name="reset_to_default">Visszaállítás alaphelyzetbe</string>
-    <string name="Presets">Sémák</string>
     <string name="custom">Egyedi</string>
     <string name="close">Bezár</string>
     <string name="custom_value">Egyedi érték</string>
@@ -414,11 +398,11 @@
     <string name="secondary_color_style">Másodlagos szín stílus</string>
     <string name="update_version">v%1$s-s frissítés</string>
     <string name="download_question">Le akarja tölteni az új verziót?</string>
-    <string name="downloadup">Letöltés</string>
-    <string name="downloadingup">Frissítés letöltése...</string>
+    <string name="update_download">Letöltés</string>
+    <string name="update_downloading">Frissítés letöltése...</string>
     <string name="download_completed">Letöltés befejezve</string>
     <string name="install">Telepítés</string>
-    <string name="download_errorup">Hiba a frissítés letöltésekor</string>
+    <string name="update_download_error">Hiba a frissítés letöltésekor</string>
     <string name="tap_to_update">Koppintson a frissítéshez</string>
     <string name="info_title">Információ</string>
     <string name="info_description">Ez a rész fontos részleteket tartalmaz a mentés és visszaállítási folyamatról, többek között az adatbiztonságról, legfőképpen hogyan tudja azt biztonságosan tárolni és könnyen hozzáférni.</string>
@@ -427,8 +411,7 @@
     <string name="backup_description">A jelenlegi adatairól készít biztonsági mentést</string>
     <string name="restore_description">Adatai visszaállítása egy korábbi mentésből</string>
     <string name="link_copied">Hivatkozás másolva</string>
-    <string name="redireccion">Átirányítás</string>
-    <string name="Version">Verzió</string>
+    <string name="version">Verzió</string>
     <string name="notification">Értesítések aktiválása</string>
     <string name="cached_playlist">Gyorsítótárazott</string>
     <string name="added_to_queue">listához hozzáadva</string>

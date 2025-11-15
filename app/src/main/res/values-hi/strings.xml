@@ -210,8 +210,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">प्लेलिस्ट आयातित</string>
-    <string name="imported_playlist">आयातित प्लेलिस्ट</string>
     <string name="removed_song_from_playlist">प्लेलिस्ट से हटा दिया गया \ "%s \"</string>
     <string name="playlist_synced">प्लेलिस्ट सिंक किया गया</string>
     <string name="undo">पूर्ववत</string>
@@ -228,8 +226,6 @@
     <string name="error_no_internet">कोई नेटवर्क कनेक्शन नहीं है</string>
     <string name="error_timeout">टाइमआउट</string>
     <string name="error_unknown">अज्ञात त्रुटि</string>
-    <string name="seek_backward">5 सेकंड पिछड़े</string>
-    <string name="seek_forward">5 सेकंड आगे</string>
 
     <!-- Player action -->
     <string name="action_like">पसंद</string>
@@ -270,7 +266,6 @@
     <string name="enable_squiggly_slider">स्क्विगली स्लाइडर सक्षम करें</string>
     <string name="enable_swipe_thumbnail">गीत बदलने के लिए स्वाइप सक्षम करें</string>
     <string name="pure_black">शुद्ध काला</string>
-    <string name="customize_navigation_tabs">नेविगेशन टैब को अनुकूलित करें</string>
     <string name="player">खिलाड़ी</string>
     <string name="player_text_alignment">खिलाड़ी पाठ संरेखण</string>
     <string name="lyrics_text_position">गीत पाठ की स्थिति</string>
@@ -312,13 +307,9 @@
     <string name="default_lib_chips">डिफ़ॉल्ट लाइब्रेरी चिप बदलें</string>
     <string name="set_quick_picks">त्वरित पिक्स सेट करें</string>
     <string name="last_song_listened">अंतिम गीत के आधार पर सुनी</string>
-    <string name="restart_to_take_effect">प्रभावी होने के लिए पुनरारंभ करें</string>
     <string name="app_language">ऐप भाषा (बीटा)</string>
     <string name="configure_app_language">ऐप भाषाओं को कॉन्फ़िगर करें</string>
-    <string name="intent_app_language_not_found">ऐप लैंग्वेज सेटिंग्स को खोज सकते हैं, कृपया उन्हें मैन्युअल रूप से कॉन्फ़िगर करें</string>
-    <string name="open_supported_links">डिफ़ॉल्ट रूप से समर्थित लिंक खोलें</string>
     <string name="configure_supported_links">समर्थित लिंक कॉन्फ़िगर करें</string>
-    <string name="intent_supported_links_not_found">समर्थित लिंक सेटिंग्स नहीं मिल सकता है, कृपया उन्हें मैन्युअल रूप से कॉन्फ़िगर करें</string>
     <string name="enable_kugou">कुगौ गीत प्रदाता को सक्षम करें</string>
     <string name="enable_lrclib">LrClib गीत प्रदाता को सक्षम करें</string>
     <string name="set_first_lyrics_provider">पसंदीदा गीत प्रदाता</string>
@@ -387,7 +378,6 @@
     <string name="enable_discord_rpc">समृद्ध उपस्थिति सक्षम करें</string>
 
     <string name="default_links">समर्थित लिंक खोलें</string>
-    <string name="open_app_settings_error">ऐप सेटिंग्स को खोल सकते हैं</string>
 
     <string name="release_notes">रिलीज नोट्स</string>
 
@@ -395,7 +385,6 @@
     <string name="app_version">एप्लिकेशन वेरीज़न</string>
 
     <string name="new_version_available">नया संस्करण उपलब्ध है</string>
-    <string name="translation_models">अनुवाद मॉडल</string>
     <string name="clear_translation_models">स्पष्ट अनुवाद मॉडल</string>
 
     <string name="all_time">पूरे समय</string>
@@ -406,18 +395,17 @@
     <string name="top_length">मेरी शीर्ष सूची लंबाई</string>
     <string name="history_duration">इतिहास अवधि</string>
     <string name="contributors">योगदानकर्ताओं</string>
-    <string name="Donate">दान करें</string>
-    <string name="Telegramchanel">तार -चैनल</string>
+    <string name="donate">दान करें</string>
+    <string name="telegram_channel">तार -चैनल</string>
     <string name="contribution">योगदान</string>
-    <string name="Hi">नमस्ते</string>
-    <string name="NewVersion">नया संस्करण</string>
-    <string name="Changelog">बदलाव का</string>
+    <string name="new_version">नया संस्करण</string>
+    <string name="changelog">बदलाव का</string>
     <string name="changelogs">बदलाव</string>
     <string name="no_changes">कोई परिवर्तन नहीं</string>
-    <string name="Translate">अनुवाद</string>
-    <string name="Redirección">पुनर्वितरण</string>
+    <string name="translate">अनुवाद</string>
+    <string name="redirect">पुनर्वितरण</string>
     <string name="poeditor_redirect">आप poeditor.com पर पुनर्निर्देशित होने वाले हैं</string>
-    <string name="barwar">बैकअप को बहाल करते समय ध्यान दें, पहले से डाउनलोड किए गए गाने डाउनलोड नहीं किए जाते हैं। किसी भी डाउनलोड त्रुटियों से बचने के लिए पुनर्स्थापित गीतों को चलाने के लिए अत्यधिक अनुशंसित है।</string>
+    <string name="backup_restore_warning">बैकअप को बहाल करते समय ध्यान दें, पहले से डाउनलोड किए गए गाने डाउनलोड नहीं किए जाते हैं। किसी भी डाउनलोड त्रुटियों से बचने के लिए पुनर्स्थापित गीतों को चलाने के लिए अत्यधिक अनुशंसित है।</string>
     <string name="backup_link_title">बैकअप सफलतापूर्वक अपलोड किया गया!</string>
     <string name="backup_link_description">आपका बैकअप 14 दिनों के लिए उपलब्ध होगा।</string>
     <string name="copy_link">लिंक की प्रतिलिपि करें</string>
@@ -431,17 +419,13 @@
     <string name="mute">आवाज़ बंद करना</string>
     <string name="explore">अन्वेषण करना</string>
     <string name="custom_avatar">"कस्टम अवतार"</string>
-    <string name="custom_avatar_beta">कस्टम अवतार</string>
     <string name="select_image">छवि का चयन करें</string>
     <string name="default_avatar">डिफ़ॉल्ट अवतार</string>
     <string name="restore_default_avatar">डिफ़ॉल्ट अवतार पुनर्स्थापित करें</string>
-    <string name="SearchResutls">खोज के परिणाम</string>
-    <string name="Sujestions">सुझाव</string>
-    <string name="SearchHistory">खोज इतिहास</string>
+    <string name="search_results">खोज के परिणाम</string>
+    <string name="suggestions">सुझाव</string>
     <string name="collapse">गिर जाना</string>
     <string name="expand">बढ़ाना</string>
-    <string name="reset_to_default">वितथ पर ले जाएं</string>
-    <string name="Presets">प्रीसेट</string>
     <string name="custom">रिवाज़</string>
     <string name="close">बंद करना</string>
     <string name="custom_value">कस्टम मूल्य</string>
@@ -453,11 +437,11 @@
     <string name="secondary_color_style">द्वितीयक रंग शैली</string>
     <string name="update_version">V%1 $ s अपडेट करें</string>
     <string name="download_question">क्या आप नया संस्करण डाउनलोड करना चाहेंगे?</string>
-    <string name="downloadup">डाउनलोड करना</string>
-    <string name="downloadingup">अद्यतन स्थिति डाउनलोड हो रही है...</string>
+    <string name="update_download">डाउनलोड करना</string>
+    <string name="update_downloading">अद्यतन स्थिति डाउनलोड हो रही है...</string>
     <string name="download_completed">पूरा डाउनलोड</string>
     <string name="install">स्थापित करना</string>
-    <string name="download_errorup">अद्यतन डाउनलोड करने में त्रुटि</string>
+    <string name="update_download_error">अद्यतन डाउनलोड करने में त्रुटि</string>
     <string name="tap_to_update">अद्यतन करने के लिए टैप करें</string>
     <string name="info_title">जानकारी</string>
     <string name="info_description">यह खंड आपके डेटा की सुरक्षा सहित बैकअप और पुनर्स्थापना प्रक्रिया के बारे में महत्वपूर्ण विवरण प्रदान करता है और यह सुनिश्चित करने के लिए कि आपकी जानकारी सुरक्षित और आसानी से सुलभ कैसे बनी रहे।</string>
@@ -467,8 +451,7 @@
     <string name="backup_description">अपने वर्तमान डेटा की बैकअप फ़ाइल बनाएं</string>
     <string name="restore_description">बैकअप फ़ाइल से अपना डेटा पुनर्प्राप्त करें</string>
     <string name="link_copied">लिंक कॉपी किया गया</string>
-    <string name="redireccion">पुनर्निर्देशन</string>
-    <string name="Version">संस्करण</string>
+    <string name="version">संस्करण</string>
     <string name="notification">सूचनाओं को सक्रिय करें</string>
     <string name="cached_playlist">कैश्ड</string>
     <string name="added_to_queue">कतार में जोड़ा गया</string>
@@ -482,7 +465,6 @@
     <string name="clear_song_cache_confirmation">क्या आप सुनिश्चित हैं कि आप सॉन्ग कैश को साफ़ करना चाहते हैं? यह अंतरिक्ष को मुक्त कर देगा, लेकिन अस्थायी रूप से प्लेबैक प्रदर्शन को प्रभावित कर सकता है।</string>
     <string name="clear_image_cache_confirmation">क्या आप सुनिश्चित हैं कि आप छवि कैश को साफ करना चाहते हैं? एल्बम कला और कलाकार छवियों को फिर से उतारने की आवश्यकता होगी।</string>
     <string name="confirm">पुष्टि करना</string>
-    <string name="problem_solver">समस्या निवारक</string>
     <string name="action_login">लॉग इन करें</string>
     <string name="generating_image">सृजन छवि</string>
     <string name="please_wait">कृपया प्रतीक्षा करें</string>
@@ -494,7 +476,6 @@
     <string name="customize_colors">रंगों को अनुकूलित करें</string>
     <string name="more_options">अधिक विकल्प</string>
     <string name="text_color">पाठ का रंग</string>
-    <string name="secondary_text_color">द्वितीयक पाठ रंग</string>
     <string name="background_color">पृष्ठभूमि का रंग</string>
 </resources>
 

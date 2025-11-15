@@ -210,8 +210,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">Playlist importada</string>
-    <string name="imported_playlist">Playlist importada</string>
     <string name="removed_song_from_playlist">Removido \"%s\" da playlist</string>
     <string name="playlist_synced">Playlist sincronizada</string>
     <string name="undo">Desfazer</string>
@@ -228,8 +226,6 @@
     <string name="error_no_internet">Nenhuma conexão de rede</string>
     <string name="error_timeout">Tempo esgotado</string>
     <string name="error_unknown">Erro desconhecido</string>
-    <string name="seek_backward">5 segundos para trás</string>
-    <string name="seek_forward">5 segundos para frente</string>
 
     <!-- Player action -->
     <string name="action_like">Curtir</string>
@@ -270,7 +266,6 @@
     <string name="enable_squiggly_slider">Ativar slider ondulado</string>
     <string name="enable_swipe_thumbnail">Ativar deslizar para mudar música</string>
     <string name="pure_black">Preto puro</string>
-    <string name="customize_navigation_tabs">Personalizar abas de navegação</string>
     <string name="player">Player</string>
     <string name="player_text_alignment">Alinhamento de texto do player</string>
     <string name="lyrics_text_position">Posição do texto das letras</string>
@@ -312,13 +307,9 @@
     <string name="default_lib_chips">Alterar chip de biblioteca padrão</string>
     <string name="set_quick_picks">Definir seleções rápidas</string>
     <string name="last_song_listened">Com base na última música ouvida</string>
-    <string name="restart_to_take_effect">Reinicie para que surta efeito</string>
     <string name="app_language">Idioma do aplicativo (Beta)</string>
     <string name="configure_app_language">Configurar idiomas do aplicativo</string>
-    <string name="intent_app_language_not_found">Não foi possível encontrar as configurações de idioma do aplicativo, configure manualmente</string>
-    <string name="open_supported_links">Abrir links suportados por padrão</string>
     <string name="configure_supported_links">Configurar links suportados</string>
-    <string name="intent_supported_links_not_found">Não foi possível encontrar as configurações de links suportados, configure manualmente</string>
     <string name="enable_kugou">Ativar provedor de letras KuGou</string>
     <string name="enable_lrclib">Ativar provedor de letras LrcLib</string>
     <string name="set_first_lyrics_provider">Provedor de letras preferido</string>
@@ -387,7 +378,6 @@
     <string name="enable_discord_rpc">Ativar Rich Presence</string>
 
     <string name="default_links">Abrir links suportados</string>
-    <string name="open_app_settings_error">Não foi possível abrir as configurações do aplicativo</string>
 
     <string name="release_notes">Notas de Lançamento</string>
 
@@ -395,7 +385,6 @@
     <string name="app_version">Versão do aplicativo</string>
 
     <string name="new_version_available">Nova versão disponível</string>
-    <string name="translation_models">Modelos de tradução</string>
     <string name="clear_translation_models">Limpar modelos de tradução</string>
 
     <string name="all_time">Todo o tempo</string>
@@ -406,18 +395,17 @@
     <string name="top_length">Comprimento da lista top</string>
     <string name="history_duration">Duração do histórico</string>
     <string name="contributors">contribuidores</string>
-    <string name="Donate">Doar</string>
-    <string name="Telegramchanel">Canal do Telegram</string>
+    <string name="donate">Doar</string>
+    <string name="telegram_channel">Canal do Telegram</string>
     <string name="contribution">Contribuição</string>
-    <string name="Hi">Oi</string>
-    <string name="NewVersion">Nova Versão</string>
-    <string name="Changelog">Registro de alterações</string>
+    <string name="new_version">Nova Versão</string>
+    <string name="changelog">Registro de alterações</string>
     <string name="changelogs">registros de alterações</string>
     <string name="no_changes">sem alterações</string>
-    <string name="Translate">Traduzir</string>
-    <string name="Redirección">Redireção</string>
+    <string name="translate">Traduzir</string>
+    <string name="redirect">Redireção</string>
     <string name="poeditor_redirect">Você está prestes a ser redirecionado para poeditor.com</string>
-    <string name="barwar">Atenção ao restaurar os backups, as músicas baixadas anteriormente não são baixadas. É MUITO RECOMENDADO reproduzir as músicas restauradas para evitar erros de download.</string>
+    <string name="backup_restore_warning">Atenção ao restaurar os backups, as músicas baixadas anteriormente não são baixadas. É MUITO RECOMENDADO reproduzir as músicas restauradas para evitar erros de download.</string>
     <string name="backup_link_title">Backup carregado com sucesso!</string>
     <string name="backup_link_description">Seu backup estará disponível por 14 dias.</string>
     <string name="copy_link">Copiar link</string>
@@ -431,17 +419,13 @@
     <string name="mute">Silenciar</string>
     <string name="explore">Explorar</string>
     <string name="custom_avatar">"Avatar personalizado "</string>
-    <string name="custom_avatar_beta">Avatar personalizado</string>
     <string name="select_image">Selecionar imagem</string>
     <string name="default_avatar">Avatar padrão</string>
     <string name="restore_default_avatar">Restaurar avatar padrão</string>
-    <string name="SearchResutls">Resultados da pesquisa</string>
-    <string name="Sujestions">Sugestões</string>
-    <string name="SearchHistory">Histórico de pesquisa</string>
+    <string name="search_results">Resultados da pesquisa</string>
+    <string name="suggestions">Sugestões</string>
     <string name="collapse">Recolher</string>
     <string name="expand">Expandir</string>
-    <string name="reset_to_default">Redefinir para padrão</string>
-    <string name="Presets">Predefinidos</string>
     <string name="custom">Personalizado</string>
     <string name="close">Fechar</string>
     <string name="custom_value">Valor personalizado</string>
@@ -453,11 +437,11 @@
     <string name="secondary_color_style">Estilo de cor secundária</string>
     <string name="update_version">Atualizar v%1$s</string>
     <string name="download_question">Você gostaria de baixar a nova versão?</string>
-    <string name="downloadup">Baixar</string>
-    <string name="downloadingup">Baixando atualização…</string>
+    <string name="update_download">Baixar</string>
+    <string name="update_downloading">Baixando atualização…</string>
     <string name="download_completed">Download concluído</string>
     <string name="install">Instalar</string>
-    <string name="download_errorup">Erro ao baixar a atualização</string>
+    <string name="update_download_error">Erro ao baixar a atualização</string>
     <string name="tap_to_update">Toque para atualizar</string>
     <string name="info_title">Informação</string>
     <string name="info_description">Esta seção fornece detalhes chave sobre o processo de backup e restauração, incluindo a segurança dos seus dados e como garantir que suas informações permaneçam seguras e de fácil acesso.</string>
@@ -467,8 +451,7 @@
     <string name="backup_description">Criar arquivo de backup dos seus dados atuais</string>
     <string name="restore_description">Recuperar seus dados de um arquivo de backup</string>
     <string name="link_copied">Link Copiado</string>
-    <string name="redireccion">Redirecionamento</string>
-    <string name="Version">Versão</string>
+    <string name="version">Versão</string>
     <string name="notification">Ativar Notificações</string>
     <string name="cached_playlist">Cache</string>
     <string name="added_to_queue">adicionado à fila</string>
@@ -482,7 +465,6 @@
     <string name="clear_song_cache_confirmation">Tem certeza de que deseja limpar o cache de música? Isso liberará espaço, mas pode afetar temporariamente o desempenho de reprodução.</string>
     <string name="clear_image_cache_confirmation">Tem certeza de que deseja limpar o cache de imagens? Imagens de capa de álbum e artistas precisarão ser rebaixadas.</string>
     <string name="confirm">Confirmar</string>
-    <string name="problem_solver">Solver de Problemas</string>
     <string name="action_login">Login</string>
     <string name="generating_image">Gerando imagem</string>
     <string name="please_wait">Por favor, aguarde</string>
@@ -494,10 +476,9 @@
     <string name="customize_colors">Personalizar cores</string>
     <string name="more_options">Mais opções</string>
     <string name="text_color">Cor do texto</string>
-    <string name="secondary_text_color">Cor secundária do texto</string>
     <string name="background_color">Cor de fundo</string>
     <string name="back">Voltar</string>
-    <string name="navigation_error">Erro de navegação</string>
+    <string name="error_navigation">Erro de navegação</string>
     <string name="notifications_enabled">Notificações habilitadas</string>
     <string name="notifications_disabled">Notificações desabilitadas</string>
 
@@ -530,40 +511,22 @@
     <string name="avatar_selection">Seleção de Avatar</string>
     <string name="choose_predefined_avatar">Escolher avatar pré-definido</string>
 
-    <string name="geometric_avatar_1">Avatar Geométrico 1</string>
-    <string name="geometric_avatar_2">Avatar Geométrico 2</string>
-    <string name="geometric_avatar_3">Avatar Geométrico 3</string>
-    <string name="geometric_avatar_4">Avatar Geométrico 4</string>
-    <string name="geometric_avatar_5">Avatar Geométrico 5</string>
-    <string name="geometric_avatar_6">Avatar Geométrico 6</string>
-    <string name="purple_initial_avatar">Avatar de Iniciais Roxas</string>
     <string name="blue_initial_avatar">Avatar de Iniciais Azuis</string>
-    <string name="green_initial_avatar">Avatar de Iniciais Verdes</string>
-    <string name="orange_initial_avatar">Avatar de Iniciais Laranjas</string>
-    <string name="red_initial_avatar">Avatar de Iniciais Vermelhas</string>
-    <string name="teal_initial_avatar">Avatar de Iniciais Verde-água</string>
-    <string name="dots_pattern_avatar">Avatar com Padrão de Pontos</string>
-    <string name="waves_pattern_avatar">Avatar com Padrão de Ondas</string>
-    <string name="gradient_pattern_avatar">Avatar com Padrão de Gradiente</string>
     <string name="music_note_avatar">Avatar de Nota Musical</string>
-    <string name="equalizer_avatar">Avatar de Equalizador</string>
-    <string name="headphones_avatar">Avatar de Fones de Ouvido</string>
     <string name="discord_use_details">Usar detalhes em vez de estado</string>
     <string name="discord_use_details_description">Mostrar título da música em destaque em vez de nomes de artistas</string>
     <string name="community">Comunidade</string>
     <string name="app_info">Informações do App</string>
     <string name="hide_controls">Ocultar controles</string>
     <string name="show_controls">Mostrar controles</string>
-    <string name="customize_lyrics_image">Personalizar imagem de letras</string>
 
     <string name="customize_image">Personalizar Imagem</string>
     <string name="select_theme">Selecionar Tema</string>
     <string name="from_cover">Da Capa</string>
-    <string name="presets">Temas Pré-definidos</string>
+    <string name="preset_themes">Temas Pré-definidos</string>
     <string name="share_lyrics_image">Compartilhar Letras como Imagem</string>
-    <string name="error_generating_image">Erro ao gerar imagem</string>
     <string name="cover_color">Cor da Capa</string>
-    <string name="Rotatelyricsbackground">Rotacionar o fundo das letras</string>
+    <string name="rotate_lyrics_background">Rotacionar o fundo das letras</string>
     <string name="playlist_add_local_to_synced_note">Nota: Adicionar músicas locais a playlists sincronizadas/remotas não é suportado. Qualquer outra combinação é válida</string>
     <string name="manage">Gerenciar</string>
     <string name="clear">Limpar</string>

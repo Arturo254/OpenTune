@@ -210,8 +210,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">Daftar putar diimpor</string>
-    <string name="imported_playlist">Daftar putar impor</string>
     <string name="removed_song_from_playlist">Dihapus \ "%s \" dari daftar putar</string>
     <string name="playlist_synced">Daftar putar disinkronkan</string>
     <string name="undo">Membuka</string>
@@ -228,8 +226,6 @@
     <string name="error_no_internet">Tidak ada koneksi jaringan</string>
     <string name="error_timeout">Batas waktu</string>
     <string name="error_unknown">Kesalahan yang tidak diketahui</string>
-    <string name="seek_backward">5 detik ke belakang</string>
-    <string name="seek_forward">5 detik ke depan</string>
 
     <!-- Player action -->
     <string name="action_like">Menyukai</string>
@@ -270,7 +266,6 @@
     <string name="enable_squiggly_slider">Aktifkan slider squiggly</string>
     <string name="enable_swipe_thumbnail">Aktifkan Gesek untuk Mengubah Lagu</string>
     <string name="pure_black">Hitam murni</string>
-    <string name="customize_navigation_tabs">Kustomisasi tab Navigasi</string>
     <string name="player">Pemain</string>
     <string name="player_text_alignment">Penyelarasan teks pemain</string>
     <string name="lyrics_text_position">Lirik Posisi Teks</string>
@@ -312,13 +307,9 @@
     <string name="default_lib_chips">Ubah chip perpustakaan default</string>
     <string name="set_quick_picks">Atur pick cepat</string>
     <string name="last_song_listened">Berdasarkan lagu terakhir yang didengarkan</string>
-    <string name="restart_to_take_effect">Mulai ulang agar berlaku</string>
     <string name="app_language">Bahasa aplikasi (beta)</string>
     <string name="configure_app_language">Konfigurasikan bahasa aplikasi</string>
-    <string name="intent_app_language_not_found">Tidak bisakah menemukan pengaturan bahasa aplikasi, harap konfigurasinya secara manual</string>
-    <string name="open_supported_links">Buka tautan yang didukung secara default</string>
     <string name="configure_supported_links">Konfigurasikan tautan yang didukung</string>
-    <string name="intent_supported_links_not_found">Tidak bisakah menemukan pengaturan tautan yang didukung, harap konfigurasikannya secara manual</string>
     <string name="enable_kugou">Aktifkan penyedia lirik kugou</string>
     <string name="enable_lrclib">Aktifkan penyedia lirik lrclib</string>
     <string name="set_first_lyrics_provider">Penyedia lirik yang disukai</string>
@@ -387,7 +378,6 @@
     <string name="enable_discord_rpc">Aktifkan kehadiran yang kaya</string>
 
     <string name="default_links">Buka tautan yang didukung</string>
-    <string name="open_app_settings_error">Tidak bisa membuka pengaturan aplikasi</string>
 
     <string name="release_notes">Catatan rilis</string>
 
@@ -395,7 +385,6 @@
     <string name="app_version">Versi Aplikasi</string>
 
     <string name="new_version_available">Versi baru tersedia</string>
-    <string name="translation_models">Model terjemahan</string>
     <string name="clear_translation_models">Model terjemahan yang jelas</string>
 
     <string name="all_time">Sepanjang waktu</string>
@@ -406,18 +395,17 @@
     <string name="top_length">Panjang daftar teratas saya</string>
     <string name="history_duration">Durasi Sejarah</string>
     <string name="contributors">kontributor</string>
-    <string name="Donate">Menyumbangkan</string>
-    <string name="Telegramchanel">Telegram Chanel</string>
+    <string name="donate">Menyumbangkan</string>
+    <string name="telegram_channel">Telegram Chanel</string>
     <string name="contribution">Kontribusi</string>
-    <string name="Hi">Hai</string>
-    <string name="NewVersion">Versi baru</string>
-    <string name="Changelog">Changelog</string>
+    <string name="new_version">Versi baru</string>
+    <string name="changelog">Changelog</string>
     <string name="changelogs">Changelogs</string>
     <string name="no_changes">tidak ada perubahan</string>
-    <string name="Translate">Menerjemahkan</string>
-    <string name="Redirección">Redirección</string>
+    <string name="translate">Menerjemahkan</string>
+    <string name="redirect">Redirección</string>
     <string name="poeditor_redirect">Anda akan diarahkan ke poeditor.com</string>
-    <string name="barwar">Perhatian saat memulihkan cadangan, lagu -lagu yang sebelumnya diunduh tidak diunduh. Sangat disarankan untuk memutar lagu yang dipulihkan untuk menghindari kesalahan unduhan.</string>
+    <string name="backup_restore_warning">Perhatian saat memulihkan cadangan, lagu -lagu yang sebelumnya diunduh tidak diunduh. Sangat disarankan untuk memutar lagu yang dipulihkan untuk menghindari kesalahan unduhan.</string>
     <string name="backup_link_title">Cadangan diunggah dengan sukses!</string>
     <string name="backup_link_description">Cadangan Anda akan tersedia selama 14 hari.</string>
     <string name="copy_link">Salin tautan</string>
@@ -431,17 +419,13 @@
     <string name="mute">Bisu</string>
     <string name="explore">Mengeksplorasi</string>
     <string name="custom_avatar">Avatar khusus (beta)</string>
-    <string name="custom_avatar_beta">Avatar khusus (beta)</string>
     <string name="select_image">Pilih gambar</string>
     <string name="default_avatar">Avatar default</string>
     <string name="restore_default_avatar">Kembalikan avatar default</string>
-    <string name="SearchResutls">Hasil pencarian</string>
-    <string name="Sujestions">Saran</string>
-    <string name="SearchHistory">Riwayat pencarian</string>
+    <string name="search_results">Hasil pencarian</string>
+    <string name="suggestions">Saran</string>
     <string name="collapse">Runtuh</string>
     <string name="expand">Memperluas</string>
-    <string name="reset_to_default">Reset ke default</string>
-    <string name="Presets">Preset</string>
     <string name="custom">Kebiasaan</string>
     <string name="close">Menutup</string>
     <string name="custom_value">Nilai khusus</string>
@@ -453,11 +437,11 @@
     <string name="secondary_color_style">Gaya warna sekunder</string>
     <string name="update_version">Perbarui v%1 $ s</string>
     <string name="download_question">Apakah Anda ingin mengunduh versi baru?</string>
-    <string name="downloadup">Unduh</string>
-    <string name="downloadingup">Mengunduh pembaruan ...</string>
+    <string name="update_download">Unduh</string>
+    <string name="update_downloading">Mengunduh pembaruan ...</string>
     <string name="download_completed">Unduh selesai</string>
     <string name="install">Memasang</string>
-    <string name="download_errorup">Kesalahan mengunduh pembaruan</string>
+    <string name="update_download_error">Kesalahan mengunduh pembaruan</string>
     <string name="tap_to_update">Ketuk untuk memperbarui</string>
     <string name="info_title">Informasi</string>
     <string name="info_description">Bagian ini memberikan detail utama tentang proses cadangan dan pemulihan, termasuk keamanan data Anda dan bagaimana memastikan informasi Anda tetap aman dan mudah diakses.</string>

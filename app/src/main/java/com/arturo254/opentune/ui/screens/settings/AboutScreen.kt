@@ -422,34 +422,34 @@ fun UserCards(uriHandler: UriHandler) {
         UserCard(
             imageUrl = "https://avatars.githubusercontent.com/u/87346871?v=4",
             name = "亗 Arturo254",
-            role = "Lead Developer ",
+            role = stringResource(R.string.credits_lead_dev),
             onClick = { uriHandler.openUri("https://github.com/Arturo254") }
         )
 
         UserCard(
             imageUrl = "https://avatars.githubusercontent.com/u/138934847?v=4",
             name = "\uD81A\uDD10 Fabito02",
-            role = "Traductor (PR_BR)  Icon designer",
+            role = stringResource(R.string.credits_translator_br_icon_designer),
             onClick = { uriHandler.openUri("https://github.com/Fabito02/") }
         )
 
         UserCard(
             imageUrl = "https://avatars.githubusercontent.com/u/205341163?v=4",
             name = "ϟ Xamax-code",
-            role = "Code Refactor",
+            role = stringResource(R.string.credits_code_refactor),
             onClick = { uriHandler.openUri("https://github.com/xamax-code") }
         )
         UserCard(
             imageUrl = "https://avatars.githubusercontent.com/u/106829560?v=4",
             name = "ϟ Derpachi",
-            role = "Traductor (ru_RU)",
+            role = stringResource(R.string.credits_translator_ru),
             onClick = { uriHandler.openUri("https://github.com/Derpachi") }
         )
 
         UserCard(
             imageUrl = "https://avatars.githubusercontent.com/u/147309938?v=4",
             name = "「★」 RightSideUpCak3",
-            role = "Language selector",
+            role = stringResource(R.string.credits_language_selector),
             onClick = { uriHandler.openUri("https://github.com/RightSideUpCak3") }
         )
     }

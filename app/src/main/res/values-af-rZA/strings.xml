@@ -210,8 +210,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">Snitlys ingevoer</string>
-    <string name="imported_playlist">Ingevoerde snitlys</string>
     <string name="removed_song_from_playlist">Verwyder \ "%s \" van die snitlys</string>
     <string name="playlist_synced">Snitlys gesinkroniseer</string>
     <string name="undo">Ongedaan maak</string>
@@ -228,8 +226,6 @@
     <string name="error_no_internet">Geen netwerkverbinding nie</string>
     <string name="error_timeout">Time -out</string>
     <string name="error_unknown">Onbekende fout</string>
-    <string name="seek_backward">5 sekondes agtertoe</string>
-    <string name="seek_forward">5 sekondes vorentoe</string>
 
     <!-- Player action -->
     <string name="action_like">Soos</string>
@@ -270,7 +266,6 @@
     <string name="enable_squiggly_slider">Aktiveer Squiggly Slider</string>
     <string name="enable_swipe_thumbnail">Stel Swipe in staat om liedjie te verander</string>
     <string name="pure_black">Suiwer swart</string>
-    <string name="customize_navigation_tabs">Pas die navigasie -oortjies aan</string>
     <string name="player">Toneelspeler</string>
     <string name="player_text_alignment">Speler teksbelyning</string>
     <string name="lyrics_text_position">Lirieke teksposisie</string>
@@ -312,13 +307,9 @@
     <string name="default_lib_chips">Verander die standaardbiblioteekskyfie</string>
     <string name="set_quick_picks">Stel vinnige keuses</string>
     <string name="last_song_listened">Gebaseer op die laaste liedjie geluister</string>
-    <string name="restart_to_take_effect">Herbegin om in werking te tree</string>
     <string name="app_language">Apptaal (beta)</string>
     <string name="configure_app_language">Stel app -tale op</string>
-    <string name="intent_app_language_not_found">Kon nie app -taalinstellings vind nie, stel dit asseblief handmatig op</string>
-    <string name="open_supported_links">Open ondersteunde skakel by verstek</string>
     <string name="configure_supported_links">Stel ondersteunde skakels op</string>
-    <string name="intent_supported_links_not_found">Kon nie ondersteunde skakelsinstellings vind nie, stel dit asseblief handmatig op</string>
     <string name="enable_kugou">Aktiveer Kugou Lyrics -verskaffer</string>
     <string name="enable_lrclib">Aktiveer lrclib -lirieke verskaffer</string>
     <string name="set_first_lyrics_provider">Voorkeurlirieke Verskaffer</string>
@@ -387,7 +378,6 @@
     <string name="enable_discord_rpc">Aktiveer ryk teenwoordigheid</string>
 
     <string name="default_links">Open ondersteunde skakels</string>
-    <string name="open_app_settings_error">Kan nie app -instellings oopmaak nie</string>
 
     <string name="release_notes">Vrystellingsnotas</string>
 
@@ -395,7 +385,6 @@
     <string name="app_version">App -weergawe</string>
 
     <string name="new_version_available">Nuwe weergawe beskikbaar</string>
-    <string name="translation_models">Vertaalmodelle</string>
     <string name="clear_translation_models">Duidelike vertaalmodelle</string>
 
     <string name="all_time">Alle tyd</string>
@@ -406,18 +395,17 @@
     <string name="top_length">My lengte van die boonste lys</string>
     <string name="history_duration">Geskiedenisduur</string>
     <string name="contributors">bydraers</string>
-    <string name="Donate">Skenk</string>
-    <string name="Telegramchanel">Telegram Chanel</string>
+    <string name="donate">Skenk</string>
+    <string name="telegram_channel">Telegram Chanel</string>
     <string name="contribution">Bydrae</string>
-    <string name="Hi">Hi</string>
-    <string name="NewVersion">Nuwe weergawe</string>
-    <string name="Changelog">Changelog</string>
+    <string name="new_version">Nuwe weergawe</string>
+    <string name="changelog">Changelog</string>
     <string name="changelogs">Changelogs</string>
     <string name="no_changes">Geen veranderinge nie</string>
-    <string name="Translate">Vertaal</string>
-    <string name="Redirección">Redirección</string>
+    <string name="translate">Vertaal</string>
+    <string name="redirect">Redirección</string>
     <string name="poeditor_redirect">U is op die punt om na peditor.com herlei te word</string>
-    <string name="barwar">Aandag wanneer u die rugsteun herstel, word die voorheen afgelaaide liedjies nie afgelaai nie. Dit word sterk aanbeveel om die herstelde liedjies te speel om enige aflaaifoute te vermy.</string>
+    <string name="backup_restore_warning">Aandag wanneer u die rugsteun herstel, word die voorheen afgelaaide liedjies nie afgelaai nie. Dit word sterk aanbeveel om die herstelde liedjies te speel om enige aflaaifoute te vermy.</string>
     <string name="backup_link_title">Rugsteun suksesvol opgelaai!</string>
     <string name="backup_link_description">U rugsteun is vir 14 dae beskikbaar.</string>
     <string name="copy_link">Kopie skakel</string>
@@ -430,18 +418,14 @@
     </plurals>
     <string name="mute">Stom</string>
     <string name="explore">Verken</string>
-    <string name="custom_avatar">"Custom Avatar"</string>
-    <string name="custom_avatar_beta">Pasgemaakte avatar</string>
+    <string name="custom_avatar">Pasgemaakte avatar</string>
     <string name="select_image">Kies Beeld</string>
     <string name="default_avatar">Standaard avatar</string>
     <string name="restore_default_avatar">Herstel standaard avatar</string>
-    <string name="SearchResutls">Soekresultate</string>
-    <string name="Sujestions">Voorstelle</string>
-    <string name="SearchHistory">Soekgeskiedenis</string>
+    <string name="search_results">Soekresultate</string>
+    <string name="suggestions">Voorstelle</string>
     <string name="collapse">Ineenstort</string>
     <string name="expand">Uitbrei</string>
-    <string name="reset_to_default">Herstel na standaard</string>
-    <string name="Presets">Voorafsette</string>
     <string name="custom">Gebruik</string>
     <string name="close">Dig</string>
     <string name="custom_value">Aangepaste waarde</string>
@@ -453,11 +437,11 @@
     <string name="secondary_color_style">Sekondêre kleurstyl</string>
     <string name="update_version">UPDATE V%1 $ S</string>
     <string name="download_question">Wil u die nuwe weergawe aflaai?</string>
-    <string name="downloadup">Aflaai</string>
-    <string name="downloadingup">Aflaai -opdatering …</string>
+    <string name="update_download">Aflaai</string>
+    <string name="update_downloading">Aflaai -opdatering …</string>
     <string name="download_completed">Aflaai voltooi</string>
     <string name="install">Installeer</string>
-    <string name="download_errorup">Fout met die aflaai van die opdatering</string>
+    <string name="update_download_error">Fout met die aflaai van die opdatering</string>
     <string name="tap_to_update">Tik om op te dateer</string>
     <string name="info_title">Informasie</string>
     <string name="info_description">Hierdie afdeling bevat sleutelbesonderhede oor die rugsteun- en herstelproses, insluitend die sekuriteit van u data en hoe u inligting veilig en maklik toeganklik bly.</string>
@@ -467,8 +451,7 @@
     <string name="backup_description">Skep "n rugsteunlêer van u huidige data</string>
     <string name="restore_description">Herstel u data uit "n rugsteunlêer</string>
     <string name="link_copied">Skakel gekopieër</string>
-    <string name="redireccion">Herleiding</string>
-    <string name="Version">Weergawe</string>
+    <string name="version">Weergawe</string>
     <string name="notification">Aktiveer kennisgewings</string>
     <string name="cached_playlist">Kas</string>
     <string name="added_to_queue">by die tou gevoeg</string>

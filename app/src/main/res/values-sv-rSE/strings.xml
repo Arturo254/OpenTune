@@ -206,8 +206,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">"Spellista importerad"</string>
-    <string name="imported_playlist">"Importerad spellista"</string>
     <string name="removed_song_from_playlist">"Tog bort \"%s\" från spellistan"</string>
     <string name="playlist_synced">"Spellista synkroniserad"</string>
     <string name="undo">"Ångra"</string>
@@ -224,8 +222,6 @@
     <string name="error_no_internet">"Ingen internetanslutning"</string>
     <string name="error_timeout">"Tidsgräns överskreds"</string>
     <string name="error_unknown">"Okänt fel"</string>
-    <string name="seek_backward">"5 sekunder bakåt"</string>
-    <string name="seek_forward">"5 sekunder framåt"</string>
 
     <!-- Player action -->
     <string name="action_like">"Gilla"</string>
@@ -264,7 +260,6 @@
     <string name="enable_squiggly_slider">"Aktivera vågigt reglage"</string>
     <string name="enable_swipe_thumbnail">"Tillåt svep för att byta låt"</string>
     <string name="pure_black">"Helsvart"</string>
-    <string name="customize_navigation_tabs">"Anpassa navigeringsflikar"</string>
     <string name="player">"Spelare"</string>
     <string name="player_text_alignment">"Justering av spelarens text"</string>
     <string name="lyrics_text_position">"Placering av sångtexter"</string>
@@ -305,13 +300,9 @@
     <string name="default_lib_chips">"Byt standardchip för bibliotek"</string>
     <string name="set_quick_picks">"Ställ in snabbval"</string>
     <string name="last_song_listened">"Baserat på senast lyssnade låt"</string>
-    <string name="restart_to_take_effect">"Starta om för att tillämpa ändringarna"</string>
     <string name="app_language">"Appspråk (Beta)"</string>
     <string name="configure_app_language">"Konfigurera appspråk"</string>
-    <string name="intent_app_language_not_found">"Appens språkinställningar hittades inte, konfigurera dem manuellt."</string>
-    <string name="open_supported_links">"Öppna kompatibla länkar som standard"</string>
     <string name="configure_supported_links">"Konfigurera kompatibla länkar"</string>
-    <string name="intent_supported_links_not_found">"Inga kompatibla länkar hittades, konfigurera dem manuellt."</string>
     <string name="enable_kugou">"Aktivera textleverantören KuGou"</string>
     <string name="enable_lrclib">"Aktivera textleverantören LrcLib"</string>
     <string name="set_first_lyrics_provider">"Föredragen textleverantör"</string>
@@ -372,12 +363,10 @@
     <string name="login_failed">"Inloggning misslyckades"</string>
     <string name="enable_discord_rpc">"Aktivera Rich Presence"</string>
     <string name="default_links">"Öppna kompatibla länkar"</string>
-    <string name="open_app_settings_error">"Kunde inte öppna appinställningar"</string>
     <string name="release_notes">"Versionsinfo"</string>
     <string name="about">"Om"</string>
     <string name="app_version">"Appversion"</string>
     <string name="new_version_available">"Ny version tillgänglig"</string>
-    <string name="translation_models">"Översättningsmodeller"</string>
     <string name="clear_translation_models">"Rensa översättningsmodeller"</string>
     <string name="all_time">"Sedan start"</string>
     <string name="past_24_hours">"Senaste 24 timmarna"</string>
@@ -387,18 +376,17 @@
     <string name="top_length">"Längd för min topplista"</string>
     <string name="history_duration">"Historikens längd"</string>
     <string name="contributors">"Bidragsgivare"</string>
-    <string name="Donate">"Donera"</string>
-    <string name="Telegramchanel">"Telegram-kanal"</string>
+    <string name="donate">"Donera"</string>
+    <string name="telegram_channel">"Telegram-kanal"</string>
     <string name="contribution">"Bidrag"</string>
-    <string name="Hi">"Hej"</string>
-    <string name="NewVersion">"Ny version"</string>
-    <string name="Changelog">"Ändringslogg"</string>
+    <string name="new_version">"Ny version"</string>
+    <string name="changelog">"Ändringslogg"</string>
     <string name="changelogs">"ändringsloggar"</string>
     <string name="no_changes">"inga ändringar"</string>
-    <string name="Translate">"Översätt"</string>
-    <string name="Redirección">"Omdirigering"</string>
+    <string name="translate">"Översätt"</string>
+    <string name="redirect">"Omdirigering"</string>
     <string name="poeditor_redirect">"Du håller på att omdirigeras till poeditor.com"</string>
-    <string name="barwar">"Observera att tidigare nedladdade låtar inte laddas ner igen vid återställning. Det REKOMMENDERAS STARKT att spela upp återställda låtar för att undvika nedladdningsfel."</string>
+    <string name="backup_restore_warning">"Observera att tidigare nedladdade låtar inte laddas ner igen vid återställning. Det REKOMMENDERAS STARKT att spela upp återställda låtar för att undvika nedladdningsfel."</string>
     <string name="backup_link_title">"Säkerhetskopia uppladdad!"</string>
     <string name="backup_link_description">"Din säkerhetskopia är tillgänglig i 14 dagar."</string>
     <string name="copy_link">"Kopiera länk"</string>
@@ -412,17 +400,13 @@
     <string name="mute">"Stäng av ljud"</string>
     <string name="explore">"Utforska"</string>
     <string name="custom_avatar">"Anpassad avatar (BETA)"</string>
-    <string name="custom_avatar_beta">"Anpassad avatar (BETA)"</string>
     <string name="select_image">"Välj bild"</string>
     <string name="default_avatar">"Standardavatar"</string>
     <string name="restore_default_avatar">"Återställ standardavatar"</string>
-    <string name="SearchResutls">"Sökresultat"</string>
-    <string name="Sujestions">"Förslag"</string>
-    <string name="SearchHistory">"Sökhistorik"</string>
+    <string name="search_results">"Sökresultat"</string>
+    <string name="suggestions">"Förslag"</string>
     <string name="collapse">"Fäll ihop"</string>
     <string name="expand">"Expandera"</string>
-    <string name="reset_to_default">"Återställ till standard"</string>
-    <string name="Presets">"Förval"</string>
     <string name="custom">"Anpassa"</string>
     <string name="close">"Stäng"</string>
     <string name="custom_value">"Anpassat värde"</string>
@@ -434,11 +418,11 @@
     <string name="secondary_color_style">"Sekundär färgstil"</string>
     <string name="update_version">"Uppdatering v%1$s"</string>
     <string name="download_question">"Vill du ladda ner den nya versionen?"</string>
-    <string name="downloadup">"Ladda ner"</string>
-    <string name="downloadingup">"Laddar ner uppdatering..."</string>
+    <string name="update_download">"Ladda ner"</string>
+    <string name="update_downloading">"Laddar ner uppdatering..."</string>
     <string name="download_completed">"Nedladdning klar"</string>
     <string name="install">"Installera"</string>
-    <string name="download_errorup">"Fel vid nedladdning av uppdateringen"</string>
+    <string name="update_download_error">"Fel vid nedladdning av uppdateringen"</string>
     <string name="tap_to_update">"Tryck för att uppdatera"</string>
     <string name="info_title">"Information"</string>
     <string name="info_description">"Detta avsnitt ger viktiga detaljer om processen för säkerhetskopiering och återställning, inklusive datasäkerhet och hur du säkerställer att din information förblir skyddad och lättåtkomlig."</string>
@@ -448,8 +432,7 @@
     <string name="restore_description">"Återställ dina data från en säkerhetskopia."</string>
     <string name="keep_listening">"fortsätt lyssna"</string>
     <string name="link_copied">"länk kopierad"</string>
-    <string name="redireccion">"omdirigering"</string>
-    <string name="Version">"Version"</string>
+    <string name="version">"Version"</string>
     <string name="notification">"avisering"</string>
     <string name="cached_playlist">"cachelagrade listor"</string>
     <string name="added_to_queue">"tillagd i kön"</string>
@@ -462,7 +445,6 @@
     <string name="clear_song_cache_confirmation"></string>
     <string name="clear_image_cache_confirmation"></string>
     <string name="confirm">"Bekräfta"</string>
-    <string name="problem_solver">"Problemlösare"</string>
     <string name="action_login"></string>
     <string name="generating_image">"Skapar bild"</string>
     <string name="please_wait">"Vänligen vänta"</string>
@@ -474,10 +456,9 @@
     <string name="customize_colors">"Anpassa färger"</string>
     <string name="more_options">"Fler alternativ"</string>
     <string name="text_color">"Textfärg"</string>
-    <string name="secondary_text_color">"Sekundär textfärg"</string>
     <string name="background_color">"Bakgrundsfärg"</string>
     <string name="back">"Bakåt"</string>
-    <string name="navigation_error"></string>
+    <string name="error_navigation"></string>
     <string name="notifications_enabled">"Aviseringar aktiverade"</string>
     <string name="notifications_disabled">"Aviseringar inaktiverade"</string>
     <string name="visitor_data_title"></string>

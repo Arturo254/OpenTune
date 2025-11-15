@@ -168,7 +168,8 @@ class LocaleManager private constructor(private val context: Context) {
             "nl" to LanguageConfig("Dutch", "Nederlands", CompletionStatus.INCOMPLETE, "🇳🇱"),
             "id" to LanguageConfig("Indonesian", "Bahasa Indonesia", CompletionStatus.BETA, "🇮🇩"),
             "uk" to LanguageConfig("Ukrainian", "Українська", CompletionStatus.BETA, "🇺🇦"),
-            "he" to LanguageConfig("Hebrew", "עברית", CompletionStatus.BETA, "🇮🇱")
+            "he" to LanguageConfig("Hebrew", "עברית", CompletionStatus.BETA, "🇮🇱"),
+            "ro" to LanguageConfig("Romanian", "Română", CompletionStatus.BETA, "🇷🇴")
         )
 
         private data class LanguageConfig(

@@ -200,7 +200,6 @@
     </plurals>
 
     <!-- Snackbar -->
-    <string name="playlist_imported">Playlist importován</string>
     <string name="removed_song_from_playlist">Skladba „%s“ odebrána z playlistu</string>
     <string name="playlist_synced">Playlist synchronizován</string>
     <string name="undo">Vrátit</string>
@@ -246,7 +245,6 @@
     <string name="dark_theme_follow_system">Podle systému</string>
     <string name="pure_black">Čistě černá</string>
     <string name="default_open_tab">Výchozí karta</string>
-    <string name="customize_navigation_tabs">Přizpůsobit karty navigace</string>
     <string name="lyrics_text_position">Pozice textů</string>
     <string name="left">Vlevo</string>
     <string name="center">Uprostřed</string>
@@ -264,7 +262,6 @@
     <string name="default_lib_chips">Změnit výchozí stránku knihovny</string>
     <string name="set_quick_picks">Nastavit rychlý výběr</string>
     <string name="last_song_listened">Podle poslední poslouchané skladby</string>
-    <string name="restart_to_take_effect">Restartujte pro uplatnění změn</string>
 
     <string name="player_and_audio">Přehrávání a zvuk</string>
     <string name="audio_quality">Kvalita zvuku</string>
@@ -302,7 +299,6 @@
     <string name="backup_restore">Záloha a obnovení</string>
     <string name="backup">Zálohovat</string>
     <string name="restore">Obnovit</string>
-    <string name="imported_playlist">Playlist importován</string>
     <string name="backup_create_success">Záloha úspěšně vytvořena</string>
     <string name="backup_create_failed">Nepodařilo se vytvořit zálohu</string>
     <string name="restore_failed">Nepodařilo se obnovit zálohu</string>
@@ -311,7 +307,6 @@
     <string name="app_version">Verze aplikace</string>
 
     <string name="new_version_available">Je dostupná nová verze</string>
-    <string name="translation_models">Modely překladu</string>
     <string name="clear_translation_models">Vymazat modely překladu</string>
 
     <string name="all_time">Za celou dobu</string>
