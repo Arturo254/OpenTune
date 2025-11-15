@@ -131,6 +131,7 @@ dependencies {
     implementation(libs.material.icons.extended)
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
+    implementation(libs.graphics.shapes)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 

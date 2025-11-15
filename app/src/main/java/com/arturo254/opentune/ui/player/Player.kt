@@ -51,13 +51,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -116,6 +119,7 @@ import com.arturo254.opentune.LocalDownloadUtil
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.DarkModeKey
+import com.arturo254.opentune.constants.DefaultSmallButtonsShape
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerButtonsStyle
@@ -127,6 +131,7 @@ import com.arturo254.opentune.constants.QueuePeekHeight
 import com.arturo254.opentune.constants.ShowLyricsKey
 import com.arturo254.opentune.constants.SliderStyle
 import com.arturo254.opentune.constants.SliderStyleKey
+import com.arturo254.opentune.constants.SmallButtonsShapeKey
 import com.arturo254.opentune.extensions.togglePlayPause
 import com.arturo254.opentune.extensions.toggleRepeatMode
 import com.arturo254.opentune.models.MediaMetadata
@@ -141,6 +146,7 @@ import com.arturo254.opentune.ui.menu.PlayerMenu
 import com.arturo254.opentune.ui.screens.settings.DarkMode
 import com.arturo254.opentune.ui.screens.settings.PlayerTextAlignment
 import com.arturo254.opentune.ui.theme.extractGradientColors
+import com.arturo254.opentune.utils.getSmallButtonShape
 import com.arturo254.opentune.utils.makeTimeString
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
@@ -151,7 +157,7 @@ import kotlinx.coroutines.withContext
 import me.saket.squiggles.SquigglySlider
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BottomSheetPlayer(
     state: BottomSheetState,
@@ -168,6 +174,10 @@ fun BottomSheetPlayer(
     var showFullscreenLyrics by remember { mutableStateOf(false) }
 
     val playerConnection = LocalPlayerConnection.current ?: return
+
+
+
+
 
 
     val playerTextAlignment by rememberEnumPreference(
@@ -237,6 +247,7 @@ fun BottomSheetPlayer(
     var changeColor by remember {
         mutableStateOf(false)
     }
+
 
 
     // Animaciones para efectos de fondo
@@ -494,6 +505,22 @@ fun BottomSheetPlayer(
     }
 
 
+    val smallButtonsShapeState = rememberPreference(
+        key = SmallButtonsShapeKey,
+        defaultValue = DefaultSmallButtonsShape
+    )
+
+    val smallButtonShape = remember(smallButtonsShapeState.value) {
+        getSmallButtonShape(smallButtonsShapeState.value)
+    }
+
+    // Función para crear el modifier de los botones pequeños
+    val smallButtonModifier = @Composable {
+        Modifier
+            .size(42.dp)
+            .clip(smallButtonShape.toShape())
+            .background(textButtonColor)
+    }
 
     LaunchedEffect(playbackState) {
         if (playbackState == STATE_READY) {
@@ -588,23 +615,93 @@ fun BottomSheetPlayer(
             expandedBound = state.expandedBound,
         )
 
+    val bottomSheetBackgroundColor = when (playerBackground) {
+        PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT ->
+            MaterialTheme.colorScheme.surfaceContainer
+        else ->
+            if (useBlackBackground) Color.Black
+            else MaterialTheme.colorScheme.surfaceContainer
+    }
+
     BottomSheet(
         state = state,
         modifier = modifier,
-        brushBackgroundColor =
-            if (gradientColors.size >=
-                2 &&
-                state.value > changeBound
+        background = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(bottomSheetBackgroundColor)
             ) {
-                Brush.verticalGradient(gradientColors)
-            } else {
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.surfaceContainer,
-                        MaterialTheme.colorScheme.surfaceContainer,
-                    ),
-                )
-            },
+                when (playerBackground) {
+                    PlayerBackgroundStyle.BLUR -> {
+                        AnimatedContent(
+                            targetState = mediaMetadata?.thumbnailUrl,
+                            transitionSpec = {
+                                fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
+                            },
+                            label = "blurBackground"
+                        ) { thumbnailUrl ->
+                            if (thumbnailUrl != null) {
+                                Box(modifier = Modifier.alpha(backgroundAlpha)) {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(context)
+                                            .data(thumbnailUrl)
+                                            .size(100, 100)
+                                            .allowHardware(false)
+                                            .build(),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .blur(if (useDarkTheme) 150.dp else 100.dp)
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = 0.3f))
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    PlayerBackgroundStyle.GRADIENT -> {
+                        AnimatedContent(
+                            targetState = gradientColors,
+                            transitionSpec = {
+                                fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
+                            },
+                            label = "gradientBackground"
+                        ) { colors ->
+                            if (colors.isNotEmpty()) {
+                                val gradientColorStops = if (colors.size >= 3) {
+                                    arrayOf(
+                                        0.0f to colors[0],
+                                        0.5f to colors[1],
+                                        1.0f to colors[2]
+                                    )
+                                } else {
+                                    arrayOf(
+                                        0.0f to colors[0],
+                                        0.6f to colors[0].copy(alpha = 0.7f),
+                                        1.0f to Color.Black
+                                    )
+                                }
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .alpha(backgroundAlpha)
+                                        .background(Brush.verticalGradient(colorStops = gradientColorStops))
+                                        .background(Color.Black.copy(alpha = 0.2f))
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        PlayerBackgroundStyle.DEFAULT
+                    }
+                }
+            }
+        },
         onDismiss = {
             playerConnection.service.clearAutomix()
             playerConnection.player.stop()
@@ -721,33 +818,25 @@ fun BottomSheetPlayer(
                         .padding(horizontal = PlayerHorizontalPadding),
             ) {
                 Box(
-                    modifier =
-                        Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(textButtonColor)
-                            .clickable {
-                                playerConnection.service.startRadioSeamlessly()
-                            },
+                    modifier = smallButtonModifier()
+                        .clickable {
+                            playerConnection.service.startRadioSeamlessly()
+                        },
                 ) {
                     Image(
                         painter = painterResource(R.drawable.radio),
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(iconButtonColor),
-                        modifier =
-                            Modifier
-                                .align(Alignment.Center)
-                                .size(24.dp),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(24.dp),
                     )
                 }
 
                 Spacer(modifier = Modifier.size(12.dp))
 
                 Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(textButtonColor)
+                    modifier = smallButtonModifier()
                         .clickable {
                             if (download?.state == Download.STATE_COMPLETED) {
                                 DownloadService.sendRemoveDownload(
@@ -775,7 +864,6 @@ fun BottomSheetPlayer(
                             }
                         },
                 ) {
-                    // Indicador de progreso circular de fondo
                     if (download?.state == Download.STATE_DOWNLOADING) {
                         val progress = download!!.percentDownloaded / 100f
                         val animatedProgress by animateFloatAsState(
@@ -825,10 +913,9 @@ fun BottomSheetPlayer(
                         }
                     }
 
-                    // Icono central con animación
                     val iconResource = when (download?.state) {
                         Download.STATE_COMPLETED -> R.drawable.offline
-                        Download.STATE_DOWNLOADING -> R.drawable.pause // o R.drawable.download_pause
+                        Download.STATE_DOWNLOADING -> R.drawable.pause
                         Download.STATE_FAILED -> R.drawable.error
                         else -> R.drawable.download
                     }
@@ -869,7 +956,7 @@ fun BottomSheetPlayer(
                             .alpha(iconAlpha),
                     )
 
-                    // Texto de progreso pequeño (opcional)
+                    // Texto de progreso pequeño
                     if (download?.state == Download.STATE_DOWNLOADING) {
                         val progress = (download!!.percentDownloaded).toInt()
                         Text(
@@ -891,11 +978,10 @@ fun BottomSheetPlayer(
 
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier =
-                        Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(smallButtonShape.toShape())
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
                 ) {
                     AnimatedContent(
                         label = "sleepTimer",
@@ -907,31 +993,25 @@ fun BottomSheetPlayer(
                                 style = MaterialTheme.typography.labelLarge,
                                 color = onBackgroundColor,
                                 maxLines = 1,
-                                modifier =
-                                    Modifier
-                                        .clip(RoundedCornerShape(50))
-                                        .clickable(onClick = playerConnection.service.sleepTimer::clear)
-                                        .basicMarquee(),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .clickable(onClick = playerConnection.service.sleepTimer::clear)
+                                    .basicMarquee(),
                             )
                         } else {
                             Box(
-                                modifier =
-                                    Modifier
-                                        .size(42.dp)
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(textButtonColor)
-                                        .clickable {
-                                            showSleepTimerDialog = true
-                                        },
+                                modifier = smallButtonModifier()
+                                    .clickable {
+                                        showSleepTimerDialog = true
+                                    },
                             ) {
                                 Image(
                                     painter = painterResource(R.drawable.bedtime),
                                     colorFilter = ColorFilter.tint(iconButtonColor),
                                     contentDescription = null,
-                                    modifier =
-                                        Modifier
-                                            .align(Alignment.Center)
-                                            .size(24.dp),
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .size(24.dp),
                                 )
                             }
                         }
@@ -942,22 +1022,18 @@ fun BottomSheetPlayer(
 
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier =
-                        Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(textButtonColor)
-                            .clickable {
-                                menuState.show {
-                                    PlayerMenu(
-                                        mediaMetadata = mediaMetadata,
-                                        navController = navController,
-                                        playerBottomSheetState = state,
-                                        onShowDetailsDialog = { showDetailsDialog = true },
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
-                            },
+                    modifier = smallButtonModifier()
+                        .clickable {
+                            menuState.show {
+                                PlayerMenu(
+                                    mediaMetadata = mediaMetadata,
+                                    navController = navController,
+                                    playerBottomSheetState = state,
+                                    onShowDetailsDialog = { showDetailsDialog = true },
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        },
                 ) {
                     Image(
                         painter = painterResource(R.drawable.more_horiz),
@@ -966,6 +1042,7 @@ fun BottomSheetPlayer(
                     )
                 }
             }
+
 
             Spacer(Modifier.height(6.dp))
 
@@ -1129,8 +1206,8 @@ fun BottomSheetPlayer(
                 Box(
                     modifier =
                         Modifier
-                            .size(72.dp)
-                            .clip(RoundedCornerShape(playPauseRoundness))
+                            .size(85.dp)
+                            .clip(MaterialShapes.Cookie9Sided.toShape())
                             .background(textButtonColor)
                             .clickable {
                                 if (playbackState == STATE_ENDED) {
@@ -1278,58 +1355,53 @@ fun BottomSheetPlayer(
                             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                             .padding(bottom = queueSheetState.collapsedBound + 48.dp),
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.weight(1f)
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.weight(1f),
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.weight(1f),
+                        val screenWidth = LocalConfiguration.current.screenWidthDp
+                        val thumbnailSize = (screenWidth * 0.4).dp
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
+                            // Texto "Reproduciendo desde:"
+                            val queueTitle by playerConnection.queueTitle.collectAsState()
+                            AnimatedVisibility(
+                                visible = !queueTitle.isNullOrEmpty(),
+                                enter = fadeIn() + expandVertically(),
+                                exit = fadeOut() + shrinkVertically()
                             ) {
-                                // Texto "Reproduciendo desde:" - DENTRO del Box y ARRIBA de la imagen
-                                val queueTitle by playerConnection.queueTitle.collectAsState()
-                                AnimatedVisibility(
-                                    visible = !queueTitle.isNullOrEmpty(),
-                                    enter = fadeIn() + expandVertically(),
-                                    exit = fadeOut() + shrinkVertically()
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(bottom = 45.dp)
                                 ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.padding(bottom = 8.dp) // Espacio entre texto e imagen
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.playing_from),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = onBackgroundColor.copy(alpha = 0.7f),
-                                            fontSize = 12.sp
-                                        )
+                                    Text(
+                                        text = stringResource(R.string.playing_from),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = onBackgroundColor.copy(alpha = 0.7f),
+                                        fontSize = 12.sp
+                                    )
 
-                                        Text(
-                                            text = queueTitle.orEmpty(),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = onBackgroundColor,
-                                            fontWeight = FontWeight.SemiBold,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier
-                                                .padding(horizontal = 16.dp)
-                                                .basicMarquee()
-                                        )
-                                    }
+                                    Text(
+                                        text = queueTitle.orEmpty(),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = onBackgroundColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .basicMarquee()
+                                    )
                                 }
-
-                                val screenWidth = LocalConfiguration.current.screenWidthDp
-                                val thumbnailSize = (screenWidth * 0.4).dp
-
-                                Thumbnail(
-                                    sliderPositionProvider = { sliderPosition },
-                                    onOpenFullscreenLyrics = onOpenFullscreenLyrics,
-                                    modifier = Modifier.size(thumbnailSize)
-                                )
                             }
+
+                            Thumbnail(
+                                sliderPositionProvider = { sliderPosition },
+                                onOpenFullscreenLyrics = onOpenFullscreenLyrics,
+                                modifier = Modifier.size(thumbnailSize)
+                            )
                         }
                     }
                     Column(
@@ -1366,7 +1438,7 @@ fun BottomSheetPlayer(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection)
                         ) {
-                            // Texto "Reproduciendo desde:" - DENTRO del Box y ARRIBA de la imagen
+                            // Texto "Reproduciendo desde:"
                             val queueTitle by playerConnection.queueTitle.collectAsState()
                             AnimatedVisibility(
                                 visible = !queueTitle.isNullOrEmpty(),
@@ -1375,7 +1447,7 @@ fun BottomSheetPlayer(
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.padding(bottom = 16.dp) // Espacio entre texto e imagen
+                                    modifier = Modifier.padding(bottom = 12.dp, top = 45.dp)
                                 ) {
                                     Text(
                                         text = stringResource(R.string.playing_from),
@@ -1400,7 +1472,6 @@ fun BottomSheetPlayer(
 
                             Thumbnail(
                                 sliderPositionProvider = { sliderPosition },
-                                modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
                                 onOpenFullscreenLyrics = onOpenFullscreenLyrics,
                             )
                         }

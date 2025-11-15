@@ -263,13 +263,9 @@ fun Queue(
 
     BottomSheet(
         state = state,
-        brushBackgroundColor =
-            Brush.verticalGradient(
-                listOf(
-                    Color.Unspecified,
-                    Color.Unspecified,
-                ),
-            ),
+        background = {
+            Box(Modifier.fillMaxSize().background(Color.Unspecified))
+        },
         modifier = modifier,
         collapsedContent = {
             Row(

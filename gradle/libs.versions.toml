@@ -5,7 +5,7 @@ json = "20241224"
 kotlin = "2.1.0"
 compose = "1.9.4"
 lifecycle = "2.9.4"
-material3 = "1.5.0-alpha07"
+material3 = "1.5.0-alpha08"
 media3 = "1.8.0"
 room = "2.6.1"
 hilt = "2.55"
@@ -23,6 +23,7 @@ uiAndroid = "1.9.2"
 materialIconsExtended = "1.7.6"
 glanceAppwidget = "1.1.1"
 glanceMaterial3 = "1.1.1"
+graphicsShapes = "1.1.0"
 
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -99,6 +100,7 @@ ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref =
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glanceAppwidget" }
 glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glanceMaterial3" }
+graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphicsShapes" }
 
 [plugins]
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

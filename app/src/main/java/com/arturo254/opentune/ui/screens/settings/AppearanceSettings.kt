@@ -46,6 +46,7 @@ import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.ChipSortTypeKey
 import com.arturo254.opentune.constants.DarkModeKey
 import com.arturo254.opentune.constants.DefaultOpenTabKey
+import com.arturo254.opentune.constants.DefaultSmallButtonsShape
 import com.arturo254.opentune.constants.DynamicThemeKey
 import com.arturo254.opentune.constants.GridItemSize
 import com.arturo254.opentune.constants.GridItemsSizeKey
@@ -62,6 +63,7 @@ import com.arturo254.opentune.constants.RotateBackgroundKey
 import com.arturo254.opentune.constants.SliderStyle
 import com.arturo254.opentune.constants.SliderStyleKey
 import com.arturo254.opentune.constants.SlimNavBarKey
+import com.arturo254.opentune.constants.SmallButtonsShapeKey
 import com.arturo254.opentune.constants.SwipeThumbnailKey
 import com.arturo254.opentune.ui.component.AvatarSelector
 import com.arturo254.opentune.ui.component.DefaultDialog
@@ -71,6 +73,7 @@ import com.arturo254.opentune.ui.component.ListPreference
 import com.arturo254.opentune.ui.component.PlayerSliderTrack
 import com.arturo254.opentune.ui.component.PreferenceEntry
 import com.arturo254.opentune.ui.component.PreferenceGroupTitle
+import com.arturo254.opentune.ui.component.SmallButtonShapeSelectorButton
 import com.arturo254.opentune.ui.component.SwitchPreference
 import com.arturo254.opentune.ui.component.ThumbnailCornerRadiusSelectorButton
 import com.arturo254.opentune.ui.utils.backToMain
@@ -136,6 +139,11 @@ fun AppearanceSettings(
     val (rotateBackground, onRotateBackgroundChange) = rememberPreference(
         key = RotateBackgroundKey,
         defaultValue = false
+    )
+
+    val smallButtonsShapeState = rememberPreference(
+        key = SmallButtonsShapeKey,
+        defaultValue = DefaultSmallButtonsShape
     )
 
 
@@ -379,6 +387,13 @@ fun AppearanceSettings(
             onRadiusSelected = { selectedRadius ->
                 // Aquí puedes manejar el valor del radio seleccionado
                 Timber.tag("Thumbnail").d("Radio seleccionado: $selectedRadius")
+            }
+        )
+
+        SmallButtonShapeSelectorButton(
+            currentShapeName = smallButtonsShapeState.value,
+            onShapeSelected = { newShape ->
+                smallButtonsShapeState.value = newShape // Esto guarda automáticamente en DataStore
             }
         )
 

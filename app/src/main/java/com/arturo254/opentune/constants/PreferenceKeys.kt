@@ -66,6 +66,10 @@ val PlayerTextAlignmentKey = stringPreferencesKey("playerTextAlignment")
 
 val RotateBackgroundKey = booleanPreferencesKey("rotate_background")
 
+
+val SmallButtonsShapeKey = stringPreferencesKey("small_buttons_shape")
+const val DefaultSmallButtonsShape = "Pill"
+
 val PauseListenHistoryKey = booleanPreferencesKey("pauseListenHistory")
 val PauseSearchHistoryKey = booleanPreferencesKey("pauseSearchHistory")
 val DisableScreenshotKey = booleanPreferencesKey("disableScreenshot")
