@@ -1048,6 +1048,9 @@ class MusicService :
 
         discordUpdateJob?.cancel()
 
+        // Resetear errores consecutivos cuando hay transición exitosa
+        consecutivePlaybackErr = 0
+
         // Auto cargar más canciones
         if (dataStore.get(AutoLoadMoreKey, true) &&
             reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT &&
@@ -1066,7 +1069,10 @@ class MusicService :
 
         // Guardar estado cuando cambia el item de medios
         if (dataStore.get(PersistentQueueKey, true)) {
-            saveQueueToDisk()
+            scope.launch {
+                delay(500) // Pequeño delay para asegurar que el estado esté estable
+                saveQueueToDisk()
+            }
         }
     }
 
@@ -1074,18 +1080,34 @@ class MusicService :
         @Player.State playbackState: Int,
     ) {
         // Guardar estado cuando cambia el estado de reproducción
-        if (dataStore.get(PersistentQueueKey, true)) {
-            saveQueueToDisk()
+        if (dataStore.get(PersistentQueueKey, true) && playbackState != Player.STATE_BUFFERING) {
+            scope.launch {
+                delay(500)
+                saveQueueToDisk()
+            }
         }
 
-        if (playbackState == Player.STATE_IDLE || playbackState == Player.STATE_ENDED) {
-            // Resetear estado cuando termina
+        // Cuando termina la reproducción, ocultar notificación si la cola está vacía
+        if (playbackState == Player.STATE_ENDED) {
+            scope.launch {
+                delay(1000)
+                if (!player.isPlaying && player.mediaItemCount == 0) {
+                    // Limpiar metadata para forzar actualización de notificación
+                    currentMediaMetadata.value = null
+                }
+            }
         }
     }
 
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
         if (playWhenReady) {
             setupLoudnessEnhancer()
+        }
+
+        // Actualizar notificación cuando cambia el estado de reproducción
+        scope.launch {
+            delay(300)
+            updateNotification()
         }
     }
 
@@ -1108,10 +1130,20 @@ class MusicService :
                 }
             } else {
                 closeAudioEffectSession()
+                // Abandonar foco de audio cuando no está reproduciendo
+                if (!player.playWhenReady || player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                    abandonAudioFocus()
+                }
             }
         }
+
         if (events.containsAny(EVENT_TIMELINE_CHANGED, EVENT_POSITION_DISCONTINUITY)) {
             currentMediaMetadata.value = player.currentMetadata
+            // Forzar actualización de notificación para asegurar que la imagen se cargue
+            scope.launch {
+                delay(200)
+                updateNotification()
+            }
         }
 
         // Actualización de Discord RPC
@@ -1149,7 +1181,10 @@ class MusicService :
 
         // Guardar estado cuando cambia el modo aleatorio
         if (dataStore.get(PersistentQueueKey, true)) {
-            saveQueueToDisk()
+            scope.launch {
+                delay(300)
+                saveQueueToDisk()
+            }
         }
     }
 
@@ -1163,12 +1198,18 @@ class MusicService :
 
         // Guardar estado cuando cambia el modo de repetición
         if (dataStore.get(PersistentQueueKey, true)) {
-            saveQueueToDisk()
+            scope.launch {
+                delay(300)
+                saveQueueToDisk()
+            }
         }
     }
 
     override fun onPlayerError(error: PlaybackException) {
         super.onPlayerError(error)
+
+        Log.e(TAG, "Player error: ${error.errorCodeName}, message: ${error.message}", error)
+
         val isConnectionError = (error.cause?.cause is PlaybackException) &&
                 (error.cause?.cause as PlaybackException).errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
 
@@ -1443,42 +1484,75 @@ class MusicService :
     }
 
     private fun saveQueueToDisk() {
-        if (player.playbackState == STATE_IDLE) {
+        if (player.playbackState == STATE_IDLE && player.mediaItemCount == 0) {
             filesDir.resolve(PERSISTENT_AUTOMIX_FILE).delete()
             filesDir.resolve(PERSISTENT_QUEUE_FILE).delete()
+            filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).delete()
             return
         }
-        val persistQueue =
-            PersistQueue(
-                title = queueTitle,
-                items = player.mediaItems.mapNotNull { it.metadata },
-                mediaItemIndex = player.currentMediaItemIndex,
-                position = player.currentPosition,
+
+        try {
+            val persistQueue =
+                PersistQueue(
+                    title = queueTitle,
+                    items = player.mediaItems.mapNotNull { it.metadata },
+                    mediaItemIndex = player.currentMediaItemIndex.coerceAtLeast(0),
+                    position = if (player.currentPosition >= 0) player.currentPosition else 0,
+                )
+            val persistAutomix =
+                PersistQueue(
+                    title = "automix",
+                    items = automixItems.value.mapNotNull { it.metadata },
+                    mediaItemIndex = 0,
+                    position = 0,
+                )
+
+            // Guardar estado del reproductor
+            val playerState = PersistPlayerState(
+                repeatMode = player.repeatMode,
+                shuffleModeEnabled = player.shuffleModeEnabled,
+                volume = player.volume,
+                currentMediaItemIndex = player.currentMediaItemIndex.coerceAtLeast(0),
+                currentPosition = if (player.currentPosition >= 0) player.currentPosition else 0,
+                playWhenReady = player.playWhenReady, // Estado de reproducción (si está listo para reproducir)
+                playbackState = player.playbackState // Estado actual del reproductor
             )
-        val persistAutomix =
-            PersistQueue(
-                title = "automix",
-                items = automixItems.value.mapNotNull { it.metadata },
-                mediaItemIndex = 0,
-                position = 0,
-            )
-        runCatching {
-            filesDir.resolve(PERSISTENT_QUEUE_FILE).outputStream().use { fos ->
-                ObjectOutputStream(fos).use { oos ->
-                    oos.writeObject(persistQueue)
+
+            runCatching {
+                filesDir.resolve(PERSISTENT_QUEUE_FILE).outputStream().use { fos ->
+                    ObjectOutputStream(fos).use { oos ->
+                        oos.writeObject(persistQueue)
+                    }
                 }
+            }.onFailure {
+                Log.e(TAG, "Error saving queue to disk", it)
+                reportException(it)
             }
-        }.onFailure {
-            reportException(it)
-        }
-        runCatching {
-            filesDir.resolve(PERSISTENT_AUTOMIX_FILE).outputStream().use { fos ->
-                ObjectOutputStream(fos).use { oos ->
-                    oos.writeObject(persistAutomix)
+
+            runCatching {
+                filesDir.resolve(PERSISTENT_AUTOMIX_FILE).outputStream().use { fos ->
+                    ObjectOutputStream(fos).use { oos ->
+                        oos.writeObject(persistAutomix)
+                    }
                 }
+            }.onFailure {
+                Log.e(TAG, "Error saving automix to disk", it)
+                reportException(it)
             }
-        }.onFailure {
-            reportException(it)
+
+            runCatching {
+                filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).outputStream().use { fos ->
+                    ObjectOutputStream(fos).use { oos ->
+                        oos.writeObject(playerState)
+                    }
+                }
+            }.onFailure {
+                Log.e(TAG, "Error saving player state to disk", it)
+                reportException(it)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in saveQueueToDisk", e)
+            reportException(e)
         }
     }
 
@@ -1523,7 +1597,7 @@ class MusicService :
 
         const val CHANNEL_ID = "music_channel_01"
         const val NOTIFICATION_ID = 888
-    const val PERSISTENT_PLAYER_STATE_FILE = "persistent_player_state.data"
+        const val PERSISTENT_PLAYER_STATE_FILE = "persistent_player_state.data"
         const val MAX_CONSECUTIVE_ERR = 5
         const val CHUNK_LENGTH = 512 * 1024L
         const val PERSISTENT_QUEUE_FILE = "persistent_queue.data"
