@@ -21,9 +21,9 @@ import com.arturo254.opentune.BuildConfig
 import com.arturo254.opentune.ui.screens.artist.ArtistItemsScreen
 import com.arturo254.opentune.ui.screens.artist.ArtistScreen
 import com.arturo254.opentune.ui.screens.artist.ArtistSongsScreen
+import com.arturo254.opentune.ui.screens.library.CachePlaylistScreen
 import com.arturo254.opentune.ui.screens.library.LibraryScreen
 import com.arturo254.opentune.ui.screens.playlist.AutoPlaylistScreen
-import com.arturo254.opentune.ui.screens.library.CachePlaylistScreen
 import com.arturo254.opentune.ui.screens.playlist.LocalPlaylistScreen
 import com.arturo254.opentune.ui.screens.playlist.OnlinePlaylistScreen
 import com.arturo254.opentune.ui.screens.playlist.TopPlaylistScreen

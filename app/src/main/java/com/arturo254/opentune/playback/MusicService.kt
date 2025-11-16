@@ -99,7 +99,6 @@ import com.arturo254.opentune.extensions.findNextMediaItemById
 import com.arturo254.opentune.extensions.mediaItems
 import com.arturo254.opentune.extensions.metadata
 import com.arturo254.opentune.extensions.toMediaItem
-import com.arturo254.opentune.extensions.toPersistQueue
 import com.arturo254.opentune.extensions.toQueue
 import com.arturo254.opentune.lyrics.LyricsHelper
 import com.arturo254.opentune.models.PersistPlayerState

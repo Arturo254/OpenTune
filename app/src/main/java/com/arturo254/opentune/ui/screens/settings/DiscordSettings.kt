@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,13 +59,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.media3.common.Player.STATE_READY
 import androidx.navigation.NavController
@@ -420,50 +427,89 @@ fun EnhancedRichPresence(
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header
+                // Header - Rediseñado
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Logo y título mejorados
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(R.drawable.discord),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = "Listening to OpenTune",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        // Logo con contenedor circular y gradiente
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .shadow(4.dp, CircleShape)
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        )
+                                    ),
+                                    CircleShape
+                                )
+                                .border(
+                                    2.dp,
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.discord),
+                                contentDescription = "Discord",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Column {
+                            Text(
+                                text = "OpenTune",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Listening on Discord",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
-                    // Indicador de reproducción
+                    // Indicador de reproducción mejorado
                     if (song != null && isPlaying) {
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            border = BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                            ),
+                            shadowElevation = 2.dp
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary)
+                                // Icono de play animado
+                                Icon(
+                                    painter = painterResource(R.drawable.play),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                                 Spacer(Modifier.width(6.dp))
                                 Text(
-                                    text = "Playing",
+                                    text = "LIVE",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp
                                 )
                             }
                         }
@@ -477,68 +523,104 @@ fun EnhancedRichPresence(
                     verticalAlignment = Alignment.Top,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Thumbnail con sombra
-                    Card(
-                        modifier = Modifier.size(120.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    // Thumbnail con diseño mejorado
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .shadow(8.dp, RoundedCornerShape(16.dp))
                     ) {
-                        Box(Modifier.fillMaxSize()) {
-                            AsyncImage(
-                                model = song?.song?.thumbnailUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .run {
-                                        if (song == null) {
-                                            background(MaterialTheme.colorScheme.surfaceVariant)
-                                        } else this
-                                    }
-                            )
+                        Card(
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Box(Modifier.fillMaxSize()) {
+                                AsyncImage(
+                                    model = song?.song?.thumbnailUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .run {
+                                            if (song == null) {
+                                                background(MaterialTheme.colorScheme.surfaceVariant)
+                                            } else this
+                                        },
+                                    contentScale = ContentScale.Crop
+                                )
 
-                            // Avatar del artista
-                            song?.artists?.firstOrNull()?.thumbnailUrl?.let { avatarUrl ->
+                                // Overlay sutil
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    Color.Black.copy(alpha = 0.1f)
+                                                )
+                                            )
+                                        )
+                                )
+
+                                // Avatar del artista mejorado
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.BottomEnd)
                                         .padding(8.dp)
-                                        .size(40.dp)
-                                        .border(
-                                            3.dp,
-                                            MaterialTheme.colorScheme.surface,
-                                            CircleShape
-                                        )
-                                        .clip(CircleShape)
                                 ) {
-                                    AsyncImage(
-                                        model = avatarUrl,
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize(),
-                                        error = painterResource(R.drawable.opentune),
-                                        fallback = painterResource(R.drawable.opentune)
-                                    )
+                                    // Logo de OpenTune como fallback mejorado
+                                    val artistAvatar = song?.artists?.firstOrNull()?.thumbnailUrl
+
+                                    Card(
+                                        modifier = Modifier.size(36.dp),
+                                        shape = CircleShape,
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = MaterialTheme.colorScheme.surface
+                                        )
+                                    ) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (artistAvatar != null) {
+                                                AsyncImage(
+                                                    model = artistAvatar,
+                                                    contentDescription = "Artist",
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                            } else {
+                                                // Logo de OpenTune con estilo mejorado
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(
+                                                            Brush.linearGradient(
+                                                                colors = listOf(
+                                                                    MaterialTheme.colorScheme.primary,
+                                                                    MaterialTheme.colorScheme.secondary
+                                                                )
+                                                            )
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Image(
+                                                        painter = painterResource(R.drawable.opentune),
+                                                        contentDescription = "OpenTune",
+                                                        modifier = Modifier
+                                                            .size(20.dp)
+                                                            .alpha(0.9f),
+                                                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
-                            } ?: Box( // si no hay avatarUrl
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(8.dp)
-                                    .size(40.dp)
-                                    .border(
-                                        3.dp,
-                                        MaterialTheme.colorScheme.surface,
-                                        CircleShape
-                                    )
-                                    .clip(CircleShape)
-                            ) {
-                                Image(
-                                    painter = painterResource(R.drawable.opentune),
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize()
-                                )
                             }
                         }
                     }
-
 
                     Spacer(Modifier.width(16.dp))
 
@@ -547,7 +629,7 @@ fun EnhancedRichPresence(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = song?.song?.title ?: "Song Title",
+                            text = song?.song?.title ?: "No song playing",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             maxLines = 2,
@@ -555,10 +637,10 @@ fun EnhancedRichPresence(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(6.dp))
 
                         Text(
-                            text = song?.artists?.joinToString { it.name } ?: "Artist",
+                            text = song?.artists?.joinToString { it.name } ?: "Unknown Artist",
                             style = MaterialTheme.typography.bodyLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -592,12 +674,13 @@ fun EnhancedRichPresence(
 
                 Spacer(Modifier.height(20.dp))
 
-                // Botones de acción
+                // Botones de acción mejorados
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedButton(
+                    // Botón YouTube Music mejorado
+                    FilledTonalButton(
                         enabled = song != null,
                         onClick = {
                             val intent = Intent(
@@ -606,17 +689,21 @@ fun EnhancedRichPresence(
                             )
                             context.startActivity(intent)
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.play),
-                            contentDescription = null,
+                            contentDescription = "YouTube Music",
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("YouTube Music", maxLines = 1)
+                        Text("YouTube Music", maxLines = 1, fontWeight = FontWeight.Medium)
                     }
 
+                    // Botón OpenTune mejorado
                     OutlinedButton(
                         onClick = {
                             val intent = Intent(
@@ -625,15 +712,35 @@ fun EnhancedRichPresence(
                             )
                             context.startActivity(intent)
                         },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.info),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                         )
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.secondary
+                                        )
+                                    ),
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.opentune),
+                                contentDescription = "OpenTune",
+                                modifier = Modifier.size(12.dp),
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
+                            )
+                        }
                         Spacer(Modifier.width(8.dp))
-                        Text("OpenTune", maxLines = 1)
+                        Text("OpenTune", maxLines = 1, fontWeight = FontWeight.Medium)
                     }
                 }
             }

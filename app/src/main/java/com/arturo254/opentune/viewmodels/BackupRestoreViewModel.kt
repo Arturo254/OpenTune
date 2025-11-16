@@ -9,6 +9,9 @@ import com.arturo254.opentune.MainActivity
 import com.arturo254.opentune.R
 import com.arturo254.opentune.db.InternalDatabase
 import com.arturo254.opentune.db.MusicDatabase
+import com.arturo254.opentune.db.entities.ArtistEntity
+import com.arturo254.opentune.db.entities.Song
+import com.arturo254.opentune.db.entities.SongEntity
 import com.arturo254.opentune.extensions.div
 import com.arturo254.opentune.extensions.tryOrNull
 import com.arturo254.opentune.extensions.zipInputStream
@@ -17,10 +20,6 @@ import com.arturo254.opentune.playback.MusicService
 import com.arturo254.opentune.playback.MusicService.Companion.PERSISTENT_QUEUE_FILE
 import com.arturo254.opentune.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
-import com.arturo254.opentune.db.entities.ArtistEntity
-import com.arturo254.opentune.db.entities.Song
-import com.arturo254.opentune.db.entities.SongEntity
-import com.arturo254.opentune.viewmodels.BackupRestoreViewModel.Companion.SETTINGS_FILENAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.io.FileInputStream
