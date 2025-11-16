@@ -325,7 +325,7 @@ class MusicService :
         currentSong.debounce(1000).collect(scope) { song ->
             updateNotification()
             if (song != null && player.playWhenReady && player.playbackState == Player.STATE_READY) {
-                discordRpc?.updateSong(song)
+                discordRpc?.updateSong(song, player.currentPosition, player.playbackParameters.speed, dataStore.get(DiscordUseDetailsKey, false))
             } else {
                 discordRpc?.closeRPC()
             }
@@ -383,7 +383,7 @@ class MusicService :
                     discordRpc = DiscordRPC(this, key)
                     if (player.playbackState == Player.STATE_READY && player.playWhenReady) {
                         currentSong.value?.let {
-                            discordRpc?.updateSong(it)
+                            discordRpc?.updateSong(it, player.currentPosition, player.playbackParameters.speed, dataStore.get(DiscordUseDetailsKey, false))
                         }
                     }
                 }
@@ -400,7 +400,7 @@ class MusicService :
                         discordUpdateJob?.cancel()
                         discordUpdateJob = scope.launch {
                             delay(1000)
-                            discordRpc?.updateSong(song)
+                            discordRpc?.updateSong(song, player.currentPosition, player.playbackParameters.speed, useDetails)
                         }
                     }
                 }
@@ -1120,14 +1120,14 @@ class MusicService :
             if (player.isPlaying) {
                 currentSong.value?.let { song ->
                     scope.launch {
-                        discordRpc?.updateSong(song)
+                        discordRpc?.updateSong(song, player.currentPosition, player.playbackParameters.speed, dataStore.get(DiscordUseDetailsKey, false))
                     }
                 }
             }
-            // Enviar actividad vacía a Discord RPC si el reproductor no está reproduciendo
+            // Send empty activity to the Discord RPC if the player is not playing
             else if (!events.containsAny(Player.EVENT_POSITION_DISCONTINUITY, Player.EVENT_MEDIA_ITEM_TRANSITION)){
                 scope.launch {
-                    discordRpc?.closeRPC()
+                    discordRpc?.stopActivity()
                 }
             }
         }
