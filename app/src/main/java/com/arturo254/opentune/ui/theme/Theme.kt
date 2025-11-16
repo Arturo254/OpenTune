@@ -42,14 +42,14 @@ fun OpenTuneTheme(
     val colorScheme = remember(darkTheme, pureBlack, themeColor) {
         if (themeColor == DefaultThemeColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (darkTheme) {
-                dynamicDarkColorScheme(context).pureBlack(pureBlack)
+                dynamicDarkColorScheme(context).pureBlack(pureBlack, darkTheme)
             } else {
-                dynamicLightColorScheme(context)
+                dynamicLightColorScheme(context).pureBlack(false, darkTheme)
             }
         } else {
             SchemeTonalSpot(Hct.fromInt(themeColor.toArgb()), darkTheme, 0.0)
                 .toColorScheme()
-                .pureBlack(darkTheme && pureBlack)
+                .pureBlack(pureBlack, darkTheme)
         }
     }
 
@@ -144,8 +144,8 @@ fun DynamicScheme.toColorScheme() =
         surfaceContainerLowest = Color(surfaceContainerLowest),
     )
 
-fun ColorScheme.pureBlack(apply: Boolean) =
-    if (apply) {
+fun ColorScheme.pureBlack(apply: Boolean, isDarkTheme: Boolean) =
+    if (apply && isDarkTheme) {
         copy(
             surface = Color.Black,
             background = Color.Black,

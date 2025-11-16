@@ -15,6 +15,7 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,9 +73,14 @@ import androidx.media3.common.Player
 import coil.compose.AsyncImage
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
+import com.arturo254.opentune.constants.DarkModeKey
+import com.arturo254.opentune.constants.PureBlackKey
 import com.arturo254.opentune.constants.ThumbnailCornerRadius
 import com.arturo254.opentune.extensions.togglePlayPause
 import com.arturo254.opentune.models.MediaMetadata
+import com.arturo254.opentune.ui.screens.settings.DarkMode
+import com.arturo254.opentune.utils.rememberEnumPreference
+import com.arturo254.opentune.utils.rememberPreference
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.exp
@@ -82,7 +89,6 @@ import kotlin.math.roundToInt
 // Agregar las importaciones correctas
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.toShape
-import androidx.compose.runtime.setValue
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -98,6 +104,22 @@ fun MiniPlayer(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
+    val currentSong by playerConnection.currentSong.collectAsState(initial = null)
+
+    // Obtener el estado del tema para calcular el color de fondo correcto
+    val isSystemInDarkTheme = isSystemInDarkTheme()
+    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+    val pureBlack by rememberPreference(PureBlackKey, defaultValue = false)
+
+    val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
+        if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+    }
+
+    // Calcular el color de fondo correcto
+    val miniPlayerBackgroundColor = when {
+        useDarkTheme && pureBlack -> Color.Black.copy(alpha = 0.95f)
+        else -> MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.95f)
+    }
 
     val currentView = LocalView.current
     val layoutDirection = LocalLayoutDirection.current
@@ -179,9 +201,7 @@ fun MiniPlayer(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.95f)
-                    )
+                    .background(miniPlayerBackgroundColor)
                     .pointerInput(Unit) {
                         detectHorizontalDragGestures(
                             onDragStart = {
@@ -269,11 +289,11 @@ fun MiniPlayer(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .size(40.dp)
-                                .clip(currentThumbnailShape) // Usar Shape convertido
+                                .clip(currentThumbnailShape)
                                 .border(
                                     width = 1.dp,
                                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                    shape = currentThumbnailShape // Usar Shape convertido
+                                    shape = currentThumbnailShape
                                 )
                                 .clickable {
                                     if (playbackState == Player.STATE_ENDED) {
@@ -292,7 +312,7 @@ fun MiniPlayer(
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .clip(currentThumbnailShape) // Usar Shape convertido
+                                        .clip(currentThumbnailShape)
                                 )
                             }
 
@@ -302,11 +322,11 @@ fun MiniPlayer(
                                     .fillMaxSize()
                                     .background(
                                         color = Color.Black.copy(alpha = overlayAlpha),
-                                        shape = currentThumbnailShape // Usar Shape convertido
+                                        shape = currentThumbnailShape
                                     )
                             )
 
-                            // Usar AnimatedVisibility explícitamente
+                            // Icono de play/replay
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = playbackState == Player.STATE_ENDED || !isPlaying,
                                 enter = fadeIn(),
@@ -369,7 +389,7 @@ fun MiniPlayer(
                                 }
                             }
 
-                            // Error indicator - usar AnimatedVisibility explícitamente
+                            // Error indicator
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = error != null,
                                 enter = fadeIn(),
@@ -386,19 +406,38 @@ fun MiniPlayer(
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Like button
+                    IconButton(
+                        onClick = { playerConnection.toggleLike() },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                if (currentSong?.song?.liked == true) R.drawable.favorite else R.drawable.favorite_border
+                            ),
+                            contentDescription = if (currentSong?.song?.liked == true) "Unlike" else "Like",
+                            tint = if (currentSong?.song?.liked == true) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            },
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
 
                     // Skip next button (right side)
                     IconButton(
                         enabled = canSkipNext,
                         onClick = { playerConnection.player.seekToNext() },
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.skip_next),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -445,7 +484,7 @@ fun MiniMediaInfo(
                     .size(48.dp)
                     .clip(RoundedCornerShape(ThumbnailCornerRadius)),
             )
-            // Usar AnimatedVisibility explícitamente
+            // Error overlay
             androidx.compose.animation.AnimatedVisibility(
                 visible = error != null,
                 enter = fadeIn(),

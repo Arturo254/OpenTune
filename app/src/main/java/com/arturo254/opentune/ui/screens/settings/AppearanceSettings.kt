@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -159,6 +160,13 @@ fun AppearanceSettings(
         remember(darkMode, isSystemInDarkTheme) {
             if (darkMode == DarkMode.AUTO) isSystemInDarkTheme else darkMode == DarkMode.ON
         }
+
+    // Desactivar automáticamente pureBlack cuando se cambia a modo claro
+    LaunchedEffect(useDarkTheme) {
+        if (!useDarkTheme && pureBlack) {
+            onPureBlackChange(false)
+        }
+    }
 
     val (defaultChip, onDefaultChipChange) = rememberEnumPreference(
         key = ChipSortTypeKey,
@@ -339,8 +347,13 @@ fun AppearanceSettings(
             SwitchPreference(
                 title = { Text(stringResource(R.string.pure_black)) },
                 icon = { Icon(painterResource(R.drawable.contrast), null) },
-                checked = pureBlack,
-                onCheckedChange = onPureBlackChange,
+                checked = pureBlack && useDarkTheme,
+                onCheckedChange = { newValue ->
+                    if (useDarkTheme) {
+                        onPureBlackChange(newValue)
+                    }
+                },
+                isEnabled = useDarkTheme
             )
         }
 

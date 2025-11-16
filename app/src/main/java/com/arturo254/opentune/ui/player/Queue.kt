@@ -264,7 +264,11 @@ fun Queue(
     BottomSheet(
         state = state,
         background = {
-            Box(Modifier.fillMaxSize().background(Color.Unspecified))
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(backgroundColor)
+            )
         },
         modifier = modifier,
         collapsedContent = {
