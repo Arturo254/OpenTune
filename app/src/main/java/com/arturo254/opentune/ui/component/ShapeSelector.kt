@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.graphics.shapes.RoundedPolygon
 import com.arturo254.opentune.R
 
@@ -36,14 +35,16 @@ data class SmallButtonShapeOption(
 )
 
 /**
- * Selector de formas para botones pequeños (radio, download, sleep, more)
+ * Bottom Sheet selector de formas para botones pequeños (radio, download, sleep, more)
+ * Diseño Material 3 Expressive con animaciones sutiles y jerarquía clara
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun SmallButtonShapeSelectorDialog(
+fun SmallButtonShapeBottomSheet(
     selectedShapeName: String,
     onShapeSelected: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    sheetState: SheetState = rememberModalBottomSheetState()
 ) {
     // Lista COMPLETA de formas apropiadas para botones pequeños
     val availableShapes = remember {
@@ -86,51 +87,58 @@ fun SmallButtonShapeSelectorDialog(
         )
     }
 
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        dragHandle = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Drag handle personalizado Material 3
+                Box(
+                    modifier = Modifier
+                        .padding(top = 12.dp, bottom = 8.dp)
+                        .width(32.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                )
+            }
+        }
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 600.dp),
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp)
+            // Título con jerarquía clara
+            Text(
+                text = "Small Buttons Shape",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 20.dp)
+            )
+
+            // Grid de formas con espaciado coherente
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.heightIn(max = 480.dp)
             ) {
-                Text(
-                    text = "Select Small Buttons Shape",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(vertical = 8.dp)
-                ) {
-                    items(availableShapes) { shapeOption ->
-                        SmallButtonShapeItem(
-                            shapeOption = shapeOption,
-                            isSelected = shapeOption.name == selectedShapeName,
-                            onClick = {
-                                onShapeSelected(shapeOption.name)
-                                onDismiss()
-                            }
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
+                items(availableShapes) { shapeOption ->
+                    SmallButtonShapeItem(
+                        shapeOption = shapeOption,
+                        isSelected = shapeOption.name == selectedShapeName,
+                        onClick = {
+                            onShapeSelected(shapeOption.name)
+                            onDismiss()
+                        }
+                    )
                 }
             }
         }
@@ -138,7 +146,7 @@ fun SmallButtonShapeSelectorDialog(
 }
 
 /**
- * Item individual de forma para botones pequeños
+ * Item individual de forma con animaciones sutiles y feedback visual
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -147,59 +155,74 @@ private fun SmallButtonShapeItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    // Animación de escala suave
     val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.1f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f),
+        targetValue = if (isSelected) 1.05f else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.7f,
+            stiffness = 300f
+        ),
         label = "scale"
     )
 
-    val borderColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.primary
-        else
-            MaterialTheme.colorScheme.outlineVariant,
-        animationSpec = tween(200),
-        label = "borderColor"
-    )
-
+    // Transición de color del contenedor
     val backgroundColor by animateColorAsState(
         targetValue = if (isSelected)
             MaterialTheme.colorScheme.primaryContainer
         else
-            MaterialTheme.colorScheme.surfaceVariant,
-        animationSpec = tween(200),
+            MaterialTheme.colorScheme.surfaceContainerHighest,
+        animationSpec = tween(250),
         label = "backgroundColor"
+    )
+
+    // Color del borde con transición
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected)
+            MaterialTheme.colorScheme.primary
+        else
+            Color.Transparent,
+        animationSpec = tween(250),
+        label = "borderColor"
     )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .scale(scale)
-            .clip(RoundedCornerShape(12.dp))
-            .border(
-                width = if (isSelected) 3.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(12.dp)
-            )
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
+            .border(
+                width = if (isSelected) 2.dp else 0.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(16.dp)
+            )
             .clickable(onClick = onClick)
             .padding(8.dp)
     ) {
+        // Preview de la forma
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(40.dp)
                 .clip(shapeOption.shape.toShape())
-                .background(MaterialTheme.colorScheme.primary)
+                .background(
+                    if (isSelected)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                )
         )
 
+        // Nombre de la forma
         Text(
             text = shapeOption.displayName,
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
             maxLines = 2,
+            minLines = 2,
             color = if (isSelected)
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.onPrimaryContainer
             else
                 MaterialTheme.colorScheme.onSurface
         )
@@ -207,18 +230,20 @@ private fun SmallButtonShapeItem(
 }
 
 /**
- * Botón para abrir el selector de formas de botones pequeños
+ * Botón para abrir el bottom sheet de formas
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SmallButtonShapeSelectorButton(
     currentShapeName: String,
     onShapeSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showDialog by remember { mutableStateOf(false) }
+    var showBottomSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     PreferenceEntry(
-        title = { Text("Small Buttons Shape") },
+        title = { Text(stringResource(R.string.SmallButtonsShape)) },
         description = currentShapeName,
         icon = {
             Icon(
@@ -226,15 +251,16 @@ fun SmallButtonShapeSelectorButton(
                 contentDescription = null
             )
         },
-        onClick = { showDialog = true },
+        onClick = { showBottomSheet = true },
         modifier = modifier
     )
 
-    if (showDialog) {
-        SmallButtonShapeSelectorDialog(
+    if (showBottomSheet) {
+        SmallButtonShapeBottomSheet(
             selectedShapeName = currentShapeName,
             onShapeSelected = onShapeSelected,
-            onDismiss = { showDialog = false }
+            onDismiss = { showBottomSheet = false },
+            sheetState = sheetState
         )
     }
 }
