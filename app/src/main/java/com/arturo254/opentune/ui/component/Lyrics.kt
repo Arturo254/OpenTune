@@ -1241,7 +1241,7 @@ fun Lyrics(
 
                             Text(
                                 text = item.text,
-                                fontSize = 24.sp,
+                                fontSize = 25.sp,
                                 color = if (index == displayedCurrentLineIndex && isSynced) {
                                     if (isFullscreen)
                                         MaterialTheme.colorScheme.primary

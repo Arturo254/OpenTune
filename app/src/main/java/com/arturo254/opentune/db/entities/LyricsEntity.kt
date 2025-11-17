@@ -9,6 +9,6 @@ data class LyricsEntity(
     val lyrics: String,
 ) {
     companion object {
-        const val LYRICS_NOT_FOUND = "LYRICS_NOT_FOUND"
+        const val LYRICS_NOT_FOUND = " "
     }
 }
