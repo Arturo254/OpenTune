@@ -58,6 +58,7 @@ import com.arturo254.opentune.ui.component.HideOnScrollFAB
 import com.arturo254.opentune.ui.component.LocalMenuState
 import com.arturo254.opentune.ui.component.SongListItem
 import com.arturo254.opentune.ui.component.SortHeader
+import com.arturo254.opentune.ui.component.VerticalFastScroller
 import com.arturo254.opentune.ui.menu.SelectionSongMenu
 import com.arturo254.opentune.ui.menu.SongMenu
 import com.arturo254.opentune.ui.utils.ItemWrapper
@@ -122,6 +123,12 @@ fun LibrarySongsScreen(
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
+        VerticalFastScroller(
+            listState = lazyListState,
+            topContentPadding = 16.dp,
+            endContentPadding = 0.dp
+        )
+        {
         LazyColumn(
             state = lazyListState,
             contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
@@ -315,6 +322,7 @@ fun LibrarySongsScreen(
                             .animateItem(),
                 )
             }
+        }
         }
 
         HideOnScrollFAB(
