@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -38,7 +40,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -51,6 +53,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,20 +61,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.annotation.ExperimentalCoilApi
+import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.db.entities.Song
+import com.arturo254.opentune.extensions.tryOrNull
 import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.menu.OnlinePlaylistAdder
 import com.arturo254.opentune.ui.utils.backToMain
+import com.arturo254.opentune.ui.utils.formatFileSize
 import com.arturo254.opentune.viewmodels.BackupRestoreViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -88,8 +95,8 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalCoilApi::class, ExperimentalMaterial3Api::class)
 @SuppressLint("LogNotTimber")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupAndRestore(
     navController: NavController,
@@ -98,6 +105,7 @@ fun BackupAndRestore(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val playerCache = LocalPlayerConnection.current?.service?.playerCache
 
     // Estados
     var uploadStatus by remember { mutableStateOf<UploadStatus?>(null) }
@@ -108,6 +116,23 @@ fun BackupAndRestore(
     var showChoosePlaylistDialogOnline by remember { mutableStateOf(false) }
     var isProgressStarted by remember { mutableStateOf(false) }
     var progressPercentage by remember { mutableIntStateOf(0) }
+
+    // Cache stats
+    var playerCacheSize by remember { mutableLongStateOf(tryOrNull { playerCache?.cacheSpace } ?: 0L) }
+    var isClearing by remember { mutableStateOf(false) }
+
+    val animatedPlayerCacheSize by animateFloatAsState(
+        targetValue = if (playerCacheSize > 0) 1f else 0f,
+        label = "playerCacheProgress"
+    )
+
+    // Actualizar tamaño del caché
+    LaunchedEffect(playerCache) {
+        while (true) {
+            delay(1000)
+            playerCacheSize = tryOrNull { playerCache?.cacheSpace } ?: 0L
+        }
+    }
 
     // Launchers
     val backupLauncher =
@@ -161,29 +186,18 @@ fun BackupAndRestore(
                 title = {
                     Text(
                         stringResource(R.string.backup_restore),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Medium
                     )
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = {
-                            try {
-                                if (navController.previousBackStackEntry != null) {
-                                    navController.navigateUp()
-                                } else {
-                                    navController.popBackStack()
-                                }
-                            } catch (e: Exception) {
-                                Log.w("BackupRestore", "Error en navegación: ${e.message}")
-                                navController.popBackStack()
-                            }
-                        },
+                        onClick = navController::navigateUp,
                         onLongClick = navController::backToMain,
                     ) {
                         Icon(
                             painterResource(R.drawable.arrow_back),
-                            contentDescription = "Volver"
+                            contentDescription = null
                         )
                     }
                 },
@@ -196,18 +210,14 @@ fun BackupAndRestore(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Sección: Backup y Restore
-            SectionHeader(
-                icon = painterResource(R.drawable.backup),
-                title = "Respaldo y Restauración"
-            )
-
-            ActionCard(
+            // Backup
+            MinimalActionCard(
                 icon = painterResource(R.drawable.backup),
                 title = stringResource(R.string.backup),
                 description = stringResource(R.string.backup_description),
-                color = MaterialTheme.colorScheme.primaryContainer,
                 isEnabled = uploadStatus !is UploadStatus.Uploading,
                 onClick = {
                     val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
@@ -219,29 +229,15 @@ fun BackupAndRestore(
                 }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ActionCard(
+            // Restore
+            MinimalActionCard(
                 icon = painterResource(R.drawable.restore),
                 title = stringResource(R.string.restore),
                 description = stringResource(R.string.restore_description),
-                color = MaterialTheme.colorScheme.secondaryContainer,
                 isEnabled = uploadStatus !is UploadStatus.Uploading,
                 onClick = {
                     restoreLauncher.launch(arrayOf("application/octet-stream"))
                 }
-            )
-
-
-            // Sección: VISITOR_DATA
-            SectionHeader(
-                icon = painterResource(R.drawable.replay),
-                title = stringResource(R.string.visitor_data_title)
-            )
-
-            VisitorDataCard(
-                onResetClick = { showVisitorDataResetDialog = true },
-                onInfoClick = { showVisitorDataDialog = true }
             )
 
             // Estado de carga
@@ -250,27 +246,69 @@ fun BackupAndRestore(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    UploadStatusSection(uploadStatus) {
-                        copyToClipboard(context, (uploadStatus as UploadStatus.Success).fileUrl)
-                    }
+                MinimalUploadStatus(uploadStatus) {
+                    copyToClipboard(context, (uploadStatus as UploadStatus.Success).fileUrl)
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // VISITOR_DATA Card
+            MinimalVisitorDataCard(
+                playerCacheSize = playerCacheSize,
+                progress = animatedPlayerCacheSize,
+                isClearing = isClearing,
+                onResetClick = { showVisitorDataResetDialog = true },
+                onInfoClick = { showVisitorDataDialog = true }
+            )
         }
     }
 
     // Diálogos
     if (showVisitorDataDialog) {
-        VisitorDataInfoDialog(onDismiss = { showVisitorDataDialog = false })
+        MinimalInfoDialog(
+            icon = painterResource(R.drawable.info),
+            title = stringResource(R.string.visitor_data_info_title),
+            message = stringResource(R.string.visitor_data_info_intro) + "\n\n" +
+                    stringResource(R.string.visitor_data_info_problems) + "\n\n" +
+                    stringResource(R.string.visitor_data_info_solution),
+            onDismiss = { showVisitorDataDialog = false }
+        )
     }
 
     if (showVisitorDataResetDialog) {
-        VisitorDataResetDialog(
+        MinimalConfirmDialog(
+            icon = painterResource(R.drawable.replay),
+            title = stringResource(R.string.visitor_data_reset_title),
+            message = stringResource(R.string.visitor_data_reset_message),
+            confirmText = "Resetear",
             onConfirm = {
-                viewModel.resetVisitorData(context)
-                showVisitorDataResetDialog = false
+                isClearing = true
+                coroutineScope.launch(Dispatchers.IO) {
+                    try {
+                        // Limpiar caché de canciones
+                        playerCache?.keys?.toList()?.forEach { key ->
+                            tryOrNull { playerCache.removeResource(key) }
+                        }
+
+                        // Resetear VISITOR_DATA
+                        viewModel.resetVisitorData(context)
+
+                        delay(500) // Pequeño delay para asegurar que se complete
+
+                        withContext(Dispatchers.Main) {
+                            playerCacheSize = 0L
+                            isClearing = false
+                            showVisitorDataResetDialog = false
+                        }
+                    } catch (e: Exception) {
+                        Log.e("BackupRestore", "Error al resetear", e)
+                        withContext(Dispatchers.Main) {
+                            isClearing = false
+                            showVisitorDataResetDialog = false
+                        }
+                    }
+                }
             },
             onDismiss = { showVisitorDataResetDialog = false }
         )
@@ -297,203 +335,184 @@ fun BackupAndRestore(
     }
 
     if (isProgressStarted) {
-        LoadingOverlay(progress = progressPercentage)
+        MinimalLoadingOverlay(progress = progressPercentage)
     }
 }
 
 @Composable
-private fun SectionHeader(
-    icon: Painter,
-    title: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-@Composable
-private fun ActionCard(
+private fun MinimalActionCard(
     icon: Painter,
     title: String,
     description: String,
-    color: androidx.compose.ui.graphics.Color,
     isEnabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    Card(
+    Surface(
         onClick = onClick,
         enabled = isEnabled,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = color)
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                modifier = Modifier.size(48.dp)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        painter = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                Icon(
+                    painter = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
-
-            Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            Icon(
-                painter = painterResource(R.drawable.arrow_forward),
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = LocalContentColor.current.copy(alpha = 0.5f)
-            )
         }
     }
 }
 
 @Composable
-private fun CompactActionCard(
-    modifier: Modifier = Modifier,
-    icon: Painter,
-    title: String,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        painter = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
-@Composable
-private fun VisitorDataCard(
+private fun MinimalVisitorDataCard(
+    playerCacheSize: Long,
+    progress: Float,
+    isClearing: Boolean,
     onResetClick: () -> Unit,
     onInfoClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
         )
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.replay),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.visitor_data_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
             Text(
                 text = stringResource(R.string.visitor_data_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            // Indicador de caché
+            if (playerCacheSize > 0 || isClearing) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LinearProgressIndicator(
+                        progress = { if (isClearing) 0f else progress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)),
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = if (isClearing) "Limpiando..." else "Caché de canciones",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = formatFileSize(playerCacheSize),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
                     onClick = onInfoClick,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
+                    enabled = !isClearing
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.help),
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Info")
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Info", style = MaterialTheme.typography.labelLarge)
                 }
 
                 FilledTonalButton(
                     onClick = onResetClick,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isClearing
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.replay),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Resetear")
+                    if (isClearing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.replay),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Resetear", style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
@@ -501,32 +520,29 @@ private fun VisitorDataCard(
 }
 
 @Composable
-private fun UploadStatusSection(
+private fun MinimalUploadStatus(
     uploadStatus: UploadStatus?,
     onCopyClick: () -> Unit
 ) {
     when (uploadStatus) {
         is UploadStatus.Uploading -> {
-            Card(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Row(
-                    modifier = Modifier.padding(20.dp),
+                    modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(32.dp),
-                        strokeWidth = 3.dp
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
                     )
                     Text(
-                        text = "Subiendo copia de seguridad...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
+                        text = "Subiendo backup...",
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
@@ -535,44 +551,37 @@ private fun UploadStatusSection(
         is UploadStatus.Success -> {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Icon(
                             painter = painterResource(R.drawable.check_circle),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(20.dp)
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "¡Backup exitoso!",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            text = "Backup exitoso",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium
                         )
                     }
 
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                text = uploadStatus.fileUrl,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontFamily = FontFamily.Monospace
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
+                    Text(
+                        text = uploadStatus.fileUrl,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
 
                     Button(
                         onClick = onCopyClick,
@@ -582,7 +591,7 @@ private fun UploadStatusSection(
                         Icon(
                             painter = painterResource(R.drawable.content_copy),
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Copiar enlace")
@@ -592,24 +601,22 @@ private fun UploadStatusSection(
         }
 
         is UploadStatus.Failure -> {
-            Card(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.errorContainer
             ) {
                 Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.error),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(20.dp)
                     )
-                    Spacer(modifier = Modifier.width(16.dp))
                     Text(
                         text = "Error al subir el backup",
                         style = MaterialTheme.typography.bodyMedium,
@@ -624,11 +631,11 @@ private fun UploadStatusSection(
 }
 
 @Composable
-private fun LoadingOverlay(progress: Int) {
+private fun MinimalLoadingOverlay(progress: Int) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -636,54 +643,51 @@ private fun LoadingOverlay(progress: Int) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             CircularProgressIndicator(
-                progress = progress / 100f,
+                progress = { progress / 100f },
                 modifier = Modifier.size(64.dp),
-                strokeWidth = 6.dp
+                strokeWidth = 4.dp
             )
             Text(
                 text = "$progress%",
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Medium
             )
             Text(
-                text = "Procesando...",
+                text = "Procesando canciones...",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
 
 @Composable
-private fun VisitorDataInfoDialog(onDismiss: () -> Unit) {
+private fun MinimalInfoDialog(
+    icon: Painter,
+    title: String,
+    message: String,
+    onDismiss: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                painter = painterResource(R.drawable.info),
+                painter = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
         },
         title = {
             Text(
-                text = stringResource(R.string.visitor_data_info_title),
-                style = MaterialTheme.typography.headlineSmall
+                text = title,
+                style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.visitor_data_info_intro))
-                Text(
-                    stringResource(R.string.visitor_data_info_problems),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    stringResource(R.string.visitor_data_info_solution),
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium
+            )
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
@@ -695,7 +699,11 @@ private fun VisitorDataInfoDialog(onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun VisitorDataResetDialog(
+private fun MinimalConfirmDialog(
+    icon: Painter,
+    title: String,
+    message: String,
+    confirmText: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -703,26 +711,29 @@ private fun VisitorDataResetDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                painter = painterResource(R.drawable.replay),
+                painter = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
         },
         title = {
             Text(
-                text = stringResource(R.string.visitor_data_reset_title),
-                style = MaterialTheme.typography.headlineSmall
+                text = title,
+                style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
-            Text(stringResource(R.string.visitor_data_reset_message))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium
+            )
         },
         confirmButton = {
             Button(
                 onClick = onConfirm,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Resetear")
+                Text(confirmText)
             }
         },
         dismissButton = {
@@ -734,7 +745,7 @@ private fun VisitorDataResetDialog(
     )
 }
 
-// Función de subida a Filebin (sin cambios)
+// Función de subida a Filebin (sin cambios significativos)
 @SuppressLint("LogNotTimber")
 suspend fun uploadBackupToFilebin(
     context: Context,
@@ -827,11 +838,7 @@ suspend fun uploadBackupToFilebin(
             return@withContext null
         } finally {
             if (tempFile.exists()) {
-                try {
-                    tempFile.delete()
-                } catch (e: Exception) {
-                    Log.w("BackupRestore", "No se pudo eliminar el archivo temporal: ${e.message}")
-                }
+                tryOrNull { tempFile.delete() }
             }
         }
     }

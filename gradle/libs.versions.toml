@@ -24,6 +24,7 @@ materialIconsExtended = "1.7.6"
 glanceAppwidget = "1.1.1"
 glanceMaterial3 = "1.1.1"
 graphicsShapes = "1.1.0"
+workRuntimeKtx = "2.9.0"
 
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -101,6 +102,7 @@ material-icons-extended = { group = "androidx.compose.material", name = "materia
 glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glanceAppwidget" }
 glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glanceMaterial3" }
 graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphicsShapes" }
+work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 
 [plugins]
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
