@@ -45,6 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -117,6 +118,14 @@ fun BackupAndRestore(
     var isProgressStarted by remember { mutableStateOf(false) }
     var progressPercentage by remember { mutableIntStateOf(0) }
 
+    // NUEVO: Estado para controlar la subida automática a la nube
+    var enableCloudUpload by remember {
+        mutableStateOf(
+            context.getSharedPreferences("backup_settings", Context.MODE_PRIVATE)
+                .getBoolean("enable_cloud_upload", false)
+        )
+    }
+
     // Cache stats
     var playerCacheSize by remember { mutableLongStateOf(tryOrNull { playerCache?.cacheSpace } ?: 0L) }
     var isClearing by remember { mutableStateOf(false) }
@@ -139,13 +148,17 @@ fun BackupAndRestore(
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
             if (uri != null) {
                 viewModel.backup(context, uri)
-                coroutineScope.launch {
-                    uploadStatus = UploadStatus.Uploading
-                    val fileUrl = uploadBackupToFilebin(context, uri)
-                    uploadStatus = if (fileUrl != null) {
-                        UploadStatus.Success(fileUrl)
-                    } else {
-                        UploadStatus.Failure
+
+                // MODIFICADO: Solo subir a la nube si el usuario lo ha activado
+                if (enableCloudUpload) {
+                    coroutineScope.launch {
+                        uploadStatus = UploadStatus.Uploading
+                        val fileUrl = uploadBackupToFilebin(context, uri)
+                        uploadStatus = if (fileUrl != null) {
+                            UploadStatus.Success(fileUrl)
+                        } else {
+                            UploadStatus.Failure
+                        }
                     }
                 }
             }
@@ -213,11 +226,28 @@ fun BackupAndRestore(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // NUEVO: Card de configuración de subida a la nube
+            MinimalCloudUploadCard(
+                enabled = enableCloudUpload,
+                onToggle = { isEnabled ->
+                    enableCloudUpload = isEnabled
+                    // Guardar preferencia
+                    context.getSharedPreferences("backup_settings", Context.MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("enable_cloud_upload", isEnabled)
+                        .apply()
+                }
+            )
+
             // Backup
             MinimalActionCard(
                 icon = painterResource(R.drawable.backup),
                 title = stringResource(R.string.backup),
-                description = stringResource(R.string.backup_description),
+                description = if (enableCloudUpload) {
+                    stringResource(R.string.backup_with_cloud)
+                } else {
+                    stringResource(R.string.backup_description)
+                },
                 isEnabled = uploadStatus !is UploadStatus.Uploading,
                 onClick = {
                     val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
@@ -336,6 +366,91 @@ fun BackupAndRestore(
 
     if (isProgressStarted) {
         MinimalLoadingOverlay(progress = progressPercentage)
+    }
+}
+
+// NUEVO: Composable para el card de configuración de subida a la nube
+@Composable
+private fun MinimalCloudUploadCard(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (enabled) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHighest
+            }
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (enabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.cloud_lock),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = if (enabled) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.cloud_upload_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = if (enabled) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                )
+                Text(
+                    text = stringResource(
+                        if (enabled) {
+                            R.string.cloud_upload_enabled_description
+                        } else {
+                            R.string.cloud_upload_disabled_description
+                        }
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (enabled) {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
+
+            Switch(
+                checked = enabled,
+                onCheckedChange = onToggle
+            )
+        }
     }
 }
 
@@ -461,7 +576,11 @@ private fun MinimalVisitorDataCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = if (isClearing) "Limpiando..." else "Caché de canciones",
+                            text = if (isClearing) {
+                                stringResource(R.string.cache_clearing)
+                            } else {
+                                stringResource(R.string.song_cache)
+                            },
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -490,7 +609,7 @@ private fun MinimalVisitorDataCard(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Info", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.info_button), style = MaterialTheme.typography.labelLarge)
                 }
 
                 FilledTonalButton(
@@ -512,7 +631,7 @@ private fun MinimalVisitorDataCard(
                         )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Resetear", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.reset_button), style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
@@ -541,7 +660,7 @@ private fun MinimalUploadStatus(
                         strokeWidth = 2.dp
                     )
                     Text(
-                        text = "Subiendo backup...",
+                        text = stringResource(R.string.uploading_backup),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -571,7 +690,7 @@ private fun MinimalUploadStatus(
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = "Backup exitoso",
+                            text = stringResource(R.string.backup_success),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Medium
                         )
@@ -594,7 +713,7 @@ private fun MinimalUploadStatus(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Copiar enlace")
+                        Text(stringResource(R.string.copy_link))
                     }
                 }
             }
@@ -618,7 +737,7 @@ private fun MinimalUploadStatus(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Error al subir el backup",
+                        text = stringResource(R.string.backup_upload_error),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
@@ -653,7 +772,7 @@ private fun MinimalLoadingOverlay(progress: Int) {
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "Procesando canciones...",
+                text = stringResource(R.string.processing_songs),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -691,7 +810,7 @@ private fun MinimalInfoDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Entendido")
+                Text(stringResource(R.string.understood))
             }
         },
         shape = RoundedCornerShape(24.dp)
@@ -738,7 +857,7 @@ private fun MinimalConfirmDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(R.string.cancel))
             }
         },
         shape = RoundedCornerShape(24.dp)

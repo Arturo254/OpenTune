@@ -568,4 +568,17 @@
     <string name="manage">Gerenciar</string>
     <string name="clear">Limpar</string>
     <string name="playing_from">"Reproduzindo de: "</string>
+    <string name="SmallButtonsShape">Botões pequenos Forma</string>
+    <string name="cloud_upload_title">Upload automático para a nuvem</string>
+    <string name="cloud_upload_enabled_description">Os backups serão enviados para filebin.net</string>
+    <string name="cloud_upload_disabled_description">Os backups serão salvos apenas localmente</string>
+    <string name="backup_with_cloud">Criar backup local e enviar para a nuvem</string>
+    <string name="uploading_backup">Enviando backup...</string>
+    <string name="backup_success">Backup bem-sucedido</string>
+    <string name="backup_upload_error">Erro ao enviar backup</string>
+    <string name="cache_clearing">Limpar...</string>
+    <string name="info_button">Informações</string>
+    <string name="reset_button">Redefinir</string>
+    <string name="processing_songs">Processando músicas...</string>
+    <string name="understood">Entendido</string>
 </resources>

@@ -572,4 +572,19 @@
     <string name="clear">Clear</string>
     <string name="playing_from">"Playing from: "</string>
     <string name="SmallButtonsShape">Small Buttons Shape</string>
+
+
+
+    <string name="cloud_upload_title">Automatic cloud upload</string>
+    <string name="cloud_upload_enabled_description">Backups will be uploaded to filebin.net</string>
+    <string name="cloud_upload_disabled_description">Backups will only be saved locally</string>
+    <string name="backup_with_cloud">Create local backup and upload to cloud</string>
+    <string name="uploading_backup">Uploading backup…</string>
+    <string name="backup_success">Backup successful</string>
+    <string name="backup_upload_error">Error uploading backup</string>
+    <string name="cache_clearing">Clearing…</string>
+    <string name="info_button">Info</string>
+    <string name="reset_button">Reset</string>
+    <string name="processing_songs">Processing songs…</string>
+    <string name="understood">Understood</string>
 </resources>
