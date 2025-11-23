@@ -21,7 +21,7 @@
     <string name="stats">"Statystyki"</string>
     <string name="mood_and_genres">"Nastroje i gatunki"</string>
     <string name="account">"Konto"</string>
-    <string name="quick_picks">"Szybki wybór"</string>
+    <string name="quick_picks">"Domyślny szybki wybór"</string>
     <string name="quick_picks_empty">"Słuchaj muzyki, aby wygenerować szybki wybór"</string>
     <string name="new_release_albums">"Nowości"</string>
     <string name="forgotten_favorites">"Ulubione utwory z przeszłości"</string>
@@ -64,7 +64,7 @@
     <string name="no_results_found">"Brak wyników"</string>
 
     <!-- Artist screen -->
-    <string name="from_your_library">"Z Twojej biblioteki"</string>
+    <string name="from_your_library">"Twoja biblioteka"</string>
 
     <!-- Album screen -->
     <string name="other_versions">"Inne wersje"</string>
@@ -91,7 +91,7 @@
     <!-- Button -->
     <string name="retry">"Spróbuj ponownie"</string>
     <string name="radio">"Radio"</string>
-    <string name="shuffle">"Odtwarzaj losowo"</string>
+    <string name="shuffle">"Losowo"</string>
     <string name="reset">"Resetuj"</string>
 
     <!-- Menu -->
@@ -282,8 +282,8 @@
     <string name="player_background_style">"Styl tła odtwarzacza"</string>
     <string name="follow_theme">"Zgodnie z motywem"</string>
     <string name="gradient">"Gradient"</string>
-    <string name="player_background_blur">"Rozmyte"</string>
-    <string name="enable_squiggly_slider">"Włącz kręcony suwak"</string>
+    <string name="player_background_blur">"Rozmyty"</string>
+    <string name="enable_squiggly_slider">"Włącz falowany suwak"</string>
     <string name="enable_swipe_thumbnail">"Zmieniaj utwór przesuwając palcem"</string>
     <string name="pure_black">"Czysta czerń"</string>
     <string name="customize_navigation_tabs">"Dostosuj zakładki nawigacji"</string>
@@ -300,7 +300,7 @@
     <string name="big">"Duża"</string>
     <string name="player_slider_style">"Styl suwaka"</string>
     <string name="default_">"Domyślny"</string>
-    <string name="squiggly">"Kręcony"</string>
+    <string name="squiggly">"Falowany"</string>
     <string name="slim">"Płaski"</string>
     <string name="misc">"Inne"</string>
     <string name="default_open_tab">"Domyślna karta przy otwarciu"</string>
@@ -321,7 +321,7 @@
     <string name="content_country">"Domyślny kraj treści"</string>
     <string name="system_default">"Domyślny dla systemu"</string>
     <string name="proxy">"Proxy"</string>
-    <string name="enable_proxy">"Wyłacz proxy"</string>
+    <string name="enable_proxy">"Włącz proxy"</string>
     <string name="proxy_type">"Typ proxy"</string>
     <string name="proxy_url">"Proxy URL"</string>
     <string name="default_lib_chips">"Zmień domyślny czip biblioteki"</string>
@@ -358,11 +358,11 @@
     <string name="equalizer">"Equalizer"</string>
     <string name="storage">"Pamięć"</string>
     <string name="cache">"Pamięć tymczasowa"</string>
-    <string name="image_cache">"Pamieć obrazów"</string>
+    <string name="image_cache">"Pamięć tymczasowa obrazów"</string>
     <string name="song_cache">"Pamięć tymczasowa utworów"</string>
     <string name="max_cache_size">"Limit pamięci tymczasowej"</string>
     <string name="unlimited">"Nielimitowana"</string>
-    <string name="clear_all_downloads">"Wyczyść wszystkie pobrane"</string>
+    <string name="clear_all_downloads">"Wyczyść pobrane utwory"</string>
     <string name="max_image_cache_size">"Limit pamięci tymczasowej obrazów"</string>
     <string name="clear_image_cache">"Wyczyść pamięć tymczasową obrazów"</string>
     <string name="max_song_cache_size">"Limit pamięci tymczasowej utworów"</string>
@@ -407,7 +407,7 @@
     <string name="past_month">"Zeszły miesiąc"</string>
     <string name="past_year">"Zeszły rok"</string>
     <string name="top_length">"Długość listy Moje Top"</string>
-    <string name="history_duration">"Długość historii"</string>
+    <string name="history_duration">"Czas dodania do historii"</string>
     <string name="contributors">"Kontrybutorzy"</string>
     <string name="Donate">"Darowizna"</string>
     <string name="Telegramchanel">"Kanał Telegram"</string>
@@ -464,66 +464,126 @@
     <string name="install">"Zainstaluj"</string>
     <string name="download_errorup">"Błąd pobierania aktualizacji"</string>
     <string name="tap_to_update">"Kliknij, aby zaktualizować"</string>
-    <string name="info_title">"Informacje"</string>
+    <string name="info_title">"Informacja"</string>
     <string name="info_description">"W tej sekcji znajdziesz najważniejsze informacje o procesie tworzenia kopii zapasowej i przywracania danych, w tym o bezpieczeństwie danych oraz sposobie zapewnienia, że ​​informacje pozostaną bezpieczne i łatwo dostępne."</string>
     <string name="backup_info_title">"Ważna informacja"</string>
     <string name="backup_info_description">"Gdy tworzysz kopię zapasową swoich danych, pobrane pliki nie są uwzględniane. Zaleca się wyczyszczenie pamięci podręcznej za pomocą aplikacji w celu uzyskania optymalnej wydajności. Usługa kopii zapasowej jest bezpieczna, zapewniając prywatność i ochronę Twoich danych."</string>
     <string name="backup_description">"Stwórz kopie zapasową swoich danych"</string>
     <string name="restore_description">"Przywróc swoje dane z kopii zapasowej"</string>
-    <string name="keep_listening">"słuchaj_dalej"</string>
+    <string name="keep_listening">"Słuchaj dalej"</string>
     <string name="link_copied">"Link skopiowany"</string>
     <string name="redireccion">"Przekierowanie"</string>
     <string name="Version">"Wersja"</string>
-    <string name="notification">"Powiadomienie"</string>
-    <string name="cached_playlist">"Playlista pamięci tymczasowej"</string>
+    <string name="notification">"Powiadomienia"</string>
+    <string name="cached_playlist">"Podręczne"</string>
     <string name="added_to_queue">"Dodano do kolejki"</string>
     <string name="warn">"Ostrzeżenie"</string>
     <string name="edit_thumbnail">"Edytuj okładkę"</string>
     <string name="remove_thumbnail">"Usuń okładkę"</string>
     <string name="add_thumbnail">"Dodaj okładkę"</string>
-    <string name="storage_overview">"Przegląd_pamięci"</string>
+    <string name="storage_overview">"Wykorzystanie pamięci"</string>
     <string name="clear_downloads_confirmation">"Wyczyść potwierdzenie pobrań"</string>
-    <string name="clear_song_cache_confirmation">"usuń_pamięć_tymczasową_utworu"</string>
-    <string name="clear_image_cache_confirmation">"usuń_pamięć_tymczasową_obrazu"</string>
+    <string name="clear_song_cache_confirmation">"Czy jesteś pewien, że chcesz usunąć pamięć tymczasową utworów? Ta akcja zwolni miejsce pamięci, ale przez chwile odtwarzanie będzie musiało pobrać aktualnie odtwarzane utwory."</string>
+    <string name="clear_image_cache_confirmation">"Czy jesteś pewien, że chcesz usunąć pamięć tymczasową obrazów? Obrazy albumów i artystów będą musiały być pobrane ponownie."</string>
     <string name="confirm">"Potwierdź"</string>
-    <string name="problem_solver">"usun_problemy"</string>
-
-    <!-- Fuzzy -->
-    <string name="action_login">"akcja_login"</string>
-    <string name="generating_image">"tworzenie_obrazu"</string>
+    <string name="problem_solver">"Rozwiąż problemy"</string>
+    <string name="action_login">"Zaloguj się"</string>
+    <string name="generating_image">"Tworzenie obrazu"</string>
     <string name="please_wait">"Proszę czekać"</string>
     <string name="share_lyrics">"Udostępnij tekst"</string>
     <string name="share_as_text">"Udostępnij jako tekst"</string>
     <string name="share_as_image">"Udostępnij jako obraz"</string>
-    <string name="max_selection_limit">"maks_limit_wyboru"</string>
-    <string name="share_selected">"udostępnij_wybrane"</string>
-    <string name="customize_colors">"dostosuj_kolory"</string>
-    <string name="more_options">"więcej_opcji"</string>
-    <string name="text_color">"kolor_tekstu"</string>
-    <string name="secondary_text_color">"drugi_kolor_tekstu"</string>
-    <string name="background_color">"kolor_tła"</string>
+    <string name="max_selection_limit">"Maksymalny limit elementów"</string>
+    <string name="share_selected">"Udostępnij wybrane"</string>
+    <string name="customize_colors">"Dostosuj kolory"</string>
+    <string name="more_options">"Więcej opcji"</string>
+    <string name="text_color">"Kolor tekstu"</string>
+    <string name="secondary_text_color">"Drugi kolor tekstu"</string>
+    <string name="background_color">"Kolor tła"</string>
     <string name="back">"powrót"</string>
-    <string name="navigation_error">"błąd_nawigacji"</string>
-    <string name="notifications_enabled">"powiadomienia_włączone"</string>
-    <string name="notifications_disabled">"powiadomienia_wyłączone"</string>
-    <string name="visitor_data_title">"dane_tytułowe_wizytora"</string>
-    <string name="visitor_data_description">"dane_opisu_wizytora"</string>
-    <string name="visitor_data_info_button">"dane_info_przycisku_wizytora"</string>
-    <string name="visitor_data_reset_button">"dane_przycisku_reset_wizytora"</string>
-    <string name="visitor_data_info_title">"dane_info_tytułu_wizytora"</string>
-    <string name="visitor_data_info_intro">"dane_info_intra_wizytora"</string>
-    <string name="visitor_data_info_problems">"dane_info_problemów_wizytora"</string>
-    <string name="visitor_data_info_solution">"dane_info_rozw_prob_wizytora"</string>
-    <string name="visitor_data_info_note">"dane_info_notki_wizytora"</string>
-    <string name="visitor_data_info_confirm">"dane_info_potwierdzeń_wizytora"</string>
-    <string name="visitor_data_reset_title">"dane_resetu_tytułu_wizytora"</string>
-    <string name="visitor_data_reset_message">"dane_resetu_wiadomości_wizytora"</string>
-    <string name="visitor_data_reset_confirm">"dane_resetu_potwierdzeń_wizytora"</string>
-    <string name="visitor_data_reset_cancel">"dane_resetu_anulowań_wizytora"</string>
-    <string name="widget_title">"tytuł_widżetu"</string>
-    <string name="error_saving_image">"błąd_zapisu_obrazu"</string>
+    <string name="navigation_error">"Błąd nawigacji"</string>
+    <string name="notifications_enabled">"Powiadomienia włączone"</string>
+    <string name="notifications_disabled">"Powiadomienia wyłączone"</string>
+    <string name="visitor_data_title">"Rozwiązywanie problemów"</string>
+    <string name="visitor_data_description">"Jeśli doświadczasz problemów z połączeniem dla Youtube, zresetowanie danych wizytora może pomóc."</string>
+    <string name="visitor_data_info_button">"O co chodzi?"</string>
+    <string name="visitor_data_reset_button">"Reset"</string>
+    <string name="visitor_data_info_title">"Czym są dane wizytora?"</string>
+    <string name="visitor_data_info_intro">"Dane wizytora jest to indentyfikator używany, aby Youtube mógł znaleść twoją sesję. Kiedy dane są źle interpretowane, mogą one tworzyć takie problemy:"</string>
+    <string name="visitor_data_info_problems">"Problem z połączeniem
+Problem z ładowaniem treści
+Problem z wyszukiwaniem
+Przerywania odtwarzacza"</string>
+    <string name="visitor_data_info_solution">"Zresetowanie danych wizytora generuje nowy identyfikator i zazwyczaj rozwiązuje te problemy."</string>
+    <string name="visitor_data_info_note">"To działa zarówno dla anonimowych jak i zalogowanych użytkowników."</string>
+    <string name="visitor_data_info_confirm">"Ok"</string>
+    <string name="visitor_data_reset_title">"Resetuj dane wizytora"</string>
+    <string name="visitor_data_reset_message">"Czy jesteś pewien, że chcesz zresetować dane wizytora? Stworzy to nowy identyfikator dla YouTube i może naprawić problemy z łącznością.
+
+Aplikacja zrestartuje się automatycznie."</string>
+    <string name="visitor_data_reset_confirm">"Resetuj"</string>
+    <string name="visitor_data_reset_cancel">"Anuluj"</string>
+    <string name="widget_title">"Odtwarzacz Opentune"</string>
+    <string name="error_saving_image">"Błąd zapisywania obrazu"</string>
     <string name="processing">"przetwarzanie"</string>
     <string name="subscribed">"subskrybowany"</string>
     <string name="subscribe">"subskrybuj"</string>
-    <string name="language">"język"</string>
+    <string name="language">"Język"</string>
+    <string name="selection_mode_active"></string>
+
+    <!-- Avatar Selection -->
+    <string name="avatar_selection"></string>
+    <string name="choose_predefined_avatar"></string>
+
+    <!-- Avatar Descriptions for Predefined Avatars -->
+    <string name="geometric_avatar_1"></string>
+    <string name="geometric_avatar_2"></string>
+    <string name="geometric_avatar_3"></string>
+    <string name="geometric_avatar_4"></string>
+    <string name="geometric_avatar_5"></string>
+    <string name="geometric_avatar_6"></string>
+    <string name="purple_initial_avatar"></string>
+    <string name="blue_initial_avatar"></string>
+    <string name="green_initial_avatar"></string>
+    <string name="orange_initial_avatar"></string>
+    <string name="red_initial_avatar"></string>
+    <string name="teal_initial_avatar"></string>
+    <string name="dots_pattern_avatar"></string>
+    <string name="waves_pattern_avatar"></string>
+    <string name="gradient_pattern_avatar"></string>
+    <string name="music_note_avatar"></string>
+    <string name="equalizer_avatar"></string>
+    <string name="headphones_avatar"></string>
+    <string name="discord_use_details">"Użyj detali zamiast stanu"</string>
+    <string name="discord_use_details_description">"Priorytetowo pokazuje tytuł piosenki, a następnie artystów"</string>
+    <string name="community">"Społeczność"</string>
+    <string name="app_info">"Priorytetowo pokazuje tytuł piosenki zamiast nazwy artystów"</string>
+    <string name="hide_controls"></string>
+    <string name="show_controls"></string>
+    <string name="customize_lyrics_image"></string>
+    <string name="customize_image"></string>
+    <string name="select_theme"></string>
+    <string name="from_cover"></string>
+    <string name="presets"></string>
+    <string name="share_lyrics_image"></string>
+    <string name="error_generating_image"></string>
+    <string name="cover_color"></string>
+    <string name="Rotatelyricsbackground">"Obracaj tło napisów"</string>
+    <string name="playlist_add_local_to_synced_note"></string>
+    <string name="manage"></string>
+    <string name="clear"></string>
+    <string name="playing_from">"Odtwarzane z"</string>
+    <string name="SmallButtonsShape"></string>
+    <string name="cloud_upload_title"></string>
+    <string name="cloud_upload_enabled_description"></string>
+    <string name="cloud_upload_disabled_description"></string>
+    <string name="backup_with_cloud"></string>
+    <string name="uploading_backup"></string>
+    <string name="backup_success"></string>
+    <string name="backup_upload_error"></string>
+    <string name="cache_clearing"></string>
+    <string name="info_button"></string>
+    <string name="reset_button"></string>
+    <string name="processing_songs"></string>
+    <string name="understood"></string>
 </resources>
