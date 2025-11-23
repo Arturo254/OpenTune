@@ -83,7 +83,7 @@
     <string name="remove_download_playlist_confirm">"ダウンロード済み楽曲のストレージからプレイリスト \"%s\" の楽曲をすべて削除しますか？"</string>
     <string name="delete_playlist_confirm">"プレイリスト \"%s\" を削除しますか？"</string>
     <string name="elements_selected">"%1$d個 選択済み"</string>
-    <string name="allows_for_sync_witch_youtube">"（注意）これを行うと Youtube Music と同期が行われます。この設定は後で変更できません。"</string>
+    <string name="allows_for_sync_witch_youtube">"注意 : これを行うと Youtube Music と同期が行われます。この設定は後から変更できません。"</string>
 
     <!-- Button -->
     <string name="retry">"再試行"</string>
@@ -297,10 +297,10 @@
     <string name="restart_to_take_effect">"再起動により有効化されます"</string>
     <string name="app_language">"アプリの言語(ベータ版)"</string>
     <string name="configure_app_language">"アプリの言語設定"</string>
-    <string name="intent_app_language_not_found">"アプリの言語設定が見つかりません、手動で設定を行ってください。"</string>
+    <string name="intent_app_language_not_found">"アプリの言語設定が見つかりません、手動で設定を行ってください"</string>
     <string name="open_supported_links">"サポートされたリンクはデフォルトで開く"</string>
     <string name="configure_supported_links">"サポートされたリンクを構成する"</string>
-    <string name="intent_supported_links_not_found">"リンク設定が見つかりません、手動で設定を行ってください。"</string>
+    <string name="intent_supported_links_not_found">"リンク設定が見つかりません、手動で設定を行ってください"</string>
     <string name="enable_kugou">"KuGouの歌詞プロバイダーを使用する"</string>
     <string name="enable_lrclib">"LrcLibの歌詞プロバイダーを使用する"</string>
     <string name="set_first_lyrics_provider">"推奨された歌詞プロバイダーを使用する"</string>
@@ -387,7 +387,7 @@
     <string name="Translate">"翻訳を手伝う"</string>
     <string name="Redirección">"転送"</string>
     <string name="poeditor_redirect">"poeditor.comにアクセスします"</string>
-    <string name="barwar">"バックアップを復元する際にご注意ください。以前にダウンロードした曲はダウンロードされません。ダウンロードエラーの回避のために、復元した曲を再生することを強くお勧めします。"</string>
+    <string name="barwar">"バックアップを復元する際に、以前にダウンロードした曲はダウンロードされないことに注意してください。ダウンロードエラーの回避のために、復元した曲を再生することを強くお勧めします。"</string>
     <string name="backup_link_title">"バックアップのアップロードに成功しました"</string>
     <string name="backup_link_description">"バックアップは14日間利用できます。"</string>
     <string name="copy_link">"リンクをコピーする"</string>
@@ -465,7 +465,7 @@
     <string name="secondary_text_color">"2つ目のテキストの色"</string>
     <string name="background_color">"背景色"</string>
     <string name="back">"戻る"</string>
-    <string name="navigation_error"></string>
+    <string name="navigation_error">"Error de navegación"</string>
     <string name="notifications_enabled">"Notificaciones habilitadas"</string>
     <string name="notifications_disabled">"Notificaciones desabilitadas"</string>
     <string name="visitor_data_title"></string>
@@ -485,7 +485,64 @@
     <string name="widget_title"></string>
     <string name="error_saving_image">"Error al guardar imagen"</string>
     <string name="processing">"Procesando"</string>
-    <string name="subscribed">"Suscrito"</string>
-    <string name="subscribe">"Suscribirse"</string>
-    <string name="language">"Idioma"</string>
+    <string name="subscribed">"登録済み"</string>
+    <string name="subscribe">"登録"</string>
+    <string name="language">"言語"</string>
+    <string name="selection_mode_active"></string>
+
+    <!-- Avatar Selection -->
+    <string name="avatar_selection"></string>
+    <string name="choose_predefined_avatar"></string>
+
+    <!-- Avatar Descriptions for Predefined Avatars -->
+    <string name="geometric_avatar_1"></string>
+    <string name="geometric_avatar_2"></string>
+    <string name="geometric_avatar_3"></string>
+    <string name="geometric_avatar_4"></string>
+    <string name="geometric_avatar_5"></string>
+    <string name="geometric_avatar_6"></string>
+    <string name="purple_initial_avatar"></string>
+    <string name="blue_initial_avatar"></string>
+    <string name="green_initial_avatar"></string>
+    <string name="orange_initial_avatar"></string>
+    <string name="red_initial_avatar"></string>
+    <string name="teal_initial_avatar"></string>
+    <string name="dots_pattern_avatar"></string>
+    <string name="waves_pattern_avatar"></string>
+    <string name="gradient_pattern_avatar"></string>
+    <string name="music_note_avatar"></string>
+    <string name="equalizer_avatar"></string>
+    <string name="headphones_avatar"></string>
+    <string name="discord_use_details"></string>
+    <string name="discord_use_details_description"></string>
+    <string name="community"></string>
+    <string name="app_info"></string>
+    <string name="hide_controls"></string>
+    <string name="show_controls"></string>
+    <string name="customize_lyrics_image"></string>
+    <string name="customize_image"></string>
+    <string name="select_theme"></string>
+    <string name="from_cover"></string>
+    <string name="presets"></string>
+    <string name="share_lyrics_image"></string>
+    <string name="error_generating_image"></string>
+    <string name="cover_color"></string>
+    <string name="Rotatelyricsbackground"></string>
+    <string name="playlist_add_local_to_synced_note"></string>
+    <string name="manage"></string>
+    <string name="clear"></string>
+    <string name="playing_from"></string>
+    <string name="SmallButtonsShape"></string>
+    <string name="cloud_upload_title"></string>
+    <string name="cloud_upload_enabled_description"></string>
+    <string name="cloud_upload_disabled_description"></string>
+    <string name="backup_with_cloud"></string>
+    <string name="uploading_backup"></string>
+    <string name="backup_success"></string>
+    <string name="backup_upload_error"></string>
+    <string name="cache_clearing"></string>
+    <string name="info_button"></string>
+    <string name="reset_button"></string>
+    <string name="processing_songs"></string>
+    <string name="understood"></string>
 </resources>

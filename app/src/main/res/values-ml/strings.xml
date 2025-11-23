@@ -1,0 +1,560 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Bottom navigation -->
+    <string name="home">"ഹോം"</string>
+    <string name="songs">"ഗാനങ്ങൾ"</string>
+    <string name="artists">"കലാകാരൻ/കലാകാരി"</string>
+    <string name="albums">"ആൽബം"</string>
+    <string name="playlists">"പ്ലേലിസ്റ്റ്"</string>
+
+    <!-- Top bar -->
+    <plurals name="n_selected">
+        <item quantity="one">"%d തിരഞ്ഞെടുത്തു"</item>
+        <item quantity="other">"%d തിരഞ്ഞെടുത്തു"</item>
+    </plurals>
+
+    <!-- Home -->
+    <string name="history">"ചരിത്രം"</string>
+    <string name="stats">"സ്ഥിതിവിവരക്കണക്കുകൾ"</string>
+    <string name="mood_and_genres">"മൂടും വിഭാഗങ്ങളും"</string>
+    <string name="account">"അക്കൗണ്ട്"</string>
+    <string name="quick_picks">"ദ്രുത തിരഞ്ഞെടുപ്പുകൾ"</string>
+    <string name="quick_picks_empty">"നിങ്ങളുടെ പെട്ടെന്നുള്ള തിരഞ്ഞെടുപ്പുകൾ സൃഷ്ടിക്കാൻ പാട്ടുകൾ കേൾക്കൂ"</string>
+    <string name="new_release_albums">"പുതിയ പാട്ടുകൾ"</string>
+    <string name="forgotten_favorites">"മറന്ന പാട്ടുകൾ"</string>
+    <string name="similar_to">"സമാനമായ ഗാനങ്ങൾ"</string>
+    <string name="your_ytb_playlists">"നിങ്ങളുടെ യൂട്യൂബ് അക്കൗണ്ട്"</string>
+
+    <!-- History -->
+    <string name="today">"ഇന്ന്"</string>
+    <string name="yesterday">"ഇന്നലെ"</string>
+    <string name="this_week">"ഈ ആഴ്ച"</string>
+    <string name="last_week">"കഴിഞ്ഞ ആഴ്ച"</string>
+    <string name="local_history">"പ്രാദേശികം"</string>
+    <string name="remote_history">"റിമോട്ട്"</string>
+
+    <!-- Stats -->
+    <string name="most_played_songs">"ഏറ്റവും കൂടുതൽ പ്ലേ ചെയ്‌ത ഗാനം"</string>
+    <string name="most_played_artists">"ഏറ്റവും കൂടുതൽ തവണ പ്ലേ ചെയ്‌ത കലാകാരൻ/കലാകാരി"</string>
+    <string name="most_played_albums">"ഏറ്റവും കൂടുതൽ പ്ലേ ചെയ്‌ത ആൽബങ്ങൾ"</string>
+    <string name="weeks">"ആഴ്ചകൾ"</string>
+    <string name="months">"മാസങ്ങൾ"</string>
+    <string name="years">"വർഷങ്ങൾ"</string>
+    <string name="continuous">"തുടർച്ചയായ"</string>
+
+    <!-- Search -->
+    <string name="search">"തിരയുക"</string>
+    <string name="search_yt_music">"യൂട്യൂബ് സംഗീതം തിരയുക"</string>
+    <string name="search_library">"ലൈബ്രറി തിരയുക"</string>
+    <string name="filter_library">"ലൈബ്രറി"</string>
+    <string name="filter_liked">"ഇഷ്ടപ്പെട്ടു"</string>
+    <string name="filter_downloaded">"ഡൗൺലോഡ് ചെയ്‌തു"</string>
+    <string name="filter_all">"എല്ലാം"</string>
+    <string name="filter_songs">"ഗാനങ്ങൾ"</string>
+    <string name="filter_videos">"വീഡിയോകൾ"</string>
+    <string name="filter_albums">"ആൽബങ്ങൾ"</string>
+    <string name="filter_artists">"കലാകാരൻ/കലാകാരി"</string>
+    <string name="filter_playlists">"പ്ലേലിസ്റ്റുകൾ"</string>
+    <string name="filter_community_playlists">"കമ്മ്യൂണിറ്റി പ്ലേലിസ്റ്റുകൾ"</string>
+    <string name="filter_featured_playlists">"ഫീച്ചർ ചെയ്‌ത പ്ലേലിസ്റ്റുകൾ"</string>
+    <string name="filter_bookmarked">"ബുക്ക്മാർക്ക് ചെയ്തു"</string>
+    <string name="no_results_found">"ഫലങ്ങളൊന്നും കണ്ടെത്തിയില്ല"</string>
+
+    <!-- Artist screen -->
+    <string name="from_your_library">"നിങ്ങളുടെ ലൈബ്രറിയിൽ നിന്ന്"</string>
+
+    <!-- Album screen -->
+    <string name="other_versions">"മറ്റ് പതിപ്പുകൾ"</string>
+
+    <!-- Library -->
+    <string name="liked">"ഇഷ്ടപ്പെട്ടു"</string>
+    <string name="offline">"ഡൗൺലോഡ് ചെയ്‌തു"</string>
+    <string name="my_top">"എന്റെ ടോപ്പ്"</string>
+    <string name="library_song_empty">"ലൈബ്രറി ഗാനങ്ങൾ ഇവിടെ കാണിക്കും."</string>
+    <string name="library_artist_empty">"ലൈബ്രറി ആർട്ടിസ്റ്റുകൾ ഇവിടെ പ്രത്യക്ഷപ്പെടും."</string>
+    <string name="library_album_empty">"ലൈബ്രറി ആൽബങ്ങൾ ഇവിടെ ദൃശ്യമാകും"</string>
+    <string name="library_playlist_empty">"നിങ്ങളുടെ പ്ലേലിസ്റ്റുകൾ ഇവിടെ ദൃശ്യമാകും"</string>
+
+    <!-- Playlist -->
+    <string name="liked_songs">"ഇഷ്ടപ്പെട്ട പാട്ടുകൾ"</string>
+    <string name="downloaded_songs">"ഡൗൺലോഡ് ചെയ്ത പാട്ടുകൾ"</string>
+    <string name="sync_playlist">"പ്ലേലിസ്റ്റ് സമന്വയിപ്പിക്കുക"</string>
+    <string name="playlist_is_empty">"പ്ലേലിസ്റ്റ് ശൂന്യമാണ്"</string>
+    <string name="remove_download_playlist_confirm">"ഡൗൺലോഡ് ചെയ്ത ഗാനങ്ങളുടെ സംഭരണത്തിൽ നിന്ന് എല്ലാ \"%s\" പ്ലേലിസ്റ്റ് ഗാനങ്ങളും നീക്കം ചെയ്യാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?"</string>
+    <string name="delete_playlist_confirm">"\"%s\" എന്ന പ്ലേലിസ്റ്റ് ഇല്ലാതാക്കാൻ നിങ്ങൾ ശരിക്കും ആഗ്രഹിക്കുന്നുണ്ടോ?"</string>
+    <string name="elements_selected">"%1$d ഘടകങ്ങൾ തിരഞ്ഞെടുത്തു"</string>
+    <string name="allows_for_sync_witch_youtube">"കുറിപ്പ്: ഇത് YouTube സംഗീതവുമായി സമന്വയിപ്പിക്കാൻ അനുവദിക്കുന്നു. ഇത് പിന്നീട് മാറ്റാൻ കഴിയില്ല."</string>
+
+    <!-- Button -->
+    <string name="retry">"വീണ്ടും ശ്രമിക്കുക"</string>
+    <string name="radio">"റേഡിയോ"</string>
+    <string name="shuffle">"ഷഫിൾ ചെയ്യുക"</string>
+    <string name="reset">"റീസെറ്റ്"</string>
+
+    <!-- Menu -->
+    <string name="details">"വിശദാംശങ്ങൾ"</string>
+    <string name="edit">"എഡിറ്റ് ചെയ്യുക"</string>
+    <string name="start_radio">"റേഡിയോ ആരംഭിക്കുക"</string>
+    <string name="play">"കളിക്കുക"</string>
+    <string name="play_next">"അടുത്തത് പ്ലേ ചെയ്യുക"</string>
+    <string name="add_to_queue">"ക്യൂവിലേക്ക് ചേർക്കുക"</string>
+    <string name="add_to_library">"ലൈബ്രറിയിലേക്ക് ചേർക്കുക"</string>
+    <string name="remove_from_library">"ലൈബ്രറിയിൽ നിന്ന് നീക്കം ചെയ്യുക"</string>
+    <string name="remove_from_playlist">"പ്ലേലിസ്റ്റിൽ നിന്ന് നീക്കംചെയ്യുക"</string>
+    <string name="download">"ഇറക്കുമതി"</string>
+    <string name="downloading">"ഡൗൺലോഡ് ചെയ്യുന്നു"</string>
+    <string name="remove_download">"ഡൗൺലോഡ് നീക്കം ചെയ്യുക"</string>
+    <string name="import_playlist">"പ്ലേലിസ്റ്റ് ഇറക്കുമതി ചെയ്യുക"</string>
+    <string name="add_to_playlist">"പ്ലേലിസ്റ്റിലേക്ക് ചേർക്കുക"</string>
+    <string name="view_artist">"ആർട്ടിസ്റ്റിനെ കാണുക"</string>
+    <string name="view_album">"ആൽബം കാണുക"</string>
+    <string name="refetch">"റീഫെച്ച് ചെയ്യുക"</string>
+    <string name="share">"പങ്കിടുക"</string>
+    <string name="delete">"ഇല്ലാതാക്കുക"</string>
+    <string name="remove_from_history">"ചരിത്രത്തിൽ നിന്ന് നീക്കം ചെയ്യുക"</string>
+    <string name="search_online">"ഓൺലൈനിൽ തിരയുക"</string>
+    <string name="sync">"സമന്വയിപ്പിക്കുക"</string>
+    <string name="advanced">"വിപുലമായത്"</string>
+    <string name="select">"എല്ലാം തിരഞ്ഞെടുക്കുക"</string>
+    <string name="like_all">"എല്ലാവരെയും പോലെ"</string>
+    <string name="dislike_all">"എല്ലാം ഡിസ്‌ലൈക്ക് ചെയ്യുക"</string>
+    <string name="tempo_and_pitch">"സമയവും സ്വരവും"</string>
+
+    <!-- Sort menu -->
+    <string name="sort_by_create_date">"ചേർത്ത തീയതി"</string>
+    <string name="sort_by_last_updated">"തീയതി അപ്ഡേറ്റ് ചെയ്തു"</string>
+    <string name="sort_by_name">"പേര്"</string>
+    <string name="sort_by_artist">"കലാകാരൻ/കലാകാരി"</string>
+    <string name="sort_by_year">"വർഷം"</string>
+    <string name="sort_by_song_count">"പാട്ടുകളുടെ എണ്ണം"</string>
+    <string name="sort_by_length">"നീളം"</string>
+    <string name="sort_by_play_time">"കളിക്കുന്ന സമയം"</string>
+    <string name="sort_by_custom">"ഇഷ്ടാനുസൃത ഓർഡർ"</string>
+
+    <!-- Dialog -->
+    <string name="media_id">"മീഡിയ ഐഡി"</string>
+    <string name="mime_type">"MIME തരം"</string>
+    <string name="codecs">"കോഡെക്കുകൾ"</string>
+    <string name="bitrate">"ബിട്രേറ്റ്"</string>
+    <string name="sample_rate">"സാമ്പിൾ നിരക്ക്"</string>
+    <string name="loudness">"ഉച്ചത്തിലുള്ള ശബ്ദം"</string>
+    <string name="volume">"വ്യാപ്തം"</string>
+    <string name="file_size">"ഫയൽ വലുപ്പം"</string>
+    <string name="unknown">"അജ്ഞാതം"</string>
+    <string name="copied">"ക്ലിപ്പ്‌ബോർഡിലേക്ക് പകർത്തി"</string>
+    <string name="edit_lyrics">"വരികൾ എഡിറ്റ് ചെയ്യുക"</string>
+    <string name="search_lyrics">"വരികൾ തിരയുക"</string>
+    <string name="lyrics">"വരികൾ"</string>
+    <string name="edit_song">"പാട്ട് എഡിറ്റ് ചെയ്യുക"</string>
+    <string name="song_title">"ഗാനത്തിന്റെ പേര്"</string>
+    <string name="song_artists">"ഗാന കലാകാരന്മാർ"</string>
+    <string name="error_song_title_empty">"ഗാന ശീർഷകം ശൂന്യമായിരിക്കരുത്."</string>
+    <string name="error_song_artist_empty">"ഗാന കലാകാരൻ ശൂന്യമായിരിക്കരുത്."</string>
+    <string name="save">"രക്ഷിക്കും"</string>
+    <string name="choose_playlist">"പ്ലേലിസ്റ്റ് തിരഞ്ഞെടുക്കുക"</string>
+    <string name="edit_playlist">"പ്ലേലിസ്റ്റ് എഡിറ്റ് ചെയ്യുക"</string>
+    <string name="create_playlist">"പ്ലേലിസ്റ്റ് സൃഷ്ടിക്കുക"</string>
+    <string name="playlist_name">"പ്ലേലിസ്റ്റ് പേര്"</string>
+    <string name="error_playlist_name_empty">"പ്ലേലിസ്റ്റിന്റെ പേര് നൽകേണ്ടതില്ല."</string>
+    <string name="already_in_playlist">"പ്ലേലിസ്റ്റിൽ ഇതിനകം ഉണ്ട്:"</string>
+    <string name="edit_artist">"ആർട്ടിസ്റ്റിനെ എഡിറ്റ് ചെയ്യുക"</string>
+    <string name="artist_name">"കലാകാരന്റെ പേര്"</string>
+    <string name="error_artist_name_empty">"ആർട്ടിസ്റ്റിന്റെ പേര് നൽകാതിരിക്കാൻ കഴിയില്ല."</string>
+    <string name="duplicates">"തനിപ്പകർപ്പുകൾ"</string>
+    <string name="skip_duplicates">"ഡ്യൂപ്ലിക്കേറ്റുകൾ ഒഴിവാക്കുക"</string>
+    <string name="add_anyway">"എന്തായാലും ചേർക്കുക"</string>
+    <string name="duplicates_description_single">"ഈ പാട്ട് നിങ്ങളുടെ പ്ലേലിസ്റ്റിൽ ഉണ്ട്."</string>
+    <string name="duplicates_description_multiple">"%d പാട്ടുകൾ ഇതിനകം നിങ്ങളുടെ പ്ലേലിസ്റ്റിൽ ഉണ്ട്."</string>
+
+    <!-- Noun -->
+    <plurals name="n_song">
+        <item quantity="one">"%d ഗാനം"</item>
+        <item quantity="other">"%d ഗാനം"</item>
+    </plurals>
+    <plurals name="n_artist">
+        <item quantity="one">"%d കലാകാരൻ"</item>
+        <item quantity="other">"%d കലാകാരൻ"</item>
+    </plurals>
+    <plurals name="n_album">
+        <item quantity="one">"%d ആൽബം"</item>
+        <item quantity="other">"%d ആൽബങ്ങൾ"</item>
+    </plurals>
+    <plurals name="n_playlist">
+        <item quantity="one">"%d പ്ലേലിസ്റ്റ്"</item>
+        <item quantity="other">"%d പ്ലേലിസ്റ്റുകൾ"</item>
+    </plurals>
+    <plurals name="n_week">
+        <item quantity="one">"%d ആഴ്ച"</item>
+        <item quantity="other">"%d ആഴ്ചകൾ"</item>
+    </plurals>
+    <plurals name="n_month">
+        <item quantity="one">"%d മാസം"</item>
+        <item quantity="other">"%d മാസങ്ങൾ"</item>
+    </plurals>
+    <plurals name="n_year">
+        <item quantity="one">"%d വർഷം"</item>
+        <item quantity="other">"%d വർഷങ്ങൾ"</item>
+    </plurals>
+    <plurals name="n_element">
+        <item quantity="one">"%d ഘടകം"</item>
+        <item quantity="other">"%d ഘടകങ്ങൾ"</item>
+    </plurals>
+    <plurals name="n_time">
+        <item quantity="one">"%d സമയം"</item>
+        <item quantity="other">"%d സമയം"</item>
+    </plurals>
+
+    <!-- Snackbar -->
+    <string name="playlist_imported">"പ്ലേലിസ്റ്റ് ഇറക്കുമതി ചെയ്തു"</string>
+    <string name="imported_playlist">"ഇറക്കുമതി ചെയ്ത പ്ലേലിസ്റ്റ്"</string>
+    <string name="removed_song_from_playlist">"പ്ലേലിസ്റ്റിൽ നിന്ന് \"%s\" നീക്കം ചെയ്തു"</string>
+    <string name="playlist_synced">"പ്ലേലിസ്റ്റ് സമന്വയിപ്പിച്ചു"</string>
+    <string name="undo">"പഴയപടിയാക്കുക"</string>
+
+    <!-- Player -->
+    <string name="lyrics_not_found">"വരികൾ കണ്ടെത്തിയില്ല"</string>
+    <string name="sleep_timer">"സ്ലീപ്പ് ടൈമർ"</string>
+    <string name="end_of_song">"പാട്ടിന്റെ അവസാനം"</string>
+    <plurals name="minute">
+        <item quantity="one">"1 മിനിറ്റ്"</item>
+        <item quantity="other">"%d മിനിറ്റ്സ്"</item>
+    </plurals>
+    <string name="error_no_stream">"സ്ട്രീം ലഭ്യമല്ല."</string>
+    <string name="error_no_internet">"നെറ്റ്‌വർക്ക് കണക്ഷൻ ഇല്ല"</string>
+    <string name="error_timeout">"ടൈം ഔട്ട്"</string>
+    <string name="error_unknown">"അജ്ഞാത പിശക്"</string>
+    <string name="seek_backward">"5 സെക്കൻഡ് പിന്നിലേക്ക്"</string>
+    <string name="seek_forward">"5 സെക്കൻഡ് മുന്നോട്ട്"</string>
+
+    <!-- Player action -->
+    <string name="action_like">"ഇഷ്ടപ്പെടുക"</string>
+    <string name="action_remove_like">"ലൈക്ക് നീക്കം ചെയ്യുക"</string>
+    <string name="action_shuffle_on">"ഷഫിൾ ഓണാണ്"</string>
+    <string name="action_shuffle_off">"ഷഫിൾ ഓഫാണ്"</string>
+    <string name="repeat_mode_off">"ആവർത്തന മോഡ് ഓഫാണ്"</string>
+    <string name="repeat_mode_one">"നിലവിലെ പാട്ട് ആവർത്തിക്കുക"</string>
+    <string name="repeat_mode_all">"ക്യൂ ആവർത്തിക്കുക"</string>
+
+    <!-- Queue Title -->
+    <string name="queue_all_songs">"എല്ലാ ഗാനങ്ങളും"</string>
+    <string name="queue_searched_songs">"തിരഞ്ഞ പാട്ടുകൾ"</string>
+    <string name="similar_content">"സമാനമായ ഉള്ളടക്കം"</string>
+
+    <!-- Notification name -->
+    <string name="music_player">"മ്യൂസിക് പ്ലെയർ"</string>
+
+    <!-- Settings -->
+    <string name="settings">"ക്രമീകരണങ്ങൾ"</string>
+    <string name="login_settings">"ലോഗിൻ ക്രമീകരണങ്ങൾ"</string>
+    <string name="use_login_for_browse">"പ്രീമിയം ഉള്ളടക്കം ബ്രൗസ് ചെയ്യുന്നതിന് ലോഗിൻ ഉപയോഗിക്കുക"</string>
+    <string name="use_login_for_browse_desc">"നിങ്ങൾ ഒരു പ്രീമിയം അക്കൗണ്ട് ഉപയോഗിച്ച് ലോഗിൻ ചെയ്തിട്ടുണ്ടെങ്കിൽ, ഇതിന് പ്രീമിയം-മാത്രം ആൽബങ്ങൾ കാണിക്കാൻ കഴിയും."</string>
+    <string name="general_settings">"പൊതുവായ ക്രമീകരണങ്ങൾ"</string>
+    <string name="appearance">"രൂപഭാവം"</string>
+    <string name="theme">"തീം"</string>
+    <string name="enable_dynamic_theme">"ഡൈനാമിക് തീം പ്രവർത്തനക്ഷമമാക്കുക"</string>
+    <string name="dark_theme">"ഇരുണ്ട തീം"</string>
+    <string name="dark_theme_on">"ഓൺ"</string>
+    <string name="dark_theme_off">"ഓഫ്"</string>
+    <string name="dark_theme_follow_system">"സിസ്റ്റം പിന്തുടരുക"</string>
+    <string name="player_background_style">"പ്ലെയർ പശ്ചാത്തല ശൈലി"</string>
+    <string name="follow_theme">"തീം പിന്തുടരുക"</string>
+    <string name="gradient">"ഗ്രേഡിയന്റ്"</string>
+    <string name="player_background_blur">"മങ്ങിക്കൽ"</string>
+    <string name="enable_squiggly_slider">"സ്ക്വിഗ്ലി സ്ലൈഡർ പ്രാപ്തമാക്കുക"</string>
+    <string name="enable_swipe_thumbnail">"പാട്ട് മാറ്റാൻ സ്വൈപ്പ് പ്രവർത്തനക്ഷമമാക്കുക"</string>
+    <string name="pure_black">"തങ്ക കറുപ്പ്"</string>
+    <string name="customize_navigation_tabs">"നാവിഗേഷൻ ടാബുകൾ ഇഷ്ടാനുസൃതമാക്കുക"</string>
+    <string name="player">"പ്ലെയർ"</string>
+    <string name="player_text_alignment">"പ്ലെയർ ടെക്സ്റ്റ് വിന്യാസം"</string>
+    <string name="lyrics_text_position">"വരികളുടെ വാചക സ്ഥാനം"</string>
+    <string name="sided">"വശങ്ങളുള്ളത്"</string>
+    <string name="left">"ഇടത്"</string>
+    <string name="center">"കേന്ദ്രം"</string>
+    <string name="right">"ശരിയാണ്"</string>
+    <string name="lyrics_click_change">"ക്ലിക്കിൽ വരികൾ മാറ്റുക"</string>
+    <string name="grid_cell_size">"ഗ്രിഡ് സെൽ വലുപ്പം"</string>
+    <string name="small">"ചെറുത്"</string>
+    <string name="big">"വലിയ"</string>
+    <string name="player_slider_style">"പ്ലെയർ സ്ലൈഡർ ശൈലി"</string>
+    <string name="default_">"സ്ഥിരസ്ഥിതി"</string>
+    <string name="squiggly">"സ്ക്വിഗ്ലി"</string>
+    <string name="slim">"സ്ലിം"</string>
+    <string name="misc">"പലവക"</string>
+    <string name="default_open_tab">"ഡിഫോൾട്ട് ഓപ്പൺ ടാബ്"</string>
+    <string name="slim_navbar">"താഴെയുള്ള നാവിഗേഷൻ ബാർ ലേബലുകൾ മറയ്ക്കുക"</string>
+    <string name="content">"ഉള്ളടക്കം"</string>
+    <string name="google">"ഗൂഗിൾ"</string>
+    <string name="discord">"നിരസിക്കുക"</string>
+    <string name="login">"ലോഗിൻ"</string>
+    <string name="advanced_login">"വിപുലമായ ലോഗിൻ (ടോക്കൺ)"</string>
+    <string name="logout">"ലോഗ്ഔട്ട് ചെയ്യുക"</string>
+    <string name="not_logged_in">"ലോഗിൻ ചെയ്തിട്ടില്ല"</string>
+    <string name="token_hidden">"ടോക്കൺ കാണിക്കാൻ ടാപ്പ് ചെയ്യുക"</string>
+    <string name="token_shown">"പകർത്താനോ എഡിറ്റ് ചെയ്യാനോ വീണ്ടും ടാപ്പ് ചെയ്യുക"</string>
+    <string name="token_adv_login_description">"ഇതൊരു നൂതന ലോഗിൻ രീതിയാണ്. വെബ് പോർട്ടലിന് പകരമായി, നിങ്ങൾക്ക് ഇവിടെ നേരിട്ട് നിങ്ങളുടെ ലോഗിൻ ടോക്കൺ നൽകാനോ അപ്ഡേറ്റ് ചെയ്യാനോ കഴിയും. ഉദാഹരണത്തിന്, ഒന്നിലധികം ഉപകരണങ്ങളിൽ ലോഗിൻ ചെയ്യുന്നത് വേഗത്തിലാക്കാൻ ഇതിന് കഴിയും. ആപ്പ് പാഴ്‌സ് ചെയ്യുന്നതിൽ പരാജയപ്പെടുന്ന ഏതെങ്കിലും അസാധുവായ ടോക്കൺ ഫോർമാറ്റുകൾ സ്വീകരിക്കപ്പെടില്ലെന്ന് ദയവായി ശ്രദ്ധിക്കുക."</string>
+    <string name="ytm_sync">"നിങ്ങളുടെ YouTube Music അക്കൗണ്ടുമായി സ്വയമേവ സമന്വയിപ്പിക്കുക"</string>
+    <string name="general">"ജനറൽ"</string>
+    <string name="content_language">"ഡിഫോൾട്ട് ഉള്ളടക്ക ഭാഷ"</string>
+    <string name="content_country">"ഡിഫോൾട്ട് ഉള്ളടക്ക രാജ്യം"</string>
+    <string name="system_default">"സിസ്റ്റം ഡിഫോൾട്ട്"</string>
+    <string name="proxy">"പ്രോക്സി"</string>
+    <string name="enable_proxy">"പ്രോക്സി പ്രാപ്തമാക്കുക"</string>
+    <string name="proxy_type">"പ്രോക്സി തരം"</string>
+    <string name="proxy_url">"പ്രോക്സി URL"</string>
+    <string name="default_lib_chips">"ഡിഫോൾട്ട് ലൈബ്രറി ചിപ്പ് മാറ്റുക"</string>
+    <string name="set_quick_picks">"ദ്രുത തിരഞ്ഞെടുക്കലുകൾ സജ്ജമാക്കുക"</string>
+    <string name="last_song_listened">"അവസാനം കേട്ട പാട്ടിനെ അടിസ്ഥാനമാക്കി"</string>
+    <string name="restart_to_take_effect">"പ്രാബല്യത്തിൽ വരാൻ പുനരാരംഭിക്കുക"</string>
+    <string name="app_language">"ആപ്പ് ഭാഷ (ബീറ്റ)"</string>
+    <string name="configure_app_language">"ആപ്പ് ഭാഷകൾ കോൺഫിഗർ ചെയ്യുക"</string>
+    <string name="intent_app_language_not_found">"ആപ്പ് ഭാഷാ ക്രമീകരണങ്ങൾ കണ്ടെത്താനായില്ല, ദയവായി അവ നേരിട്ട് കോൺഫിഗർ ചെയ്യുക."</string>
+    <string name="open_supported_links">"പിന്തുണയ്ക്കുന്ന ലിങ്ക് ഡിഫോൾട്ടായി തുറക്കുക"</string>
+    <string name="configure_supported_links">"പിന്തുണയ്ക്കുന്ന ലിങ്കുകൾ കോൺഫിഗർ ചെയ്യുക"</string>
+    <string name="intent_supported_links_not_found">"പിന്തുണയ്ക്കുന്ന ലിങ്കുകളുടെ ക്രമീകരണങ്ങൾ കണ്ടെത്താനായില്ല, ദയവായി അവ നേരിട്ട് കോൺഫിഗർ ചെയ്യുക."</string>
+    <string name="enable_kugou">"KuGou വരികൾ ദാതാവിനെ പ്രാപ്തമാക്കുക"</string>
+    <string name="enable_lrclib">"LrcLib വരികൾ ദാതാവിനെ പ്രാപ്തമാക്കുക"</string>
+    <string name="set_first_lyrics_provider">"ഇഷ്ടപ്പെട്ട ഗാനരചനാ ദാതാവ്"</string>
+    <string name="player_and_audio">"പ്ലെയറും ഓഡിയോയും"</string>
+    <string name="audio_quality">"ഓഡിയോ നിലവാരം"</string>
+    <string name="audio_quality_max">"പരമാവധി (ബീറ്റ)"</string>
+    <string name="audio_quality_auto">"ഓട്ടോ"</string>
+    <string name="audio_quality_high">"ഉയർന്ന"</string>
+    <string name="audio_quality_low">"താഴ്ന്നത്"</string>
+    <string name="queue">"ക്യൂ"</string>
+    <string name="persistent_queue">"സ്ഥിരമായ ക്യൂ"</string>
+    <string name="persistent_queue_desc">"ആപ്പ് ആരംഭിക്കുമ്പോൾ നിങ്ങളുടെ അവസാന ക്യൂ പുനഃസ്ഥാപിക്കുക"</string>
+    <string name="auto_load_more">"കൂടുതൽ പാട്ടുകൾ സ്വയമേവ ലോഡ് ചെയ്യുക"</string>
+    <string name="auto_load_more_desc">"സാധ്യമെങ്കിൽ, ക്യൂവിന്റെ അവസാനം എത്തുമ്പോൾ കൂടുതൽ പാട്ടുകൾ യാന്ത്രികമായി ചേർക്കുക."</string>
+    <string name="enable_similar_content">"സമാന ഉള്ളടക്കം പ്രാപ്തമാക്കുക"</string>
+    <string name="similar_content_desc">"ക്യൂവിന്റെ അവസാനം എത്തുമ്പോൾ സമാനമായ കൂടുതൽ ഗാനങ്ങൾ സ്വയമേവ ചേർക്കുക"</string>
+    <string name="skip_silence">"നിശബ്ദത ഒഴിവാക്കുക"</string>
+    <string name="audio_normalization">"ഓഡിയോ നോർമലൈസേഷൻ"</string>
+    <string name="auto_skip_next_on_error">"പിശക് സംഭവിക്കുമ്പോൾ അടുത്ത പാട്ടിലേക്ക് യാന്ത്രികമായി പോകുക"</string>
+    <string name="auto_skip_next_on_error_desc">"നിങ്ങളുടെ തുടർച്ചയായ പ്ലേബാക്ക് അനുഭവം ഉറപ്പാക്കുക"</string>
+    <string name="stop_music_on_task_clear">"ടാസ്‌ക് ക്ലിയർ ചെയ്യുമ്പോൾ സംഗീതം നിർത്തുക"</string>
+    <string name="equalizer">"സമനില"</string>
+    <string name="storage">"സംഭരണം"</string>
+    <string name="cache">"കാഷെ"</string>
+    <string name="image_cache">"ഇമേജ് കാഷെ"</string>
+    <string name="song_cache">"ഗാന കാഷെ"</string>
+    <string name="max_cache_size">"പരമാവധി കാഷെ വലുപ്പം"</string>
+    <string name="unlimited">"പരിധിയില്ലാത്തത്"</string>
+    <string name="clear_all_downloads">"എല്ലാ ഡൗൺലോഡുകളും മായ്‌ക്കുക"</string>
+    <string name="max_image_cache_size">"പരമാവധി ഇമേജ് കാഷെ വലുപ്പം"</string>
+    <string name="clear_image_cache">"ഇമേജ് കാഷെ മായ്‌ക്കുക"</string>
+    <string name="max_song_cache_size">"പരമാവധി ഗാന കാഷെ വലുപ്പം"</string>
+    <string name="clear_song_cache">"പാട്ട് കാഷെ മായ്‌ക്കുക"</string>
+    <string name="size_used">"%s ഉപയോഗിച്ചു"</string>
+    <string name="privacy">"സ്വകാര്യത"</string>
+    <string name="listen_history">"ചരിത്രം കേൾക്കുക"</string>
+    <string name="search_history">"തിരയൽ ചരിത്രം"</string>
+    <string name="pause_listen_history">"കേൾക്കൽ ചരിത്രം താൽക്കാലികമായി നിർത്തുക"</string>
+    <string name="clear_listen_history">"കേൾക്കൽ ചരിത്രം മായ്ക്കുക"</string>
+    <string name="clear_listen_history_confirm">"എല്ലാ കേൾവി ചരിത്രവും മായ്ക്കണമെന്ന് നിങ്ങൾക്ക് ഉറപ്പാണോ?"</string>
+    <string name="pause_search_history">"തിരയൽ ചരിത്രം താൽക്കാലികമായി നിർത്തുക"</string>
+    <string name="clear_search_history">"തിരയൽ ചരിത്രം മായ്ക്കുക"</string>
+    <string name="clear_search_history_confirm">"എല്ലാ തിരയൽ ചരിത്രവും മായ്ക്കണമെന്ന് നിങ്ങൾക്ക് ഉറപ്പാണോ?"</string>
+    <string name="disable_screenshot">"സ്ക്രീൻഷോട്ട് പ്രവർത്തനരഹിതമാക്കുക"</string>
+    <string name="disable_screenshot_desc">"ഈ ഓപ്ഷൻ ഓണായിരിക്കുമ്പോൾ, സ്ക്രീൻഷോട്ടുകളും സമീപകാലങ്ങളിലെ ആപ്പിന്റെ കാഴ്ചയും പ്രവർത്തനരഹിതമാകും."</string>
+    <string name="hide_explicit">"പ്രായപൂർത്തിയായവർക്കുള്ള ഉള്ളടക്കം മറയ്ക്കുക"</string>
+    <string name="backup_restore">"ബാക്കപ്പ് ചെയ്ത് പുനഃസ്ഥാപിക്കുക"</string>
+    <string name="backup">"ബാക്കപ്പ്"</string>
+    <string name="restore">"പുനഃസ്ഥാപിക്കുക"</string>
+    <string name="backup_create_success">"ബാക്കപ്പ് വിജയകരമായി സൃഷ്ടിച്ചു"</string>
+    <string name="backup_create_failed">"ബാക്കപ്പ് സൃഷ്ടിക്കാൻ കഴിഞ്ഞില്ല"</string>
+    <string name="restore_failed">"ബാക്കപ്പ് പുനഃസ്ഥാപിക്കാനായില്ല"</string>
+    <string name="discord_integration">"ഡിസ്കോർഡ് ഇന്റഗ്രേഷൻ"</string>
+    <string name="discord_information">"നിങ്ങളുടെ Discord അക്കൗണ്ടിന്റെ സ്റ്റാറ്റസ് സജ്ജീകരിക്കാൻ OpenTune KizzyRPC ലൈബ്രറി ഉപയോഗിക്കുന്നു. ഇതിൽ Discord ഗേറ്റ്‌വേ കണക്ഷൻ ഉപയോഗിക്കുന്നത് ഉൾപ്പെടുന്നു, ഇത് Discord-ന്റെ TOS-ന്റെ ലംഘനമായി കണക്കാക്കാം. എന്നിരുന്നാലും, ഈ കാരണത്താൽ ഉപയോക്തൃ അക്കൗണ്ടുകൾ താൽക്കാലികമായി നിർത്തിവച്ചതായി അറിയപ്പെടുന്ന കേസുകളൊന്നുമില്ല. നിങ്ങളുടെ സ്വന്തം ഉത്തരവാദിത്തത്തിൽ ഉപയോഗിക്കുക. OpenTunne നിങ്ങളുടെ ടോക്കൺ മാത്രമേ എക്‌സ്‌ട്രാക്റ്റ് ചെയ്യുകയുള്ളൂ, മറ്റെല്ലാം പ്രാദേശികമായി സംഭരിക്കപ്പെടും."</string>
+    <string name="dismiss">"നിരസിക്കുക"</string>
+    <string name="options">"ഓപ്ഷനുകൾ"</string>
+    <string name="preview">"പ്രിവ്യൂ"</string>
+    <string name="login_failed">"ലോഗിൻ ചെയ്യുന്നത് പരാജയപ്പെട്ടു"</string>
+    <string name="enable_discord_rpc">"റിച്ച് പ്രെസെൻസ് പ്രാപ്തമാക്കുക"</string>
+    <string name="default_links">"പിന്തുണയ്ക്കുന്ന ലിങ്കുകൾ തുറക്കുക"</string>
+    <string name="open_app_settings_error">"ആപ്പ് ക്രമീകരണം തുറക്കാനായില്ല"</string>
+    <string name="release_notes">"റിലീസ് കുറിപ്പുകൾ"</string>
+    <string name="about">"കുറിച്ച്"</string>
+    <string name="app_version">"ആപ്പ് പതിപ്പ്"</string>
+    <string name="new_version_available">"പുതിയ പതിപ്പ് ലഭ്യമാണ്"</string>
+    <string name="translation_models">"വിവർത്തന മാതൃകകൾ"</string>
+    <string name="clear_translation_models">"വിവർത്തന മോഡലുകൾ മായ്‌ക്കുക"</string>
+    <string name="all_time">"എല്ലാ സമയത്തും"</string>
+    <string name="past_24_hours">"കഴിഞ്ഞ 24 മണിക്കൂർ"</string>
+    <string name="past_week">"കഴിഞ്ഞ ആഴ്ച"</string>
+    <string name="past_month">"കഴിഞ്ഞ മാസം"</string>
+    <string name="past_year">"കഴിഞ്ഞ വർഷം"</string>
+    <string name="top_length">"എന്റെ മികച്ച പട്ടികയുടെ ദൈർഘ്യം"</string>
+    <string name="history_duration">"ചരിത്ര ദൈർഘ്യം"</string>
+    <string name="contributors">"സംഭാവകർ"</string>
+    <string name="Donate">"സംഭാവന ചെയ്യുക"</string>
+    <string name="Telegramchanel">"ടെലിഗ്രാം ചാനൽ"</string>
+    <string name="contribution">"സംഭാവന"</string>
+    <string name="Hi">"ഹായ്"</string>
+    <string name="NewVersion">"പുതിയ പതിപ്പ്"</string>
+    <string name="Changelog">"ചേഞ്ച്‌ലോഗ്"</string>
+    <string name="changelogs">"ചേഞ്ച്‌ലോഗുകൾ"</string>
+    <string name="no_changes">"മാറ്റങ്ങളൊന്നുമില്ല"</string>
+    <string name="Translate">"വിവർത്തനം ചെയ്യുക"</string>
+    <string name="Redirección">"റീഡിറക്ഷൻ"</string>
+    <string name="poeditor_redirect">"നിങ്ങളെ poeditor.com ലേക്ക് റീഡയറക്‌ട് ചെയ്യാൻ പോകുന്നു."</string>
+    <string name="barwar">"ബാക്കപ്പുകൾ പുനഃസ്ഥാപിക്കുമ്പോൾ ശ്രദ്ധിക്കുക, മുമ്പ് ഡൗൺലോഡ് ചെയ്ത പാട്ടുകൾ ഡൗൺലോഡ് ചെയ്യപ്പെടുന്നില്ല. ഡൗൺലോഡ് പിശകുകൾ ഒഴിവാക്കാൻ പുനഃസ്ഥാപിച്ച പാട്ടുകൾ പ്ലേ ചെയ്യാൻ വളരെ ശുപാർശ ചെയ്യുന്നു."</string>
+    <string name="backup_link_title">"ബാക്കപ്പ് വിജയകരമായി അപ്‌ലോഡ് ചെയ്തു!"</string>
+    <string name="backup_link_description">"നിങ്ങളുടെ ബാക്കപ്പ് 14 ദിവസത്തേക്ക് ലഭ്യമാകും."</string>
+    <string name="copy_link">"ലിങ്ക് പകർത്തുക"</string>
+    <string name="customize_thumbnail_corner_radius">"ലഘുചിത്ര കോർണർ റേഡിയസ് ഇഷ്ടാനുസൃതമാക്കുക"</string>
+    <string name="corner_radius_label">"കോർണർ ആരം: %1$s"</string>
+    <string name="unmute">"അൺമ്യൂട്ട് ചെയ്യുക"</string>
+    <plurals name="seconds">
+        <item quantity="one">"1 സെക്കൻഡ്"</item>
+        <item quantity="other">"%d സെക്കൻഡുകൾ"</item>
+    </plurals>
+    <string name="mute">"നിശബ്ദമാക്കുക"</string>
+    <string name="explore">"പര്യവേക്ഷണം ചെയ്യുക"</string>
+    <string name="custom_avatar">"ഇഷ്ടാനുസൃത അവതാർ (ബീറ്റ)"</string>
+    <string name="custom_avatar_beta">"ഇഷ്ടാനുസൃത അവതാർ (ബീറ്റ)"</string>
+    <string name="select_image">"ചിത്രം തിരഞ്ഞെടുക്കുക"</string>
+    <string name="default_avatar">"ഡിഫോൾട്ട് അവതാർ"</string>
+    <string name="restore_default_avatar">"ഡിഫോൾട്ട് അവതാർ പുനഃസ്ഥാപിക്കുക"</string>
+    <string name="SearchResutls">"തിരയൽ ഫലങ്ങൾ"</string>
+    <string name="Sujestions">"നിർദ്ദേശങ്ങൾ"</string>
+    <string name="SearchHistory">"തിരയൽ ചരിത്രം"</string>
+    <string name="collapse">"ചുരുക്കുക"</string>
+    <string name="expand">"വികസിപ്പിക്കുക"</string>
+    <string name="reset_to_default">"സ്ഥിരസ്ഥിതിയിലേക്ക് പുനഃസജ്ജമാക്കുക"</string>
+    <string name="Presets">"പ്രീസെറ്റുകൾ"</string>
+    <string name="custom">"കസ്റ്റം"</string>
+    <string name="close">"അടയ്ക്കുക"</string>
+    <string name="custom_value">"ഇഷ്ടാനുസൃത മൂല്യം"</string>
+    <string name="adjust_radius">"ആരം ക്രമീകരിക്കുക"</string>
+    <string name="cancel">"റദ്ദാക്കുക"</string>
+    <string name="apply">"പ്രയോഗിക്കുക"</string>
+    <string name="player_buttons_style">"പ്ലെയർ ബട്ടൺസ് ശൈലി"</string>
+    <string name="default_style">"ഡിഫോൾട്ട് സ്റ്റൈൽ"</string>
+    <string name="secondary_color_style">"ദ്വിതീയ വർണ്ണ ശൈലി"</string>
+    <string name="update_version">"v%1$s അപ്ഡേറ്റ് ചെയ്യുക"</string>
+    <string name="download_question">"പുതിയ പതിപ്പ് ഡൗൺലോഡ് ചെയ്യാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?"</string>
+    <string name="downloadup">"ഇറക്കുമതി"</string>
+    <string name="downloadingup">"അപ്‌ഡേറ്റ് ഡൗൺലോഡ് ചെയ്യുന്നു..."</string>
+    <string name="download_completed">"ഡൗൺലോഡ് പൂർത്തിയായി"</string>
+    <string name="install">"ഇന്‍സ്റ്റാളുചെയ്യുക"</string>
+    <string name="download_errorup">"അപ്ഡേറ്റ് ഡൗൺലോഡ് ചെയ്യുന്നതിൽ പിശക്"</string>
+    <string name="tap_to_update">"അപ്ഡേറ്റ് ചെയ്യാൻ ടാപ്പ് ചെയ്യുക"</string>
+    <string name="info_title">"വിവരങ്ങൾ"</string>
+    <string name="info_description">"നിങ്ങളുടെ ഡാറ്റയുടെ സുരക്ഷയും നിങ്ങളുടെ വിവരങ്ങൾ സുരക്ഷിതമായും എളുപ്പത്തിൽ ആക്‌സസ് ചെയ്യാവുന്നതുമാണെന്ന് എങ്ങനെ ഉറപ്പാക്കാമെന്നതും ഉൾപ്പെടെയുള്ള ബാക്കപ്പ്, പുനഃസ്ഥാപന പ്രക്രിയയെക്കുറിച്ചുള്ള പ്രധാന വിശദാംശങ്ങൾ ഈ വിഭാഗം നൽകുന്നു."</string>
+    <string name="backup_info_title">"പ്രധാനപ്പെട്ട വിവരങ്ങൾ"</string>
+    <string name="backup_info_description">"നിങ്ങളുടെ ഡാറ്റ ബാക്കപ്പ് ചെയ്യുമ്പോൾ, നിങ്ങളുടെ ഡൗൺലോഡുകൾ ഉൾപ്പെടില്ല. മികച്ച പ്രകടനത്തിനായി ആപ്പ് വഴി നിങ്ങളുടെ കാഷെ മായ്‌ക്കാൻ ശുപാർശ ചെയ്യുന്നു. ബാക്കപ്പ് സേവനം സുരക്ഷിതമാണ്, നിങ്ങളുടെ ഡാറ്റ സ്വകാര്യമായും പരിരക്ഷിതമായും തുടരുന്നുവെന്ന് ഉറപ്പാക്കുന്നു."</string>
+    <string name="backup_description">"നിങ്ങളുടെ നിലവിലെ ഡാറ്റയുടെ ഒരു ബാക്കപ്പ് ഫയൽ സൃഷ്ടിക്കുക."</string>
+    <string name="restore_description">"ഒരു ബാക്കപ്പ് ഫയലിൽ നിന്ന് നിങ്ങളുടെ ഡാറ്റ വീണ്ടെടുക്കുക"</string>
+    <string name="keep_listening">"സെഗുയർ_എസ്‌കുച്ച"</string>
+    <string name="link_copied">"എൻലേസ് കോപിയാഡോ"</string>
+    <string name="redireccion">"റീഡയറക്ഷൻ"</string>
+    <string name="Version">"പതിപ്പ്"</string>
+    <string name="notification">"അറിയിപ്പ്"</string>
+    <string name="cached_playlist">"ലിസ്റ്റാസ് എൻ കാഷെ"</string>
+    <string name="added_to_queue">"അനദിർ എ ലാ കോള"</string>
+    <string name="warn">"മുന്നറിയിപ്പ് നൽകുക"</string>
+    <string name="edit_thumbnail">"തംബെയിൽ_എഡിറ്റ്ചെയ്യുക"</string>
+    <string name="remove_thumbnail">"ലഘുചിത്രം_നീക്കംചെയ്യുക"</string>
+    <string name="add_thumbnail">"ലഘുചിത്രം_ചേർക്കുക"</string>
+    <string name="storage_overview">"സംഭരണ അവലോകനം"</string>
+    <string name="clear_downloads_confirmation">"ഡൗൺലോഡ് സ്ഥിരീകരണം മായ്ക്കുക"</string>
+    <string name="clear_song_cache_confirmation">"പാട്ടിന്റെ കാഷെ കോൺഫി മായ്‌ക്കുക"</string>
+    <string name="clear_image_cache_confirmation">"ഇമേജ് കാഷെ സ്ഥിരീകരണം മായ്‌ക്കുക"</string>
+    <string name="confirm">"സ്ഥിരീകരിക്കുക"</string>
+    <string name="problem_solver">"പ്രശ്നപരിഹാരി"</string>
+    <string name="action_login">"ആക്ഷൻ ലോഗിൻ"</string>
+    <string name="generating_image">"ചിത്രം സൃഷ്ടിക്കുന്നു "</string>
+    <string name="please_wait">"കാത്തിരിക്കൂ"</string>
+    <string name="share_lyrics">"വരികൾ പങ്കിടുക"</string>
+    <string name="share_as_text">"ടെക്സ്റ്റായി പങ്കിടുക"</string>
+    <string name="share_as_image">"ചിത്രമായി പങ്കിടുക"</string>
+    <string name="max_selection_limit">"പരമാവധി തിരഞ്ഞെടുക്കൽ പരിധി"</string>
+    <string name="share_selected">"തിരഞ്ഞെടുത്തത് പങ്കിടുക"</string>
+    <string name="customize_colors">"ഇഷ്ടാനുസൃത നിറങ്ങൾ"</string>
+    <string name="more_options">"കൂടുതൽ ഓപ്ഷനുകൾ"</string>
+    <string name="text_color">"വാചക നിറം"</string>
+    <string name="secondary_text_color">"വാചക നിറം"</string>
+    <string name="background_color">"പശ്ചാത്തല നിറം"</string>
+    <string name="back">"തിരികെ"</string>
+    <string name="navigation_error">"നാവിഗേഷൻ പിശക്"</string>
+    <string name="notifications_enabled">"അറിയിപ്പ് എൻആൽബ്"</string>
+    <string name="notifications_disabled">"അറിയിപ്പ് പ്രാപ്തമാക്കി"</string>
+    <string name="visitor_data_title">"സന്ദർശക ഡാറ്റ ശീർഷകം"</string>
+    <string name="visitor_data_description">"സന്ദർശക ഡാറ്റ വിവരണം"</string>
+    <string name="visitor_data_info_button">"സന്ദർശക ഡാറ്റ വിവര ബട്ടൺ"</string>
+    <string name="visitor_data_reset_button">"സന്ദർശക ഡാറ്റ പുനഃസജ്ജീകരണ ബട്ടൺ"</string>
+    <string name="visitor_data_info_title">"സന്ദർശക ഡാറ്റ വിവര ശീർഷകം"</string>
+    <string name="visitor_data_info_intro">"സന്ദർശക ഡാറ്റ വിവര ആമുഖം"</string>
+    <string name="visitor_data_info_problems">"സന്ദർശക ഡാറ്റ വിവര പ്രശ്നങ്ങൾ"</string>
+    <string name="visitor_data_info_solution">"സന്ദർശക ഡാറ്റ വിവരങ്ങൾ മാത്രം"</string>
+    <string name="visitor_data_info_note">"സന്ദർശക ഡാറ്റ വിവര പരിഹാരങ്ങൾ"</string>
+    <string name="visitor_data_info_confirm">"സന്ദർശക ഡാറ്റ വിവരങ്ങൾ സ്ഥിരീകരിക്കുന്നു"</string>
+    <string name="visitor_data_reset_title">"സന്ദർശക ഡാറ്റ റീസെറ്റ് ടോട്ടൽ"</string>
+    <string name="visitor_data_reset_message">"സന്ദർശക ഡാറ്റ പുനഃസജ്ജീകരണ ശീർഷകം"</string>
+    <string name="visitor_data_reset_confirm">"സന്ദർശക ഡാറ്റ പുനഃസജ്ജീകരണം സ്ഥിരീകരിക്കുക"</string>
+    <string name="visitor_data_reset_cancel">"സന്ദർശക ഡാറ്റ പുനഃസജ്ജീകരണം"</string>
+    <string name="widget_title">"സന്ദർശക ഡാറ്റ റീസെറ്റ് റദ്ദാക്കുക"</string>
+    <string name="error_saving_image">"ചിത്രം സംരക്ഷിക്കുന്നതിൽ പിശക്"</string>
+    <string name="processing">"പ്രോസസ്സിംഗ്"</string>
+    <string name="subscribed">"സബ്‌സ്‌ക്രൈബുചെയ്‌തു"</string>
+    <string name="subscribe">"സബ്സ്ക്രൈബ് ചെയ്യുക"</string>
+    <string name="language">"ഭാഷ"</string>
+    <string name="selection_mode_active"></string>
+
+    <!-- Avatar Selection -->
+    <string name="avatar_selection"></string>
+    <string name="choose_predefined_avatar"></string>
+
+    <!-- Avatar Descriptions for Predefined Avatars -->
+    <string name="geometric_avatar_1"></string>
+    <string name="geometric_avatar_2"></string>
+    <string name="geometric_avatar_3"></string>
+    <string name="geometric_avatar_4"></string>
+    <string name="geometric_avatar_5"></string>
+    <string name="geometric_avatar_6"></string>
+    <string name="purple_initial_avatar"></string>
+    <string name="blue_initial_avatar"></string>
+    <string name="green_initial_avatar"></string>
+    <string name="orange_initial_avatar"></string>
+    <string name="red_initial_avatar"></string>
+    <string name="teal_initial_avatar"></string>
+    <string name="dots_pattern_avatar"></string>
+    <string name="waves_pattern_avatar"></string>
+    <string name="gradient_pattern_avatar"></string>
+    <string name="music_note_avatar"></string>
+    <string name="equalizer_avatar"></string>
+    <string name="headphones_avatar"></string>
+    <string name="discord_use_details"></string>
+    <string name="discord_use_details_description"></string>
+    <string name="community"></string>
+    <string name="app_info"></string>
+    <string name="hide_controls"></string>
+    <string name="show_controls"></string>
+    <string name="customize_lyrics_image"></string>
+    <string name="customize_image"></string>
+    <string name="select_theme"></string>
+    <string name="from_cover"></string>
+    <string name="presets"></string>
+    <string name="share_lyrics_image"></string>
+    <string name="error_generating_image"></string>
+    <string name="cover_color"></string>
+    <string name="Rotatelyricsbackground"></string>
+    <string name="playlist_add_local_to_synced_note"></string>
+    <string name="manage"></string>
+    <string name="clear"></string>
+    <string name="playing_from"></string>
+    <string name="SmallButtonsShape"></string>
+    <string name="cloud_upload_title"></string>
+    <string name="cloud_upload_enabled_description"></string>
+    <string name="cloud_upload_disabled_description"></string>
+    <string name="backup_with_cloud"></string>
+    <string name="uploading_backup"></string>
+    <string name="backup_success"></string>
+    <string name="backup_upload_error"></string>
+    <string name="cache_clearing"></string>
+    <string name="info_button"></string>
+    <string name="reset_button"></string>
+    <string name="processing_songs"></string>
+    <string name="understood"></string>
+</resources>
