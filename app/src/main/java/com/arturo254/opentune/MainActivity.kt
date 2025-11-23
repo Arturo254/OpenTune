@@ -27,8 +27,13 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -100,6 +105,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.BlendMode
@@ -1641,6 +1647,28 @@ fun ProfileIconWithUpdateBadge(
     var showUpdateBadge by remember { mutableStateOf(false) }
     val updatedOnClick = rememberUpdatedState(onProfileClick)
 
+    // Animación del badge
+    val infiniteTransition = rememberInfiniteTransition(label = "badge_animation")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
     // Control seguro de updates
     LaunchedEffect(currentVersion) {
         try {
@@ -1666,8 +1694,7 @@ fun ProfileIconWithUpdateBadge(
                     e.printStackTrace()
                 }
             }
-    )
-    {
+    ) {
         // Avatar usando el nuevo sistema
         Box(contentAlignment = Alignment.Center) {
             when (currentSelection) {
@@ -1711,27 +1738,52 @@ fun ProfileIconWithUpdateBadge(
                     )
                 }
             }
+        }
 
-            // Badge de actualización
-            if (showUpdateBadge) {
+        // Badge de actualización mejorado - dentro del avatar
+        if (showUpdateBadge) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(28.dp)
+            ) {
+                // Anillo de pulso exterior
                 Box(
                     modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(28.dp)
+                        .fillMaxSize()
+                        .scale(scale)
                         .background(
-                            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f),
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f * alpha),
+                                    Color.Transparent
+                                )
+                            ),
                             shape = CircleShape
                         )
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.update),
-                        contentDescription = "Actualización disponible",
-                        tint = MaterialTheme.colorScheme.onTertiary,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .align(Alignment.Center)
-                    )
-                }
+                )
+
+                // Overlay semi-transparente
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                            shape = CircleShape
+                        )
+                )
+
+                // Ícono de actualización con animación
+                Icon(
+                    painter = painterResource(R.drawable.update),
+                    contentDescription = "Actualización disponible",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .align(Alignment.Center)
+                        .scale(scale)
+                        .alpha(alpha)
+                )
             }
         }
     }
