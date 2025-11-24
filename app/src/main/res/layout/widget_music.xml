@@ -3,25 +3,11 @@
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/glass_background"
-    android:elevation="10dp"
+    android:background="@drawable/widget_background"
     android:minHeight="120dp"
-    android:padding="@dimen/widget_padding">
+    android:padding="16dp">
 
-    <!-- Logo OpenTune -->
-    <ImageView
-        android:id="@+id/widget_logo"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:alpha="0.8"
-        android:contentDescription="OpenTune"
-        android:src="@drawable/opentune" />
-
-    <!-- Contenido principal -->
+    <!-- Contenido -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,27 +15,26 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- Album Art -->
+        <!-- Portada -->
         <ImageView
             android:id="@+id/widget_album_art"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:layout_marginEnd="12dp"
             android:background="@drawable/rounded_image_bg"
             android:clipToOutline="true"
             android:contentDescription="@string/albums"
             android:scaleType="centerCrop"
             android:src="@drawable/music_note" />
 
-        <!-- Información de la canción -->
+        <!-- Información -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
             android:layout_weight="1"
-            android:gravity="start"
-            android:orientation="vertical"
-            android:paddingEnd="8dp">
+            android:orientation="vertical">
 
+            <!-- Título -->
             <TextView
                 android:id="@+id/widget_song_title"
                 android:layout_width="match_parent"
@@ -61,23 +46,27 @@
                 android:scrollHorizontally="true"
                 android:singleLine="true"
                 android:text="@string/song_title"
-                android:textColor="@color/white_30"
-                android:textSize="14sp"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
+            <!-- Artista (con marquee agregado) -->
             <TextView
                 android:id="@+id/widget_artist"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:alpha="0.8"
-                android:ellipsize="end"
+                android:ellipsize="marquee"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"
                 android:singleLine="true"
                 android:text="@string/artist_name"
-                android:textColor="@color/white_30"
-                android:textSize="12sp" />
+                android:textColor="@android:color/white"
+                android:textSize="13sp" />
 
-            <!-- Progress Bar -->
+            <!-- Progreso -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -89,31 +78,32 @@
                     android:id="@+id/widget_current_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:alpha="0.7"
                     android:text="0:00"
-                    android:textColor="@color/white_30"
-                    android:textSize="10sp" />
+                    android:textColor="@android:color/white"
+                    android:textSize="10sp"
+                    android:alpha="0.85" />
 
                 <ProgressBar
                     android:id="@+id/widget_progress_bar"
                     style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="0dp"
+                    android:layout_width="32dp"
                     android:layout_height="4dp"
-                    android:layout_marginHorizontal="8dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
                     android:layout_weight="1"
-                    android:alpha="0.3"
+                    android:max="100"
                     android:progress="0"
-                    android:progressBackgroundTint="@color/white_30"
-                    android:progressTint="@color/light_blue_50" />
+                    android:progressBackgroundTint="#80FFFFFF"
+                    android:progressTint="#FFFFFFFF" />
 
                 <TextView
                     android:id="@+id/widget_duration"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:alpha="0.7"
                     android:text="0:00"
-                    android:textColor="@color/white_30"
-                    android:textSize="10sp" />
+                    android:textColor="@android:color/white"
+                    android:textSize="10sp"
+                    android:alpha="0.85" />
 
             </LinearLayout>
 
@@ -123,75 +113,76 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
             android:gravity="center"
             android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:orientation="horizontal">
 
+                <!-- Botones -->
                 <ImageButton
                     android:id="@+id/widget_shuffle"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/shuffle"
                     android:padding="6dp"
                     android:src="@drawable/shuffle"
-                    android:tint="@color/white_30" />
+                    android:tint="@android:color/white" />
 
                 <ImageButton
                     android:id="@+id/widget_prev"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginHorizontal="4dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="2dp"
+                    android:layout_marginRight="2dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:padding="8dp"
                     android:src="@drawable/skip_previous"
-                    android:tint="@color/white_30" />
+                    android:tint="@android:color/white" />
 
                 <ImageButton
                     android:id="@+id/widget_play_pause"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:layout_marginHorizontal="6dp"
+                    android:layout_marginLeft="2dp"
+                    android:layout_marginRight="2dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:padding="10dp"
                     android:src="@drawable/play"
-                    android:tint="@color/white_30" />
+                    android:tint="@android:color/white" />
 
                 <ImageButton
                     android:id="@+id/widget_next"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginHorizontal="4dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="2dp"
+                    android:layout_marginRight="2dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:padding="8dp"
                     android:src="@drawable/skip_next"
-                    android:tint="@color/white_30" />
+                    android:tint="@android:color/white" />
 
                 <ImageButton
                     android:id="@+id/widget_like"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/liked"
                     android:padding="6dp"
                     android:src="@drawable/favorite_border"
-                    android:tint="@color/white_30" />
+                    android:tint="@android:color/holo_red_dark" />
 
             </LinearLayout>
 
-            <!-- Estado de reproducción -->
             <TextView
                 android:id="@+id/widget_playback_state"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text=""
-                android:textColor="@color/light_blue_50"
+                android:textColor="@android:color/white"
                 android:textSize="10sp"
                 android:visibility="gone" />
 

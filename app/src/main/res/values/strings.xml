@@ -587,4 +587,5 @@
     <string name="reset_button">Reset</string>
     <string name="processing_songs">Processing songs…</string>
     <string name="understood">Understood</string>
+    <string name="tap_to_open">Tap to open</string>
 </resources>

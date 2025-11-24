@@ -133,6 +133,7 @@ dependencies {
     implementation(libs.glance.material3)
     implementation(libs.graphics.shapes)
     implementation(libs.work.runtime.ktx)
+    implementation(libs.constraintlayout)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
