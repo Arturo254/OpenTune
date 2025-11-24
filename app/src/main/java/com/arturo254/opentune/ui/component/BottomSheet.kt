@@ -48,6 +48,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
+
 /**
  * Bottom Sheet
  * Modified from [ViMusic](https://github.com/vfsfitvnm/ViMusic)
@@ -57,23 +58,19 @@ fun BottomSheet(
     state: BottomSheetState,
     modifier: Modifier = Modifier,
     background: @Composable (BoxScope.() -> Unit) = { },
-
     onDismiss: (() -> Unit)? = null,
     collapsedContent: @Composable BoxScope.() -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
-
-
-            Box(
-                modifier = modifier
-                    .graphicsLayer {
-                        alpha = (1.4f * ((state.progress.coerceAtLeast(0.1f) - 0.1f).toDouble().pow(0.5)).toFloat())
-                            .coerceIn(0f, 1f)
-                    }
-                    .fillMaxSize(),
-                content = background
-            )
-
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                // background fades during about 10%-61% progress
+                alpha = (1.4f * (state.progress.coerceAtLeast(0.1f) - 0.1f).pow(0.5f)).coerceIn(0f, 1f)
+            }
+            .fillMaxSize(),
+        content = background
+    )
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -108,7 +105,6 @@ fun BottomSheet(
                     topEnd = if (!state.isExpanded) 16.dp else 0.dp
                 )
             )
-
     ) {
         if (!state.isCollapsed && !state.isDismissed) {
             BackHandler(onBack = state::collapseSoft)
