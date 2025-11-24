@@ -479,7 +479,7 @@
     <string name="background_color">Color de fondo</string>
 
     <string name="visitor_data_title">Solución de problemas</string>
-    <string name="visitor_data_description">Si está experimentando problemas de conectividad con YouTube, restablecer el visitante_data podría ayudar.</string>
+    <string name="visitor_data_description">iSi está experimentando problemas de conectividad con YouTube, restablecer el  VISITOR_DATA podría ayudar.</string>
     <string name="visitor_data_info_button">¿Qué es?</string>
     <string name="visitor_data_reset_button">Reiniciar</string>
 
