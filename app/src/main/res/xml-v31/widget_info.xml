@@ -1,5 +1,5 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:description="@string/widget_title"
+    android:description="@string/about"
     android:initialLayout="@layout/widget_music"
     android:minWidth="40dp"
     android:minHeight="40dp"
