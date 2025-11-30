@@ -91,7 +91,7 @@ junit = { group = "junit", name = "junit", version = "4.13.2" }
 
 timber = { group = "com.jakewharton.timber", name = "timber", version = "5.0.1" }
 
-newpipe-extractor = { module  = "com.github.mostafaalagamy:MetrolistExtractor", name = "PipePipeExtractor", version = "8773f0d" }
+newpipe-extractor = { module  = "com.github.mostafaalagamy:MetrolistExtractor", name = "PipePipeExtractor", version = "a194151" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }

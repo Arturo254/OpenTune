@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -31,6 +32,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -106,50 +108,55 @@ fun ThumbnailCornerRadiusSelectorButton(
     LaunchedEffect(Unit) {
         currentRadius = AppConfig.getThumbnailCornerRadius(context)
     }
-
-    // Botón mejorado con mejor semántica y táctil
-    Surface(
-        modifier = modifier
+    Row(
+        modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clip(RoundedCornerShape(26.dp)),
-        shadowElevation = 10.dp,
-        color = MaterialTheme.colorScheme.surface,
-        onClick = { showDialog = true }
+            .clip(RoundedCornerShape(12.dp))
+            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .clickable(
+                enabled = true,
+                onClick = { showDialog = true }
+            ),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                ),
+            contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.line_curve),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
             )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = stringResource(
-                        id = R.string.customize_thumbnail_corner_radius,
-                        currentRadius.roundToInt()
-                    ),
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = stringResource(
+                    id = R.string.customize_thumbnail_corner_radius,
+                    currentRadius.roundToInt()
+                ),
 
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleMedium,
             )
         }
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(
+            imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
     }
+//    }
 
     // Modal para seleccionar el radio
     if (showDialog) {

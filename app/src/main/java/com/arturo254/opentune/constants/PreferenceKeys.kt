@@ -119,6 +119,7 @@ val QueueEditLockKey = booleanPreferencesKey("queueEditLock")
 
 val LyricFontSizeKey = intPreferencesKey("lyricFontSize")
 val fullScreenLyricsKey = booleanPreferencesKey("fullScreenLyrics")
+val AnimateLyricsKey = booleanPreferencesKey("animate_lyrics")
 
 enum class LibraryViewType {
     LIST,

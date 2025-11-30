@@ -18,8 +18,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -937,9 +939,9 @@ fun LanguagePreference(
             .find { it.code == selectedCode }
             ?.let { language ->
                 if (language.isSystemDefault) {
-                    language.displayName
+                    language.nativeName
                 } else {
-                    "${language.displayName} ${language.flag}".trim()
+                    "${language.nativeName} ${language.flag}".trim()
                 }
             } ?: selectedCode
     }
@@ -949,29 +951,35 @@ fun LanguagePreference(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(30.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(enabled = !isChanging) {
                 showLanguageSelector = true
             },
         colors = CardDefaults.cardColors(
-            containerColor = if (isChanging) {
-                MaterialTheme.colorScheme.surfaceVariant
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
+            containerColor = Color.Transparent
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painterResource(R.drawable.translate),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painterResource(R.drawable.translate),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -989,7 +997,7 @@ fun LanguagePreference(
 
                 Text(
                     text = if (isChanging) {
-                        "Cambiando idioma..."
+                        stringResource(R.string.changing_language)
                     } else {
                         currentLanguageDisplay
                     },
@@ -1012,7 +1020,7 @@ fun LanguagePreference(
             } else {
                 Icon(
                     imageVector = Icons.Default.ArrowForward,
-                    contentDescription = "Cambiar idioma",
+                    contentDescription = stringResource(R.string.configure_app_language),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
@@ -1026,6 +1034,7 @@ fun LanguagePreference(
         )
     }
 }
+
 
 abstract class LocaleAwareApplication : android.app.Application() {
 

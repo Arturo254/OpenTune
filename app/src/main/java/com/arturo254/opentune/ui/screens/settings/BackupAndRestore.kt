@@ -77,6 +77,10 @@ import com.arturo254.opentune.R
 import com.arturo254.opentune.db.entities.Song
 import com.arturo254.opentune.extensions.tryOrNull
 import com.arturo254.opentune.ui.component.IconButton
+import com.arturo254.opentune.ui.component.PreferenceEntry
+import com.arturo254.opentune.ui.component.SettingsGeneralCategory
+import com.arturo254.opentune.ui.component.SettingsPage
+import com.arturo254.opentune.ui.component.SwitchPreference
 import com.arturo254.opentune.ui.menu.OnlinePlaylistAdder
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.ui.utils.formatFileSize
@@ -108,7 +112,7 @@ fun BackupAndRestore(
     val coroutineScope = rememberCoroutineScope()
     val playerCache = LocalPlayerConnection.current?.service?.playerCache
 
-    // Estados
+    // Statuses
     var uploadStatus by remember { mutableStateOf<UploadStatus?>(null) }
     var showVisitorDataDialog by remember { mutableStateOf(false) }
     var showVisitorDataResetDialog by remember { mutableStateOf(false) }
@@ -118,7 +122,7 @@ fun BackupAndRestore(
     var isProgressStarted by remember { mutableStateOf(false) }
     var progressPercentage by remember { mutableIntStateOf(0) }
 
-    // NUEVO: Estado para controlar la subida automática a la nube
+    // NEW: Status to control automatic upload to the cloud
     var enableCloudUpload by remember {
         mutableStateOf(
             context.getSharedPreferences("backup_settings", Context.MODE_PRIVATE)
@@ -135,7 +139,7 @@ fun BackupAndRestore(
         label = "playerCacheProgress"
     )
 
-    // Actualizar tamaño del caché
+    // Update cache size
     LaunchedEffect(playerCache) {
         while (true) {
             delay(1000)
@@ -149,7 +153,7 @@ fun BackupAndRestore(
             if (uri != null) {
                 viewModel.backup(context, uri)
 
-                // MODIFICADO: Solo subir a la nube si el usuario lo ha activado
+                // MODIFIED: Only upload to the cloud if the user has enabled it.
                 if (enableCloudUpload) {
                     coroutineScope.launch {
                         uploadStatus = UploadStatus.Uploading
@@ -193,108 +197,79 @@ fun BackupAndRestore(
             }
         }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.backup_restore),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Medium
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = navController::navigateUp,
-                        onLongClick = navController::backToMain,
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.arrow_back),
-                            contentDescription = null
+    SettingsPage(
+        title = stringResource(R.string.backup_restore),
+        navController = navController,
+        scrollBehavior = scrollBehavior,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        SettingsGeneralCategory(
+            title = stringResource(R.string.backup_restore),
+            items = listOf(
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.cloud_upload_title)) },
+                    icon = { Icon(painterResource(R.drawable.cloud_lock), null) },
+                    checked = enableCloudUpload,
+                    description = stringResource(
+                        if (enableCloudUpload) {
+                            R.string.cloud_upload_enabled_description
+                        } else {
+                            R.string.cloud_upload_disabled_description
+                        }
+                    ),
+                    onCheckedChange = { isEnabled ->
+                        enableCloudUpload = isEnabled
+                        // Save preference
+                        context.getSharedPreferences("backup_settings", Context.MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("enable_cloud_upload", isEnabled)
+                            .apply()
+                    }
+                )},
+                {PreferenceEntry(
+                    title = { Text(stringResource(R.string.backup)) },
+                    icon = { Icon(painterResource(R.drawable.backup), null) },
+                    description = stringResource(if (enableCloudUpload) R.string.backup_with_cloud else R.string.backup_description),
+                    isEnabled = uploadStatus !is UploadStatus.Uploading,
+                    onClick = {
+                        val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+                        backupLauncher.launch(
+                            "${context.getString(R.string.app_name)}_${
+                                LocalDateTime.now().format(formatter)
+                            }.backup"
                         )
                     }
-                },
-                scrollBehavior = scrollBehavior
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // NUEVO: Card de configuración de subida a la nube
-            MinimalCloudUploadCard(
-                enabled = enableCloudUpload,
-                onToggle = { isEnabled ->
-                    enableCloudUpload = isEnabled
-                    // Guardar preferencia
-                    context.getSharedPreferences("backup_settings", Context.MODE_PRIVATE)
-                        .edit()
-                        .putBoolean("enable_cloud_upload", isEnabled)
-                        .apply()
-                }
-            )
-
-            // Backup
-            MinimalActionCard(
-                icon = painterResource(R.drawable.backup),
-                title = stringResource(R.string.backup),
-                description = if (enableCloudUpload) {
-                    stringResource(R.string.backup_with_cloud)
-                } else {
-                    stringResource(R.string.backup_description)
-                },
-                isEnabled = uploadStatus !is UploadStatus.Uploading,
-                onClick = {
-                    val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-                    backupLauncher.launch(
-                        "${context.getString(R.string.app_name)}_${
-                            LocalDateTime.now().format(formatter)
-                        }.backup"
-                    )
-                }
-            )
-
-            // Restore
-            MinimalActionCard(
-                icon = painterResource(R.drawable.restore),
-                title = stringResource(R.string.restore),
-                description = stringResource(R.string.restore_description),
-                isEnabled = uploadStatus !is UploadStatus.Uploading,
-                onClick = {
-                    restoreLauncher.launch(arrayOf("application/octet-stream"))
-                }
-            )
-
-            // Estado de carga
-            AnimatedVisibility(
-                visible = uploadStatus != null,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                MinimalUploadStatus(uploadStatus) {
+                )},
+                {PreferenceEntry(
+                    title = { Text(stringResource(R.string.restore)) },
+                    icon = { Icon(painterResource(R.drawable.restore), null) },
+                    description = stringResource(R.string.restore_description),
+                    isEnabled = uploadStatus !is UploadStatus.Uploading,
+                    onClick = {
+                        restoreLauncher.launch(arrayOf("application/octet-stream"))
+                    }
+                )},
+                {AnimatedVisibility(
+                    visible = uploadStatus != null,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {MinimalUploadStatus(uploadStatus) {
                     copyToClipboard(context, (uploadStatus as UploadStatus.Success).fileUrl)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // VISITOR_DATA Card
-            MinimalVisitorDataCard(
-                playerCacheSize = playerCacheSize,
-                progress = animatedPlayerCacheSize,
-                isClearing = isClearing,
-                onResetClick = { showVisitorDataResetDialog = true },
-                onInfoClick = { showVisitorDataDialog = true }
+                }}}
             )
-        }
+        )
+
+        // VISITOR_DATA Card
+        MinimalVisitorDataCard(
+            playerCacheSize = playerCacheSize,
+            progress = animatedPlayerCacheSize,
+            isClearing = isClearing,
+            onResetClick = { showVisitorDataResetDialog = true },
+            onInfoClick = { showVisitorDataDialog = true }
+        )
     }
 
-    // Diálogos
+    // Dialogs
     if (showVisitorDataDialog) {
         MinimalInfoDialog(
             icon = painterResource(R.drawable.info),
@@ -311,20 +286,20 @@ fun BackupAndRestore(
             icon = painterResource(R.drawable.replay),
             title = stringResource(R.string.visitor_data_reset_title),
             message = stringResource(R.string.visitor_data_reset_message),
-            confirmText = "Resetear",
+            confirmText = stringResource(R.string.visitor_data_reset_confirm),
             onConfirm = {
                 isClearing = true
                 coroutineScope.launch(Dispatchers.IO) {
                     try {
-                        // Limpiar caché de canciones
+                        // Clear song cache
                         playerCache?.keys?.toList()?.forEach { key ->
                             tryOrNull { playerCache.removeResource(key) }
                         }
 
-                        // Resetear VISITOR_DATA
+                        // Reset VISITOR_DATA
                         viewModel.resetVisitorData(context)
 
-                        delay(500) // Pequeño delay para asegurar que se complete
+                        delay(500) // Short delay to ensure completion
 
                         withContext(Dispatchers.Main) {
                             playerCacheSize = 0L
@@ -332,7 +307,7 @@ fun BackupAndRestore(
                             showVisitorDataResetDialog = false
                         }
                     } catch (e: Exception) {
-                        Log.e("BackupRestore", "Error al resetear", e)
+                        Log.e("BackupRestore", "Error when resetting VISITOR_DATA", e)
                         withContext(Dispatchers.Main) {
                             isClearing = false
                             showVisitorDataResetDialog = false
@@ -369,143 +344,6 @@ fun BackupAndRestore(
     }
 }
 
-// NUEVO: Composable para el card de configuración de subida a la nube
-@Composable
-private fun MinimalCloudUploadCard(
-    enabled: Boolean,
-    onToggle: (Boolean) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (enabled) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest
-            }
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (enabled) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.surfaceVariant
-                        }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.cloud_lock),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = if (enabled) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.cloud_upload_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = if (enabled) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    }
-                )
-                Text(
-                    text = stringResource(
-                        if (enabled) {
-                            R.string.cloud_upload_enabled_description
-                        } else {
-                            R.string.cloud_upload_disabled_description
-                        }
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (enabled) {
-                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
-                )
-            }
-
-            Switch(
-                checked = enabled,
-                onCheckedChange = onToggle
-            )
-        }
-    }
-}
-
-@Composable
-private fun MinimalActionCard(
-    icon: Painter,
-    title: String,
-    description: String,
-    isEnabled: Boolean = true,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        enabled = isEnabled,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHighest
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun MinimalVisitorDataCard(
@@ -516,14 +354,17 @@ private fun MinimalVisitorDataCard(
     onInfoClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
@@ -533,14 +374,16 @@ private fun MinimalVisitorDataCard(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.replay),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+//                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -560,7 +403,7 @@ private fun MinimalVisitorDataCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Indicador de caché
+            // Cache indicator
             if (playerCacheSize > 0 || isClearing) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     LinearProgressIndicator(
@@ -864,7 +707,7 @@ private fun MinimalConfirmDialog(
     )
 }
 
-// Función de subida a Filebin (sin cambios significativos)
+// Filebin upload function (no significant changes)
 @SuppressLint("LogNotTimber")
 suspend fun uploadBackupToFilebin(
     context: Context,
@@ -889,7 +732,7 @@ suspend fun uploadBackupToFilebin(
                         }
                     } ?: input.available().toLong()
                 } catch (e: Exception) {
-                    Log.w("BackupRestore", "No se pudo obtener el tamaño del archivo: ${e.message}")
+                    Log.w("BackupRestore", "The file size could not be obtained: ${e.message}")
                     input.available().toLong()
                 }
 
@@ -946,14 +789,14 @@ suspend fun uploadBackupToFilebin(
             val response = client.newCall(request).execute()
 
             if (!response.isSuccessful) {
-                Log.e("BackupRestore", "Error en la respuesta del servidor: ${response.code}")
+                Log.e("BackupRestore", "Error in server response: ${response.code}")
                 return@withContext null
             }
 
             return@withContext "https://filebin.net/$binId/$fileName"
 
         } catch (e: Exception) {
-            Log.e("BackupRestore", "Error durante la subida", e)
+            Log.e("BackupRestore", "Error during upload", e)
             return@withContext null
         } finally {
             if (tempFile.exists()) {
@@ -970,7 +813,7 @@ fun copyToClipboard(context: Context, text: String) {
         val clip = ClipData.newPlainText("Backup URL", text)
         clipboard.setPrimaryClip(clip)
     } catch (e: Exception) {
-        Log.e("BackupRestore", "Error al copiar al portapapeles: ${e.message}")
+        Log.e("BackupRestore", "Error copying to clipboard: ${e.message}")
     }
 }
 

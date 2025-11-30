@@ -72,6 +72,56 @@ fun SettingsCategory(
     }
 }
 
+@Composable
+fun SettingsGeneralCategory(
+    title: String? = null,
+    items: List<@Composable () -> Unit>
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        // Section title
+        title?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 0.dp, bottom = 8.dp, top = 8.dp)
+            )
+        }
+
+        // Settings card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column {
+                items.forEachIndexed { index, item ->
+                    item()
+                    if (index < items.size - 1) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(
+                                start = 76.dp,
+                                end = 20.dp
+                            ),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** Individual settings item row with Material 3 styling */
 @Composable
 private fun Material3SettingsItemRow(

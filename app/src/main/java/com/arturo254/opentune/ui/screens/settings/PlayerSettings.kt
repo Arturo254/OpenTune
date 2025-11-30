@@ -31,6 +31,8 @@ import com.arturo254.opentune.constants.StopMusicOnTaskClearKey
 import com.arturo254.opentune.ui.component.EnumListPreference
 import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.component.PreferenceGroupTitle
+import com.arturo254.opentune.ui.component.SettingsGeneralCategory
+import com.arturo254.opentune.ui.component.SettingsPage
 import com.arturo254.opentune.ui.component.SwitchPreference
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.utils.rememberEnumPreference
@@ -75,112 +77,91 @@ fun PlayerSettings(
         defaultValue = false
     )
 
-    Column(
-        Modifier
-            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-            .verticalScroll(rememberScrollState())
+    SettingsPage(
+        title = stringResource(R.string.player_and_audio),
+        navController = navController,
+        scrollBehavior = scrollBehavior
     ) {
-        Spacer(
-            Modifier.windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Top
-                )
+        SettingsGeneralCategory(
+            title = stringResource(R.string.player),
+            items = listOf(
+                {EnumListPreference(
+                    title = { Text(stringResource(R.string.audio_quality)) },
+                    icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
+                    selectedValue = audioQuality,
+                    onValueSelected = onAudioQualityChange,
+                    valueText = {
+                        when (it) {
+                            AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
+                            AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
+                            AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
+                        }
+                    }
+                )},
+
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.skip_silence)) },
+                    icon = { Icon(painterResource(R.drawable.fast_forward), null) },
+                    checked = skipSilence,
+                    onCheckedChange = onSkipSilenceChange
+                )},
+
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.audio_normalization)) },
+                    icon = { Icon(painterResource(R.drawable.volume_up), null) },
+                    checked = audioNormalization,
+                    onCheckedChange = onAudioNormalizationChange
+                )},
             )
         )
 
-        PreferenceGroupTitle(
-            title = stringResource(R.string.player)
+        SettingsGeneralCategory(
+            title = stringResource(R.string.queue),
+            items = listOf(
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.persistent_queue)) },
+                    description = stringResource(R.string.persistent_queue_desc),
+                    icon = { Icon(painterResource(R.drawable.queue_music), null) },
+                    checked = persistentQueue,
+                    onCheckedChange = onPersistentQueueChange
+                )},
+
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.auto_load_more)) },
+                    description = stringResource(R.string.auto_load_more_desc),
+                    icon = { Icon(painterResource(R.drawable.playlist_add), null) },
+                    checked = autoLoadMore,
+                    onCheckedChange = onAutoLoadMoreChange
+                )},
+
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.enable_similar_content)) },
+                    description = stringResource(R.string.similar_content_desc),
+                    icon = { Icon(painterResource(R.drawable.similar), null) },
+                    checked = similarContentEnabled,
+                    onCheckedChange = similarContentEnabledChange,
+                )},
+
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.auto_skip_next_on_error)) },
+                    description = stringResource(R.string.auto_skip_next_on_error_desc),
+                    icon = { Icon(painterResource(R.drawable.skip_next), null) },
+                    checked = autoSkipNextOnError,
+                    onCheckedChange = onAutoSkipNextOnErrorChange
+                )},
+            )
         )
 
-        EnumListPreference(
-            title = { Text(stringResource(R.string.audio_quality)) },
-            icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
-            selectedValue = audioQuality,
-            onValueSelected = onAudioQualityChange,
-            valueText = {
-                when (it) {
-                    AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
-                    AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
-                    AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
-                }
-            }
-        )
-
-        SwitchPreference(
-            title = { Text(stringResource(R.string.skip_silence)) },
-            icon = { Icon(painterResource(R.drawable.fast_forward), null) },
-            checked = skipSilence,
-            onCheckedChange = onSkipSilenceChange
-        )
-
-        SwitchPreference(
-            title = { Text(stringResource(R.string.audio_normalization)) },
-            icon = { Icon(painterResource(R.drawable.volume_up), null) },
-            checked = audioNormalization,
-            onCheckedChange = onAudioNormalizationChange
-        )
-
-        PreferenceGroupTitle(
-            title = stringResource(R.string.queue)
-        )
-
-        SwitchPreference(
-            title = { Text(stringResource(R.string.persistent_queue)) },
-            description = stringResource(R.string.persistent_queue_desc),
-            icon = { Icon(painterResource(R.drawable.queue_music), null) },
-            checked = persistentQueue,
-            onCheckedChange = onPersistentQueueChange
-        )
-
-        SwitchPreference(
-            title = { Text(stringResource(R.string.auto_load_more)) },
-            description = stringResource(R.string.auto_load_more_desc),
-            icon = { Icon(painterResource(R.drawable.playlist_add), null) },
-            checked = autoLoadMore,
-            onCheckedChange = onAutoLoadMoreChange
-        )
-
-        SwitchPreference(
-            title = { Text(stringResource(R.string.enable_similar_content)) },
-            description = stringResource(R.string.similar_content_desc),
-            icon = { Icon(painterResource(R.drawable.similar), null) },
-            checked = similarContentEnabled,
-            onCheckedChange = similarContentEnabledChange,
-        )
-
-        SwitchPreference(
-            title = { Text(stringResource(R.string.auto_skip_next_on_error)) },
-            description = stringResource(R.string.auto_skip_next_on_error_desc),
-            icon = { Icon(painterResource(R.drawable.skip_next), null) },
-            checked = autoSkipNextOnError,
-            onCheckedChange = onAutoSkipNextOnErrorChange
-        )
-
-        PreferenceGroupTitle(
-            title = stringResource(R.string.misc)
-        )
-
-        SwitchPreference(
-            title = { Text(stringResource(R.string.stop_music_on_task_clear)) },
-            icon = { Icon(painterResource(R.drawable.clear_all), null) },
-            checked = stopMusicOnTaskClear,
-            onCheckedChange = onStopMusicOnTaskClearChange
+        SettingsGeneralCategory(
+            title = stringResource(R.string.misc),
+            items = listOf(
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.stop_music_on_task_clear)) },
+                    icon = { Icon(painterResource(R.drawable.clear_all), null) },
+                    checked = stopMusicOnTaskClear,
+                    onCheckedChange = onStopMusicOnTaskClearChange
+                )},
+            )
         )
     }
-
-    TopAppBar(
-        title = { Text(stringResource(R.string.player_and_audio)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null
-                )
-            }
-        },
-        scrollBehavior = scrollBehavior
-    )
 }

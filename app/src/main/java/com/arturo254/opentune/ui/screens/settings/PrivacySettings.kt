@@ -44,6 +44,10 @@ import com.arturo254.opentune.constants.DisableScreenshotKey
 import com.arturo254.opentune.constants.PauseListenHistoryKey
 import com.arturo254.opentune.constants.PauseSearchHistoryKey
 import com.arturo254.opentune.ui.component.IconButton
+import com.arturo254.opentune.ui.component.PreferenceEntry
+import com.arturo254.opentune.ui.component.SettingsGeneralCategory
+import com.arturo254.opentune.ui.component.SettingsPage
+import com.arturo254.opentune.ui.component.SwitchPreference
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.utils.rememberPreference
 
@@ -70,113 +74,60 @@ fun PrivacySettings(
     var showClearListenHistoryDialog by remember { mutableStateOf(false) }
     var showClearSearchHistoryDialog by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.background
+    SettingsPage(
+        title = stringResource(R.string.privacy),
+        navController = navController,
+        scrollBehavior = scrollBehavior,
     ) {
-        Column(
-            modifier = Modifier
-                .windowInsetsPadding(
-                    LocalPlayerAwareWindowInsets.current.only(
-                        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
-                    )
-                )
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-        ) {
-            Spacer(
-                modifier = Modifier.windowInsetsPadding(
-                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top)
-                )
+        SettingsGeneralCategory(
+            title = stringResource(R.string.listen_history),
+            items = listOf(
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.pause_listen_history)) },
+                    icon = { Icon(painterResource(R.drawable.history), null) },
+                    checked = pauseListenHistory,
+                    onCheckedChange = onPauseListenHistoryChange
+                )},
+
+                {PreferenceEntry(
+                    title = { Text(stringResource(R.string.clear_listen_history)) },
+                    icon = { Icon(painterResource(R.drawable.delete_history), null) },
+                    onClick = { showClearListenHistoryDialog = true }
+                )},
             )
+        )
+        SettingsGeneralCategory(
+            title = stringResource(R.string.search_history),
+            items = listOf(
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.pause_search_history)) },
+                    icon = { Icon(painterResource(R.drawable.search_off), null) },
+                    checked = pauseSearchHistory,
+                    onCheckedChange = onPauseSearchHistoryChange
+                )},
 
-            PrivacySection(
-                title = stringResource(R.string.listen_history),
-                content = {
-                    SwitchPreferenceCard(
-                        title = stringResource(R.string.pause_listen_history),
-                        icon = R.drawable.history,
-                        checked = pauseListenHistory,
-                        onCheckedChange = onPauseListenHistoryChange
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    ActionPreferenceCard(
-                        title = stringResource(R.string.clear_listen_history),
-                        icon = R.drawable.delete_history,
-                        onClick = { showClearListenHistoryDialog = true }
-                    )
-                }
+                {PreferenceEntry(
+                    title = { Text(stringResource(R.string.clear_search_history)) },
+                    icon = { Icon(painterResource(R.drawable.clear_all), null) },
+                    onClick = { showClearSearchHistoryDialog = true }
+                )},
             )
+        )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            PrivacySection(
-                title = stringResource(R.string.search_history),
-                content = {
-                    SwitchPreferenceCard(
-                        title = stringResource(R.string.pause_search_history),
-                        icon = R.drawable.search_off,
-                        checked = pauseSearchHistory,
-                        onCheckedChange = onPauseSearchHistoryChange
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    ActionPreferenceCard(
-                        title = stringResource(R.string.clear_search_history),
-                        icon = R.drawable.clear_all,
-                        onClick = { showClearSearchHistoryDialog = true }
-                    )
-                }
+        SettingsGeneralCategory(
+            title = stringResource(R.string.misc),
+            items = listOf(
+                {SwitchPreference(
+                    title = { Text(stringResource(R.string.disable_screenshot)) },
+                    description = stringResource(R.string.disable_screenshot_desc),
+                    icon = { Icon(painterResource(R.drawable.screenshot), null) },
+                    checked = disableScreenshot,
+                    onCheckedChange = onDisableScreenshotChange
+                )},
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            PrivacySection(
-                title = stringResource(R.string.misc),
-                content = {
-                    SwitchPreferenceCard(
-                        title = stringResource(R.string.disable_screenshot),
-                        description = stringResource(R.string.disable_screenshot_desc),
-                        icon = R.drawable.screenshot,
-                        checked = disableScreenshot,
-                        onCheckedChange = onDisableScreenshotChange
-                    )
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
+        )
     }
 
-    TopAppBar(
-        title = {
-            Text(
-                text = stringResource(R.string.privacy),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Medium
-            )
-        },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        },
-        scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
-        )
-    )
 
     if (showClearListenHistoryDialog) {
         ConfirmationDialog2(
@@ -200,116 +151,6 @@ fun PrivacySettings(
                 database.query { clearSearchHistory() }
             }
         )
-    }
-}
-
-@Composable
-private fun PrivacySection(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    Column {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        content()
-    }
-}
-
-@Composable
-private fun SwitchPreferenceCard(
-    title: String,
-    icon: Int,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    description: String? = null
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(end = 16.dp)
-                )
-                Column {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Medium
-                    )
-                    description?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
-            }
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange
-            )
-        }
-    }
-}
-
-@Composable
-private fun ActionPreferenceCard(
-    title: String,
-    icon: Int,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(end = 16.dp)
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium
-            )
-        }
     }
 }
 

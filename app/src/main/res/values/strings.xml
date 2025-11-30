@@ -588,4 +588,7 @@
     <string name="processing_songs">Processing songs…</string>
     <string name="understood">Understood</string>
     <string name="tap_to_open">Tap to open</string>
+    <string name="animate_lyrics">Animate lyrics</string>
+    <string name="animate_lyrics_desc">Smoothly transition between lyrics</string>
+    <string name="changing_language">Changing language…</string>
 </resources>
