@@ -162,7 +162,7 @@ import kotlin.math.roundToInt
 fun BottomSheetPlayer(
     state: BottomSheetState,
     navController: NavController,
-    onOpenFullscreenLyrics: () -> Unit, // NUEVO PARÁMETRO
+    onOpenFullscreenLyrics: () -> Unit, // NEW PARAMETER
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -250,7 +250,7 @@ fun BottomSheetPlayer(
 
 
 
-    // Animaciones para efectos de fondo
+    // Animations for background effects
     var backgroundImageUrl by remember { mutableStateOf<String?>(null) }
     val blurRadius by animateDpAsState(
         targetValue = if (state.isExpanded && playerBackground == PlayerBackgroundStyle.BLUR) 150.dp else 0.dp,
@@ -285,7 +285,7 @@ fun BottomSheetPlayer(
     }
 
     LaunchedEffect(mediaMetadata, playerBackground) {
-        // Actualizar URL de imagen para transiciones suaves
+        // Update image URL for smooth transitions
         backgroundImageUrl = mediaMetadata?.thumbnailUrl
 
         if (useBlackBackground && playerBackground != PlayerBackgroundStyle.BLUR) {
@@ -514,7 +514,7 @@ fun BottomSheetPlayer(
         getSmallButtonShape(smallButtonsShapeState.value)
     }
 
-    // Función para crear el modifier de los botones pequeños
+    // Function to create the modifier for small buttons
     val smallButtonModifier = @Composable {
         Modifier
             .size(42.dp)
@@ -884,7 +884,7 @@ fun BottomSheetPlayer(
                             val radius = (size.minDimension - strokeWidth) / 2
                             val center = Offset(size.width / 2, size.height / 2)
 
-                            // Círculo de fondo (gris)
+                            // Background circle (gray)
                             drawCircle(
                                 color = iconButtonColor.copy(alpha = 0.3f),
                                 radius = radius,
@@ -892,7 +892,7 @@ fun BottomSheetPlayer(
                                 style = Stroke(width = strokeWidth)
                             )
 
-                            // Círculo de progreso
+                            // Progress circle
                             if (animatedProgress > 0f) {
                                 drawArc(
                                     color = iconButtonColor,
@@ -938,10 +938,10 @@ fun BottomSheetPlayer(
                     Image(
                         painter = painterResource(iconResource),
                         contentDescription = when (download?.state) {
-                            Download.STATE_COMPLETED -> "Downloaded"
-                            Download.STATE_DOWNLOADING -> "Downloading..."
-                            Download.STATE_FAILED -> "Download failed"
-                            else -> "Download"
+                            Download.STATE_COMPLETED -> stringResource(R.string.download)
+                            Download.STATE_DOWNLOADING -> stringResource(R.string.downloading)
+                            Download.STATE_FAILED -> stringResource(R.string.download_errorup)
+                            else -> stringResource(R.string.download)
                         },
                         colorFilter = ColorFilter.tint(
                             when (download?.state) {
@@ -956,7 +956,7 @@ fun BottomSheetPlayer(
                             .alpha(iconAlpha),
                     )
 
-                    // Texto de progreso pequeño
+                    // Small progress text
                     if (download?.state == Download.STATE_DOWNLOADING) {
                         val progress = (download!!.percentDownloaded).toInt()
                         Text(
@@ -1270,11 +1270,11 @@ fun BottomSheetPlayer(
             }
         }
 
-        // Efectos de fondo animados
+        // Animated background effects
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Fondo con imagen difuminada
+            // Background with blurred image
             AnimatedVisibility(
                 visible = playerBackground == PlayerBackgroundStyle.BLUR && backgroundImageUrl != null,
                 enter = fadeIn(tween(600)),
@@ -1291,7 +1291,7 @@ fun BottomSheetPlayer(
                 )
             }
 
-            // Fondo con gradiente animado
+            // Animated gradient background
             AnimatedVisibility(
                 visible = playerBackground == PlayerBackgroundStyle.GRADIENT && gradientColors.size >= 2,
                 enter = fadeIn(tween(800)),
@@ -1317,7 +1317,7 @@ fun BottomSheetPlayer(
                 )
             }
 
-            // Overlay oscuro animado
+            // Animated dark overlay
             AnimatedVisibility(
                 visible = overlayAlpha > 0f,
                 enter = fadeIn(tween(500)),
@@ -1330,7 +1330,7 @@ fun BottomSheetPlayer(
                 )
             }
 
-            // Overlay adicional para letras
+            // Additional overlay for lyrics
             if (playerBackground != PlayerBackgroundStyle.DEFAULT && showLyrics) {
                 Box(
                     modifier = Modifier
@@ -1353,7 +1353,8 @@ fun BottomSheetPlayer(
                     modifier =
                         Modifier
                             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-                            .padding(bottom = queueSheetState.collapsedBound + 48.dp),
+//                            .padding(bottom = queueSheetState.collapsedBound + 48.dp),
+                            .padding(top = queueSheetState.collapsedBound)
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -1365,7 +1366,7 @@ fun BottomSheetPlayer(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Texto "Reproduciendo desde:"
+                            // Text “Playing from:”
                             val queueTitle by playerConnection.queueTitle.collectAsState()
                             AnimatedVisibility(
                                 visible = !queueTitle.isNullOrEmpty(),
@@ -1438,7 +1439,7 @@ fun BottomSheetPlayer(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection)
                         ) {
-                            // Texto "Reproduciendo desde:"
+                            // Text “Playing from:”
                             val queueTitle by playerConnection.queueTitle.collectAsState()
                             AnimatedVisibility(
                                 visible = !queueTitle.isNullOrEmpty(),
