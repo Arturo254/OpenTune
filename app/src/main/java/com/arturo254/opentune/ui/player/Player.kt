@@ -8,9 +8,13 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -76,6 +80,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -119,7 +124,9 @@ import com.arturo254.opentune.LocalDownloadUtil
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.DarkModeKey
+import com.arturo254.opentune.constants.DefaultPlayPauseButtonShape
 import com.arturo254.opentune.constants.DefaultSmallButtonsShape
+import com.arturo254.opentune.constants.PlayPauseButtonShapeKey
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerButtonsStyle
@@ -146,6 +153,7 @@ import com.arturo254.opentune.ui.menu.PlayerMenu
 import com.arturo254.opentune.ui.screens.settings.DarkMode
 import com.arturo254.opentune.ui.screens.settings.PlayerTextAlignment
 import com.arturo254.opentune.ui.theme.extractGradientColors
+import com.arturo254.opentune.utils.getPlayPauseShape
 import com.arturo254.opentune.utils.getSmallButtonShape
 import com.arturo254.opentune.utils.makeTimeString
 import com.arturo254.opentune.utils.rememberEnumPreference
@@ -513,6 +521,42 @@ fun BottomSheetPlayer(
     val smallButtonShape = remember(smallButtonsShapeState.value) {
         getSmallButtonShape(smallButtonsShapeState.value)
     }
+
+    val playPauseShapeState = rememberPreference(
+        key = PlayPauseButtonShapeKey,
+        defaultValue = DefaultPlayPauseButtonShape
+    )
+
+    val playPauseShape = remember(playPauseShapeState.value) {
+        getPlayPauseShape(playPauseShapeState.value)
+    }
+
+
+
+    val infiniteTransition = rememberInfiniteTransition(label = "play_pause_rotation")
+    val playPauseRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 9000, // 9 seconds for a full rotation
+                easing = LinearEasing
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
+
+// Forma dinámica: cuando está reproduciendo usa la forma seleccionada
+// Cuando está en pausa usa Square
+    val currentPlayPauseShape = remember(isPlaying, playPauseShape) {
+        if (isPlaying) {
+            playPauseShape
+        } else {
+            MaterialShapes.Square
+        }
+    }
+
 
     // Function to create the modifier for small buttons
     val smallButtonModifier = @Composable {
@@ -1207,7 +1251,8 @@ fun BottomSheetPlayer(
                     modifier =
                         Modifier
                             .size(85.dp)
-                            .clip(MaterialShapes.Cookie9Sided.toShape())
+                            .rotate(if (isPlaying) playPauseRotation else 0f) // Solo rota cuando isPlaying = true
+                            .clip(currentPlayPauseShape.toShape())
                             .background(textButtonColor)
                             .clickable {
                                 if (playbackState == STATE_ENDED) {
@@ -1236,7 +1281,8 @@ fun BottomSheetPlayer(
                         modifier =
                             Modifier
                                 .align(Alignment.Center)
-                                .size(36.dp),
+                                .size(36.dp)
+                                .rotate(if (isPlaying) -playPauseRotation else 0f),
                     )
                 }
 

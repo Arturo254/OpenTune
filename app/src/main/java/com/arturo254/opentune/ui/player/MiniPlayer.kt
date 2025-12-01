@@ -1,12 +1,17 @@
 package com.arturo254.opentune.ui.player
 
-// Agregar las importaciones correctas
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -55,6 +60,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -69,17 +75,19 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import coil.compose.AsyncImage
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.DarkModeKey
+import com.arturo254.opentune.constants.MiniPlayerThumbnailShapeKey
+import com.arturo254.opentune.constants.DefaultMiniPlayerThumbnailShape
 import com.arturo254.opentune.constants.PureBlackKey
 import com.arturo254.opentune.constants.ThumbnailCornerRadius
 import com.arturo254.opentune.extensions.togglePlayPause
 import com.arturo254.opentune.models.MediaMetadata
 import com.arturo254.opentune.ui.screens.settings.DarkMode
+import com.arturo254.opentune.utils.getMiniPlayerThumbnailShape
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
 import kotlinx.coroutines.launch
@@ -112,6 +120,20 @@ fun MiniPlayer(
         if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
     }
 
+    // Obtener la forma del thumbnail del MiniPlayer
+    val miniPlayerThumbnailShapeState = rememberPreference(
+        key = MiniPlayerThumbnailShapeKey,
+        defaultValue = DefaultMiniPlayerThumbnailShape
+    )
+
+    val miniPlayerThumbnailShape = remember(miniPlayerThumbnailShapeState.value, isPlaying) {
+        if (isPlaying) {
+            getMiniPlayerThumbnailShape(miniPlayerThumbnailShapeState.value)
+        } else {
+            MaterialShapes.Circle
+        }
+    }
+
     // Calcular el color de fondo correcto
     val miniPlayerBackgroundColor = when {
         useDarkTheme && pureBlack -> Color.Black.copy(alpha = 0.95f)
@@ -141,28 +163,39 @@ fun MiniPlayer(
         animationSpec = animationSpec
     )
 
+    // Animación INFINITA de rotación para el thumbnail
+    // Se ejecuta continuamente mientras isPlaying = true
+    val infiniteTransition = rememberInfiniteTransition(label = "thumbnail_rotation")
+    val thumbnailRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 8000, // 8 segundos para una rotación completa (velocidad lenta)
+                easing = LinearEasing
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
+
     // Convertir RoundedPolygon a Shape usando la API oficial
-    val currentThumbnailShape = if (isPlaying) {
-        remember { MaterialShapes.Cookie9Sided }.toShape()
-    } else {
-        remember { MaterialShapes.Circle }.toShape()
-    }
+    // Cambia a Square cuando está en pausa, usa la forma seleccionada cuando está reproduciendo
+    val currentThumbnailShape = remember(isPlaying, miniPlayerThumbnailShape) {
+        if (isPlaying) {
+            miniPlayerThumbnailShape
+        } else {
+            MaterialShapes.Square
+        }
+    }.toShape()
 
     /**
      * Calculates the auto-swipe threshold based on swipe sensitivity.
-     * The formula uses a sigmoid function to determine the threshold dynamically.
-     * Constants:
-     * - -11.44748: Controls the steepness of the sigmoid curve.
-     * - 9.04945: Adjusts the midpoint of the curve.
-     * - 600: Base threshold value in pixels.
-     *
-     * @param swipeSensitivity The sensitivity value (typically between 0 and 1).
-     * @return The calculated auto-swipe threshold in pixels.
      */
     fun calculateAutoSwipeThreshold(swipeSensitivity: Float): Int {
         return (600 / (1f + exp(-(-11.44748 * swipeSensitivity + 9.04945)))).roundToInt()
     }
-    val autoSwipeThreshold = calculateAutoSwipeThreshold(0.73f) // Default sensitivity
+    val autoSwipeThreshold = calculateAutoSwipeThreshold(0.73f)
 
     Box(
         modifier = modifier
@@ -172,7 +205,6 @@ fun MiniPlayer(
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .background(Color.Transparent)
     ) {
-        // Main MiniPlayer box that moves with swipe
         Surface(
             modifier = Modifier
                 .then(
@@ -265,12 +297,10 @@ fun MiniPlayer(
                         .fillMaxSize()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                 ) {
-                    // Play/Pause button with circular progress indicator (left side)
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(48.dp)
                     ) {
-                        // Circular progress indicator around the play button
                         if (duration > 0) {
                             CircularProgressIndicator(
                                 progress = { (position.toFloat() / duration).coerceIn(0f, 1f) },
@@ -281,11 +311,11 @@ fun MiniPlayer(
                             )
                         }
 
-                        // Play/Pause button with thumbnail background
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .size(40.dp)
+                                .rotate(if (isPlaying) thumbnailRotation else 0f) // Solo rota cuando está reproduciendo
                                 .clip(currentThumbnailShape)
                                 .border(
                                     width = 1.dp,
@@ -301,7 +331,6 @@ fun MiniPlayer(
                                     }
                                 }
                         ) {
-                            // Thumbnail background
                             mediaMetadata?.let { metadata ->
                                 AsyncImage(
                                     model = metadata.thumbnailUrl,
@@ -313,7 +342,6 @@ fun MiniPlayer(
                                 )
                             }
 
-                            // Semi-transparent overlay for better icon visibility
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -323,7 +351,6 @@ fun MiniPlayer(
                                     )
                             )
 
-                            // Icono de play/replay
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = playbackState == Player.STATE_ENDED || !isPlaying,
                                 enter = fadeIn(),
@@ -347,7 +374,6 @@ fun MiniPlayer(
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    // Song info - takes most space in the middle
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.Center
@@ -386,7 +412,6 @@ fun MiniPlayer(
                                 }
                             }
 
-                            // Error indicator
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = error != null,
                                 enter = fadeIn(),
@@ -405,7 +430,6 @@ fun MiniPlayer(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // Like button
                     IconButton(
                         onClick = { playerConnection.toggleLike() },
                         modifier = Modifier.size(36.dp)
@@ -424,7 +448,6 @@ fun MiniPlayer(
                         )
                     }
 
-                    // Skip next button (right side)
                     IconButton(
                         enabled = canSkipNext,
                         onClick = { playerConnection.player.seekToNext() },
@@ -441,7 +464,6 @@ fun MiniPlayer(
             }
         }
 
-        // Visual indicator for swipe
         if (offsetXAnimatable.value.absoluteValue > 50f) {
             Box(
                 modifier = Modifier
@@ -466,7 +488,7 @@ fun MiniPlayer(
 @Composable
 fun MiniMediaInfo(
     mediaMetadata: MediaMetadata,
-    error: PlaybackException?,
+    error: androidx.media3.common.PlaybackException?,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -481,7 +503,6 @@ fun MiniMediaInfo(
                     .size(48.dp)
                     .clip(RoundedCornerShape(ThumbnailCornerRadius)),
             )
-            // Error overlay
             androidx.compose.animation.AnimatedVisibility(
                 visible = error != null,
                 enter = fadeIn(),

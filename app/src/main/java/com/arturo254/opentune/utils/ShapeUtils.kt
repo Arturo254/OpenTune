@@ -1,9 +1,9 @@
-// SmallButtonShapes.kt
 package com.arturo254.opentune.utils
 
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.graphics.shapes.RoundedPolygon
+
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun getSmallButtonShape(shapeName: String): RoundedPolygon {
@@ -43,6 +43,12 @@ fun getSmallButtonShape(shapeName: String): RoundedPolygon {
         "PuffyDiamond" -> MaterialShapes.PuffyDiamond
         "Slanted" -> MaterialShapes.Slanted
         "ClamShell" -> MaterialShapes.ClamShell
-        else -> MaterialShapes.Pill
+        else -> MaterialShapes.Circle
     }
 }
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+fun getPlayPauseShape(shapeName: String): RoundedPolygon = getSmallButtonShape(shapeName)
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+fun getMiniPlayerThumbnailShape(shapeName: String): RoundedPolygon = getSmallButtonShape(shapeName)

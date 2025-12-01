@@ -1,122 +1,96 @@
 package com.arturo254.opentune.ui.screens
 
-import androidx.compose.foundation.ExperimentalFoundationApi
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.arturo254.opentune.LocalPlayerAwareWindowInsets
-import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
-import com.arturo254.opentune.ui.component.LocalMenuState
+import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.component.NavigationTitle
+import com.arturo254.opentune.ui.component.shimmer.ListItemPlaceHolder
 import com.arturo254.opentune.ui.component.shimmer.ShimmerHost
-import com.arturo254.opentune.ui.component.shimmer.TextPlaceholder
-import com.arturo254.opentune.viewmodels.ExploreViewModel
+import com.arturo254.opentune.ui.utils.backToMain
+import com.arturo254.opentune.viewmodels.MoodAndGenresViewModel
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExploreScreen(
     navController: NavController,
-    viewModel: ExploreViewModel = hiltViewModel(),
+    scrollBehavior: TopAppBarScrollBehavior,
+    viewModel: MoodAndGenresViewModel = hiltViewModel(),
 ) {
-    val menuState = LocalMenuState.current
-    val haptic = LocalHapticFeedback.current
-    val playerConnection = LocalPlayerConnection.current ?: return
-    val isPlaying by playerConnection.isPlaying.collectAsState()
-    val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
+    val localConfiguration = LocalConfiguration.current
+    val itemsPerRow = if (localConfiguration.orientation == ORIENTATION_LANDSCAPE) 3 else 2
 
-    val explorePage by viewModel.explorePage.collectAsState()
+    val moodAndGenresList by viewModel.moodAndGenres.collectAsState()
 
-    val coroutineScope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
-
-    Box(
-        modifier = Modifier.fillMaxSize(),
+    LazyColumn(
+        contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
     ) {
-        Column(
-            modifier = Modifier.verticalScroll(scrollState),
-        ) {
-            Spacer(
-                Modifier.height(
-                    LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateTopPadding(),
-                ),
-            )
-
-            explorePage?.moodAndGenres?.let { moodAndGenres ->
-                NavigationTitle(
-                    title = stringResource(R.string.mood_and_genres),
-                    onClick = {
-                        navController.navigate("mood_and_genres")
-                    },
-                )
-
-                LazyHorizontalGrid(
-                    rows = GridCells.Fixed(4),
-                    contentPadding = PaddingValues(6.dp),
-                    modifier = Modifier.height((MoodAndGenresButtonHeight + 12.dp) * 4 + 12.dp),
-                ) {
-                    items(moodAndGenres) {
-                        MoodAndGenresButton(
-                            title = it.title,
-                            onClick = {
-                                navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}")
-                            },
-                            modifier =
-                                Modifier
-                                    .padding(6.dp)
-                                    .width(180.dp),
-                        )
+        if (moodAndGenresList == null) {
+            item {
+                ShimmerHost {
+                    repeat(8) {
+                        ListItemPlaceHolder()
                     }
                 }
-                Spacer(
-                    Modifier.height(
-                        LocalPlayerAwareWindowInsets.current.asPaddingValues()
-                            .calculateBottomPadding()
-                    )
-                )
             }
+        }
 
-            if (explorePage == null) {
-                ShimmerHost {
-                    TextPlaceholder(
-                        height = 36.dp,
-                        modifier =
-                            Modifier
-                                .padding(vertical = 12.dp, horizontal = 12.dp)
-                                .width(250.dp),
-                    )
-                    repeat(4) {
+        moodAndGenresList?.forEach { moodAndGenres ->
+            item {
+                NavigationTitle(
+                    title = moodAndGenres.title,
+                )
+
+                Column(
+                    modifier = Modifier.padding(horizontal = 6.dp),
+                ) {
+                    moodAndGenres.items.chunked(itemsPerRow).forEach { row ->
                         Row {
-                            repeat(2) {
-                                TextPlaceholder(
-                                    height = MoodAndGenresButtonHeight,
+                            row.forEach {
+                                MoodAndGenresButton(
+                                    title = it.title,
+                                    onClick = {
+                                        navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}")
+                                    },
                                     modifier =
                                         Modifier
-                                            .padding(horizontal = 6.dp)
-                                            .width(200.dp),
+                                            .weight(1f)
+                                            .padding(6.dp),
                                 )
+                            }
+
+                            repeat(itemsPerRow - row.size) {
+                                Spacer(Modifier.weight(1f))
                             }
                         }
                     }
@@ -124,4 +98,46 @@ fun ExploreScreen(
             }
         }
     }
+
+    TopAppBar(
+        title = { Text(stringResource(R.string.mood_and_genres)) },
+        navigationIcon = {
+            IconButton(
+                onClick = navController::navigateUp,
+                onLongClick = navController::backToMain,
+            ) {
+                Icon(
+                    painterResource(R.drawable.arrow_back),
+                    contentDescription = null,
+                )
+            }
+        },
+    )
 }
+
+@Composable
+fun MoodAndGenresButton(
+    title: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        contentAlignment = Alignment.CenterStart,
+        modifier =
+            modifier
+                .height(MoodAndGenresButtonHeight)
+                .clip(RoundedCornerShape(6.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 12.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+val MoodAndGenresButtonHeight = 48.dp

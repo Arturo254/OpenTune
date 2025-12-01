@@ -904,24 +904,12 @@ class MainActivity : ComponentActivity() {
                                             )
                                         },
                                         leadingIcon = {
-                                            val currentRoute = navBackStackEntry?.destination?.route
-                                            val isInNavigationItems =
-                                                navigationItems.fastAny { it.route == currentRoute }
-
                                             IconButton(
                                                 onClick = {
                                                     when {
                                                         active -> onActiveChange(false)
-                                                        !isInNavigationItems -> {
-                                                            try {
-                                                                navController.navigateUp()
-                                                            } catch (e: Exception) {
-                                                                Log.e(
-                                                                    "Navigation",
-                                                                    "Error navigating up",
-                                                                    e
-                                                                )
-                                                            }
+                                                        !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } -> {
+                                                            navController.navigateUp()
                                                         }
 
                                                         else -> onActiveChange(true)
@@ -929,41 +917,25 @@ class MainActivity : ComponentActivity() {
                                                 },
                                                 onLongClick = {
                                                     when {
-                                                        active -> { /* No action */
+                                                        active -> {}
+                                                        !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } -> {
+                                                            navController.backToMain()
                                                         }
-
-                                                        !isInNavigationItems -> {
-                                                            try {
-                                                                navController.backToMain()
-                                                            } catch (e: Exception) {
-                                                                Log.e(
-                                                                    "Navigation",
-                                                                    "Error navigating to main",
-                                                                    e
-                                                                )
-                                                            }
-                                                        }
-
-                                                        else -> { /* No action */
-                                                        }
+                                                        else -> {}
                                                     }
                                                 },
                                             ) {
                                                 Icon(
                                                     painterResource(
-                                                        if (active || !isInNavigationItems) {
+                                                        if (active ||
+                                                            !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }
+                                                        ) {
                                                             R.drawable.arrow_back
                                                         } else {
                                                             R.drawable.search
-                                                        }
+                                                        },
                                                     ),
-                                                    contentDescription = stringResource(
-                                                        if (active || !isInNavigationItems) {
-                                                            R.string.back
-                                                        } else {
-                                                            R.string.search
-                                                        }
-                                                    ),
+                                                    contentDescription = null,
                                                 )
                                             }
                                         },
@@ -1113,7 +1085,7 @@ class MainActivity : ComponentActivity() {
                                             configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
                                     // Mostrar NavigationBar solo en phones o tablets en portrait
-                                    val shouldShowBottomNav = !isTabletLandscape
+                                    val shouldShowBottomNav = true
 
                                     if (shouldShowBottomNav) {
                                         NavigationBar(

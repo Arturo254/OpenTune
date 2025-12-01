@@ -10,15 +10,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +21,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,12 +38,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.arturo254.opentune.LocalPlayerAwareWindowInsets
 import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.AnimateLyricsKey
 import com.arturo254.opentune.constants.ChipSortTypeKey
 import com.arturo254.opentune.constants.DarkModeKey
+import com.arturo254.opentune.constants.DefaultMiniPlayerThumbnailShape
 import com.arturo254.opentune.constants.DefaultOpenTabKey
+import com.arturo254.opentune.constants.DefaultPlayPauseButtonShape
 import com.arturo254.opentune.constants.DefaultSmallButtonsShape
 import com.arturo254.opentune.constants.DynamicThemeKey
 import com.arturo254.opentune.constants.GridItemSize
@@ -57,6 +52,8 @@ import com.arturo254.opentune.constants.GridItemsSizeKey
 import com.arturo254.opentune.constants.LibraryFilter
 import com.arturo254.opentune.constants.LyricsClickKey
 import com.arturo254.opentune.constants.LyricsTextPositionKey
+import com.arturo254.opentune.constants.MiniPlayerThumbnailShapeKey
+import com.arturo254.opentune.constants.PlayPauseButtonShapeKey
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerButtonsStyle
@@ -72,19 +69,15 @@ import com.arturo254.opentune.constants.SwipeThumbnailKey
 import com.arturo254.opentune.ui.component.AvatarSelector
 import com.arturo254.opentune.ui.component.DefaultDialog
 import com.arturo254.opentune.ui.component.EnumListPreference
-import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.component.LanguagePreference
 import com.arturo254.opentune.ui.component.ListPreference
 import com.arturo254.opentune.ui.component.PlayerSliderTrack
 import com.arturo254.opentune.ui.component.PreferenceEntry
-import com.arturo254.opentune.ui.component.PreferenceGroupTitle
-import com.arturo254.opentune.ui.component.SettingsCategory
 import com.arturo254.opentune.ui.component.SettingsGeneralCategory
 import com.arturo254.opentune.ui.component.SettingsPage
-import com.arturo254.opentune.ui.component.SmallButtonShapeSelectorButton
 import com.arturo254.opentune.ui.component.SwitchPreference
 import com.arturo254.opentune.ui.component.ThumbnailCornerRadiusSelectorButton
-import com.arturo254.opentune.ui.utils.backToMain
+import com.arturo254.opentune.ui.component.UnifiedShapeSelectorButton
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
 import me.saket.squiggles.SquigglySlider
@@ -147,23 +140,27 @@ fun AppearanceSettings(
         defaultValue = true
     )
 
-
     val (rotateBackground, onRotateBackgroundChange) = rememberPreference(
         key = RotateBackgroundKey,
         defaultValue = false
     )
 
+    // Estados de formas
     val smallButtonsShapeState = rememberPreference(
         key = SmallButtonsShapeKey,
         defaultValue = DefaultSmallButtonsShape
     )
 
+    val playPauseShapeState = rememberPreference(
+        key = PlayPauseButtonShapeKey,
+        defaultValue = DefaultPlayPauseButtonShape
+    )
 
+    val miniPlayerThumbnailShapeState = rememberPreference(
+        key = MiniPlayerThumbnailShapeKey,
+        defaultValue = DefaultMiniPlayerThumbnailShape
+    )
 
-
-    val availableBackgroundStyles = PlayerBackgroundStyle.entries.filter {
-        it != PlayerBackgroundStyle.BLUR || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    }
     val (slimNav, onSlimNavChange) = rememberPreference(SlimNavBarKey, defaultValue = false)
 
     val isSystemInDarkTheme = isSystemInDarkTheme()
@@ -376,7 +373,6 @@ fun AppearanceSettings(
             )
         )
 
-
         // Determine the options available based on the Android version
         val availableBackgroundStyles = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             enumValues<PlayerBackgroundStyle>().toList()
@@ -390,7 +386,7 @@ fun AppearanceSettings(
         val safeSelectedValue = if (playerBackground == PlayerBackgroundStyle.BLUR &&
             Build.VERSION.SDK_INT < Build.VERSION_CODES.S
         ) {
-            PlayerBackgroundStyle.DEFAULT // Or any other default value
+            PlayerBackgroundStyle.DEFAULT
         } else {
             playerBackground
         }
@@ -415,17 +411,27 @@ fun AppearanceSettings(
 
                 {ThumbnailCornerRadiusSelectorButton(
                     onRadiusSelected = { selectedRadius ->
-                        // Here you can manage the value of the selected radius.
                         Timber.tag("Thumbnail").d("Selected radio: $selectedRadius")
                     }
                 )},
 
-                {SmallButtonShapeSelectorButton(
-                    currentShapeName = smallButtonsShapeState.value,
-                    onShapeSelected = { newShape ->
-                        smallButtonsShapeState.value = newShape // This automatically saves to DataStore.
-                    }
-                )},
+                // En tu lista de items del Player, simplemente usa:
+                {
+                    UnifiedShapeSelectorButton(
+                        smallButtonsShape = smallButtonsShapeState.value,
+                        playPauseShape = playPauseShapeState.value,
+                        miniPlayerShape = miniPlayerThumbnailShapeState.value,
+                        onSmallButtonsShapeSelected = { newShape ->
+                            smallButtonsShapeState.value = newShape
+                        },
+                        onPlayPauseShapeSelected = { newShape ->
+                            playPauseShapeState.value = newShape
+                        },
+                        onMiniPlayerShapeSelected = { newShape ->
+                            miniPlayerThumbnailShapeState.value = newShape
+                        }
+                    )
+                },
 
                 {EnumListPreference(
                     title = { Text(stringResource(R.string.player_buttons_style)) },
@@ -582,7 +588,6 @@ fun AppearanceSettings(
                 )},
             )
         )
-
 
         // New avatar selector
         AvatarSelector(modifier = Modifier.padding(vertical = 8.dp))

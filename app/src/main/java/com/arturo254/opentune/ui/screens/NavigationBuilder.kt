@@ -57,16 +57,13 @@ fun NavGraphBuilder.navigationBuilder(
         LibraryScreen(navController)
     }
     composable(Screens.Explore.route) {
-        ExploreScreen(navController)
+        ExploreScreen(navController,scrollBehavior)
     }
     composable("history") {
         HistoryScreen(navController)
     }
     composable("stats") {
         StatsScreen(navController)
-    }
-    composable("mood_and_genres") {
-        MoodAndGenresScreen(navController, scrollBehavior)
     }
     composable("account") {
         AccountScreen(navController, scrollBehavior)
