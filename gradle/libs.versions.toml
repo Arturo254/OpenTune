@@ -26,6 +26,8 @@ glanceMaterial3 = "1.1.1"
 graphicsShapes = "1.1.0"
 workRuntimeKtx = "2.9.0"
 constraintlayout = "2.2.1"
+itextg = "5.5.10"
+mpandroidchart = "v3.1.0"
 
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -105,6 +107,8 @@ glance-material3 = { group = "androidx.glance", name = "glance-material3", versi
 graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphicsShapes" }
 work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+itextg = { group = "com.itextpdf", name = "itextg", version.ref = "itextg" }
+mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpandroidchart" }
 
 [plugins]
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

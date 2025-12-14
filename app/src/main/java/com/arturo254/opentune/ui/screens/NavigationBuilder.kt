@@ -71,6 +71,9 @@ fun NavGraphBuilder.navigationBuilder(
     composable("new_release") {
         NewReleaseScreen(navController, scrollBehavior)
     }
+//    composable("insight") {
+//        InsightScreen(navController)
+//    }
 
 
 

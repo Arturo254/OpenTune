@@ -134,6 +134,8 @@ dependencies {
     implementation(libs.graphics.shapes)
     implementation(libs.work.runtime.ktx)
     implementation(libs.constraintlayout)
+    implementation(libs.itextg)
+    implementation(libs.mpandroidchart)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
