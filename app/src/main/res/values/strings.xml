@@ -489,7 +489,7 @@
     <string name="share_lyrics">Share lyrics</string>
     <string name="share_as_text">Share as text</string>
     <string name="share_as_image">Share as image</string>
-    <string name="max_selection_limit">Max selection limit</string>
+    <string name="max_selection_limit">Max selection limit: %1$d</string>
     <string name="share_selected">Share selected</string>
     <string name="customize_colors">Customize colors</string>
     <string name="more_options">More options</string>
@@ -591,4 +591,6 @@
     <string name="animate_lyrics">Animate lyrics</string>
     <string name="animate_lyrics_desc">Smoothly transition between lyrics</string>
     <string name="changing_language">Changing language…</string>
+    <string name="auto_scroll">Auto scroll</string>
+    <string name="tertiary_color_style">Tertiary color</string>
 </resources>

@@ -441,7 +441,8 @@ fun AppearanceSettings(
                     valueText = {
                         when (it) {
                             PlayerButtonsStyle.DEFAULT -> stringResource(R.string.default_style)
-                            PlayerButtonsStyle.SECONDARY -> stringResource(R.string.secondary_color_style)
+                            PlayerButtonsStyle.PRIMARY -> stringResource(R.string.secondary_color_style)
+                            PlayerButtonsStyle.TERTIARY -> stringResource(R.string.tertiary_color_style)
                         }
                     },
                 )},

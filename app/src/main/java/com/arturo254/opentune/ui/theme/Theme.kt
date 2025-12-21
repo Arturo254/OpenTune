@@ -8,6 +8,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.palette.graphics.Palette
+import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.google.material.color.dynamiccolor.DynamicScheme
 import com.google.material.color.hct.Hct
 import com.google.material.color.scheme.SchemeTonalSpot
@@ -67,39 +69,48 @@ fun OpenTuneTheme(
 }
 
 fun Bitmap.extractThemeColor(): Color {
-    val colorsToPopulation =
-        Palette
-            .from(this)
-            .maximumColorCount(8)
-            .generate()
-            .swatches
-            .associate { it.rgb to it.population }
+    val colorsToPopulation = Palette.from(this)
+        .maximumColorCount(8)
+        .generate()
+        .swatches
+        .associate { it.rgb to it.population }
     val rankedColors = Score.score(colorsToPopulation)
     return Color(rankedColors.first())
 }
 
-fun Bitmap.extractGradientColors(darkTheme: Boolean = false): List<Color> {
+fun Bitmap.extractGradientColors(): List<Color> {
     val extractedColors = Palette.from(this)
-        .maximumColorCount(16)
+        .maximumColorCount(64)
         .generate()
         .swatches
         .associate { it.rgb to it.population }
 
-    val orderedColors = if (darkTheme) {
-        Score.order(extractedColors)
-            .sortedBy { Color(it).luminance() }
-            .take(2)
-            .reversed()
-    } else {
-        Score.order(extractedColors)
-            .take(2)
-            .sortedByDescending { Color(it).luminance() }
-    }
+    val orderedColors = Score.score(extractedColors, 2, 0xFF4285F4.toInt(), true)
+        .sortedByDescending { Color(it).luminance() }
 
     return if (orderedColors.size >= 2)
         listOf(Color(orderedColors[0]), Color(orderedColors[1]))
     else
         listOf(Color(0xFF595959), Color(0xFF0D0D0D))
+}
+
+object PlayerColorExtractor {
+    fun extractGradientColors(
+        palette: Palette,
+        fallbackColor: Int = Color(0xFF595959).toArgb()
+    ): List<Color> {
+        val extractedColors = palette.swatches
+            .associate { it.rgb to it.population }
+
+        val orderedColors = Score.score(extractedColors, 2, fallbackColor, true)
+            .sortedByDescending { Color(it).luminance() }
+
+        return if (orderedColors.size >= 2) {
+            listOf(Color(orderedColors[0]), Color(orderedColors[1]))
+        } else {
+            listOf(Color(0xFF595959), Color(0xFF0D0D0D))
+        }
+    }
 }
 
 fun DynamicScheme.toColorScheme() =
@@ -147,6 +158,9 @@ fun ColorScheme.pureBlack(apply: Boolean, isDarkTheme: Boolean) =
         copy(
             surface = Color.Black,
             background = Color.Black,
+            surfaceContainer = Color.Black,
+            surfaceContainerLow = Color.Black,
+            surfaceContainerLowest = Color.Black,
         )
     } else {
         this
@@ -155,4 +169,34 @@ fun ColorScheme.pureBlack(apply: Boolean, isDarkTheme: Boolean) =
 val ColorSaver = object : Saver<Color, Int> {
     override fun restore(value: Int): Color = Color(value)
     override fun SaverScope.save(value: Color): Int = value.toArgb()
+}
+
+object PlayerSliderColors {
+    @Composable
+    fun getSliderColors(
+        textButtonColor: Color,
+        playerBackground: PlayerBackgroundStyle,
+        useDarkTheme: Boolean
+    ) = SliderDefaults.colors(
+        activeTrackColor = when (playerBackground) {
+            PlayerBackgroundStyle.DEFAULT -> textButtonColor
+            PlayerBackgroundStyle.BLUR -> Color.White
+            PlayerBackgroundStyle.GRADIENT -> Color.White
+        },
+        inactiveTrackColor = when {
+            useDarkTheme -> Color.Gray.copy(alpha = 0.5f)
+            else -> Color.Gray.copy(alpha = 0.3f)
+        },
+        activeTickColor = when (playerBackground) {
+            PlayerBackgroundStyle.DEFAULT -> textButtonColor
+            PlayerBackgroundStyle.BLUR -> Color.White
+            PlayerBackgroundStyle.GRADIENT -> Color.White
+        },
+        inactiveTickColor = Color.Gray,
+        thumbColor = when (playerBackground) {
+            PlayerBackgroundStyle.DEFAULT -> textButtonColor
+            PlayerBackgroundStyle.BLUR -> Color.White
+            PlayerBackgroundStyle.GRADIENT -> Color.White
+        }
+    )
 }

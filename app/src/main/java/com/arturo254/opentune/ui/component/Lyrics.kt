@@ -12,6 +12,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
@@ -103,9 +105,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -158,7 +164,9 @@ import kotlin.time.Duration.Companion.seconds
 
 @RequiresApi(Build.VERSION_CODES.M)
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedBoxWithConstraintsScope", "StringFormatInvalid")
+@SuppressLint("UnusedBoxWithConstraintsScope", "StringFormatInvalid",
+    "LocalContextGetResourceValueCall"
+)
 @Composable
 fun Lyrics(
     sliderPositionProvider: () -> Long?,
@@ -183,7 +191,6 @@ fun Lyrics(
 
     var showLyrics by rememberPreference(ShowLyricsKey, defaultValue = false)
 
-
     val infiniteTransition = rememberInfiniteTransition(label = "backgroundRotation")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -203,7 +210,6 @@ fun Lyrics(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val currentSongId = mediaMetadata?.id
 
-    // States that reset when the song changes
     var currentLineIndex by remember { mutableIntStateOf(-1) }
     var deferredCurrentLineIndex by remember(currentSongId) { mutableIntStateOf(0) }
     var previousLineIndex by remember(currentSongId) { mutableIntStateOf(0) }
@@ -216,6 +222,8 @@ fun Lyrics(
     var showImageOverlay by remember { mutableStateOf(false) }
     var showControls by remember { mutableStateOf(true) }
     var cornerRadius by remember { mutableFloatStateOf(16f) }
+
+    var isAutoScrollEnabled by rememberSaveable { mutableStateOf(true) }
 
     // Improved selection system
     var isSelectionModeActive by remember(currentSongId) { mutableStateOf(false) }
@@ -238,7 +246,6 @@ fun Lyrics(
     }
     var isLoadingLyrics by remember(currentSongId) { mutableStateOf(false) }
 
-
     val lyricsEntity by playerConnection.currentLyrics.collectAsState(initial = null)
     val lyrics = remember(lyricsEntity) { lyricsEntity?.lyrics?.trim() }
 
@@ -260,6 +267,15 @@ fun Lyrics(
         if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
     }
 
+    var position by rememberSaveable(playbackState) { mutableLongStateOf(playerConnection.player.currentPosition) }
+    var duration by rememberSaveable(playbackState) { mutableLongStateOf(playerConnection.player.duration) }
+
+    val expressiveAccent = when (playerBackground) {
+        PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.tertiary
+    }
+    val textColor = expressiveAccent
+
     LaunchedEffect(currentSongId) {
         currentSongId?.let { songId ->
             if (lyricsCache.containsKey(songId)) {
@@ -271,7 +287,6 @@ fun Lyrics(
 
             withContext(Dispatchers.IO) {
                 try {
-                    // First, attempt to load from the database.
                     val existingLyrics = try {
                         database.getLyrics(songId)
                     } catch (e: Throwable) {
@@ -285,7 +300,6 @@ fun Lyrics(
                         lyricsCache = newCache
                         currentLyricsEntity = existingLyrics
                     } else {
-                        // If not in the database, try to obtain from the API using LyricsHelper.
                         try {
                             val entryPoint = EntryPointAccessors.fromApplication(
                                 context.applicationContext,
@@ -300,14 +314,11 @@ fun Lyrics(
                                 LyricsEntity(songId, LYRICS_NOT_FOUND)
                             }
 
-                            // Save/upsert to database for cache
                             try {
                                 database.query {
                                     upsert(entity)
                                 }
-                            } catch (e: Throwable) {
-                                // If the upsert fails, do not block the flow: continue with temporary cache
-                            }
+                            } catch (e: Throwable) {}
 
                             val newCache = lyricsCache.toMutableMap().apply {
                                 put(songId, entity)
@@ -315,7 +326,6 @@ fun Lyrics(
                             lyricsCache = newCache
                             currentLyricsEntity = entity
                         } catch (e: Throwable) {
-                            // If retrieval via network/entry point fails, save “not found” marker.
                             val errorEntity = LyricsEntity(songId, LYRICS_NOT_FOUND)
                             val newCache = lyricsCache.toMutableMap().apply {
                                 put(songId, errorEntity)
@@ -338,7 +348,6 @@ fun Lyrics(
         }
     }
 
-// REPLACE your remember(lyrics, currentSongId) function with:
     val lines = remember(lyrics, scope) {
         if (lyrics == null || lyrics == LYRICS_NOT_FOUND) {
             emptyList()
@@ -352,10 +361,6 @@ fun Lyrics(
         }
     }
 
-
-
-
-    // ADD this LaunchedEffect right after defining 'lines'
     LaunchedEffect(lines) {
         isSelectionModeActive = false
         selectedIndices.clear()
@@ -364,40 +369,56 @@ fun Lyrics(
         previousLineIndex = 0
         initialScrollDone = false
         shouldScrollToFirstLine = true
+        isAutoScrollEnabled = true
     }
 
     val isSynced = remember(lyrics) {
         !lyrics.isNullOrEmpty() && lyrics.startsWith("[")
     }
 
-    val textColor = when (playerBackground) {
-        PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.secondary
-        else ->
-            if (useDarkTheme)
-                MaterialTheme.colorScheme.onSurface
-            else
-                MaterialTheme.colorScheme.onPrimary
-    }
-
-    var position by rememberSaveable(playbackState) { mutableLongStateOf(playerConnection.player.currentPosition) }
-    var duration by rememberSaveable(playbackState) { mutableLongStateOf(playerConnection.player.duration) }
-
-
-    // intelligent BackHandler
     BackHandler(enabled = isSelectionModeActive || isFullscreen) {
         when {
             isSelectionModeActive -> {
                 isSelectionModeActive = false
                 selectedIndices.clear()
             }
-
             isFullscreen -> onNavigateBack?.invoke()
+        }
+    }
+
+    // Disable auto-scroll cuando el usuario interactúa
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (source == NestedScrollSource.UserInput) {
+                    isAutoScrollEnabled = false
+                }
+                if (!isSelectionModeActive) {
+                    lastPreviewTime = System.currentTimeMillis()
+                }
+                return super.onPostScroll(consumed, available, source)
+            }
+
+            override suspend fun onPostFling(
+                consumed: Velocity,
+                available: Velocity
+            ): Velocity {
+                isAutoScrollEnabled = false
+                if (!isSelectionModeActive) {
+                    lastPreviewTime = System.currentTimeMillis()
+                }
+                return super.onPostFling(consumed, available)
+            }
         }
     }
 
     LaunchedEffect(Unit) {
         if (isFullscreen) {
-            cornerRadius = 16f // Use fixed value instead of AppConfig
+            cornerRadius = 16f
         }
     }
 
@@ -476,54 +497,52 @@ fun Lyrics(
         }
     }
 
+    suspend fun performSmoothPageScroll(targetIndex: Int, duration: Int = 1500) {
+        if (isAnimating) return
+        isAnimating = true
+        try {
+            val itemInfo = lazyListState.layoutInfo.visibleItemsInfo
+                .firstOrNull { it.index == targetIndex }
+            if (itemInfo != null) {
+                val viewportHeight = lazyListState.layoutInfo.viewportEndOffset -
+                        lazyListState.layoutInfo.viewportStartOffset
+                val center = lazyListState.layoutInfo.viewportStartOffset + (viewportHeight / 2)
+                val itemCenter = itemInfo.offset + itemInfo.size / 2
+                val offset = itemCenter - center
+                if (kotlin.math.abs(offset) > 10) {
+                    lazyListState.animateScrollBy(
+                        value = offset.toFloat(),
+                        animationSpec = tween(durationMillis = duration)
+                    )
+                }
+            } else {
+                lazyListState.scrollToItem(targetIndex)
+            }
+        } finally {
+            isAnimating = false
+        }
+    }
 
-    // REPLACE your LaunchedEffect(currentLineIndex...) with:
-    LaunchedEffect(currentLineIndex, lastPreviewTime, initialScrollDone) {
+    LaunchedEffect(currentLineIndex, lastPreviewTime, initialScrollDone, isAutoScrollEnabled) {
         if (!isSynced) return@LaunchedEffect
 
-        suspend fun performSmoothPageScroll(targetIndex: Int, duration: Int = 1500) {
-            if (isAnimating) return
-            isAnimating = true
-
-            try {
-                val itemInfo = lazyListState.layoutInfo.visibleItemsInfo
-                    .firstOrNull { it.index == targetIndex }
-                if (itemInfo != null) {
-                    val viewportHeight = lazyListState.layoutInfo.viewportEndOffset -
-                            lazyListState.layoutInfo.viewportStartOffset
-                    val center = lazyListState.layoutInfo.viewportStartOffset + (viewportHeight / 2)
-                    val itemCenter = itemInfo.offset + itemInfo.size / 2
-                    val offset = itemCenter - center
-
-                    if (kotlin.math.abs(offset) > 10) {
-                        lazyListState.animateScrollBy(
-                            value = offset.toFloat(),
-                            animationSpec = tween(durationMillis = duration)
-                        )
-                    }
-                } else {
-                    lazyListState.scrollToItem(targetIndex)
+        if (isAutoScrollEnabled) {
+            if ((currentLineIndex == 0 && shouldScrollToFirstLine) || !initialScrollDone) {
+                shouldScrollToFirstLine = false
+                val initialCenterIndex = kotlin.math.max(0, currentLineIndex)
+                performSmoothPageScroll(initialCenterIndex, 800)
+                if (!isAppMinimized) {
+                    initialScrollDone = true
                 }
-            } finally {
-                isAnimating = false
-            }
-        }
-
-        if ((currentLineIndex == 0 && shouldScrollToFirstLine) || !initialScrollDone) {
-            shouldScrollToFirstLine = false
-            val initialCenterIndex = kotlin.math.max(0, currentLineIndex)
-            performSmoothPageScroll(initialCenterIndex, 800)
-            if (!isAppMinimized) {
-                initialScrollDone = true
-            }
-        } else if (currentLineIndex != -1) {
-            deferredCurrentLineIndex = currentLineIndex
-            if (isSeeking) {
-                val seekCenterIndex = kotlin.math.max(0, currentLineIndex - 1)
-                performSmoothPageScroll(seekCenterIndex, 500)
-            } else if ((lastPreviewTime == 0L || currentLineIndex != previousLineIndex) && scrollLyrics) {
-                if (currentLineIndex != previousLineIndex) {
-                    performSmoothPageScroll(currentLineIndex, 1500)
+            } else if (currentLineIndex != -1) {
+                deferredCurrentLineIndex = currentLineIndex
+                if (isSeeking) {
+                    val seekCenterIndex = kotlin.math.max(0, currentLineIndex - 1)
+                    performSmoothPageScroll(seekCenterIndex, 500)
+                } else if ((lastPreviewTime == 0L || currentLineIndex != previousLineIndex) && scrollLyrics) {
+                    if (currentLineIndex != previousLineIndex) {
+                        performSmoothPageScroll(currentLineIndex, 1500)
+                    }
                 }
             }
         }
@@ -560,9 +579,8 @@ fun Lyrics(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
-                            .blur(50.dp) // Blur BEFORE the graphicsLayer
+                            .blur(50.dp)
                             .graphicsLayer {
-                                // Much more aggressive scaling to compensate for blur and rotation
                                 scaleX = 2.5f
                                 scaleY = 2.5f
                                 if (rotateBackground) {
@@ -820,7 +838,8 @@ fun Lyrics(
                                     },
                                     thumb = { Spacer(modifier = Modifier.size(0.dp)) },
                                     track = { sliderState ->
-                                        PlayerSliderTrack(
+                                        // PlayerSliderTrack would need to be defined or replaced
+                                        SliderDefaults.Track(
                                             sliderState = sliderState,
                                             colors = SliderDefaults.colors(
                                                 activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -1054,7 +1073,6 @@ fun Lyrics(
             }
         }
 
-        // Main content of lyrics
         BoxWithConstraints(
             contentAlignment = if (isFullscreen) Alignment.TopStart else Alignment.Center,
             modifier = Modifier
@@ -1078,6 +1096,7 @@ fun Lyrics(
                 } else {
                     0.dp
                 }
+
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = if (isFullscreen) {
@@ -1090,38 +1109,18 @@ fun Lyrics(
                     } else {
                         WindowInsets.systemBars
                             .only(WindowInsetsSides.Top)
-                            .add(WindowInsets(top = maxHeight / 2, bottom = maxHeight / 2))
+                            .add(WindowInsets(top = maxHeight / 3, bottom = maxHeight / 2))
                             .asPaddingValues()
                     },
                     modifier = Modifier
                         .fadingEdge(vertical = if (isFullscreen) 32.dp else 64.dp)
-                        .nestedScroll(remember {
-                            object : NestedScrollConnection {
-                                override fun onPostScroll(
-                                    consumed: Offset,
-                                    available: Offset,
-                                    source: NestedScrollSource
-                                ): Offset {
-                                    if (!isSelectionModeActive) {
-                                        lastPreviewTime = System.currentTimeMillis()
-                                    }
-                                    return super.onPostScroll(consumed, available, source)
-                                }
-
-                                override suspend fun onPostFling(
-                                    consumed: Velocity,
-                                    available: Velocity
-                                ): Velocity {
-                                    if (!isSelectionModeActive) {
-                                        lastPreviewTime = System.currentTimeMillis()
-                                    }
-                                    return super.onPostFling(consumed, available)
-                                }
-                            }
-                        })
+                        .nestedScroll(nestedScrollConnection)
                 ) {
                     val displayedCurrentLineIndex =
-                        if (isSeeking || isSelectionModeActive) deferredCurrentLineIndex else currentLineIndex
+                        if (!isAutoScrollEnabled || isSeeking || isSelectionModeActive)
+                            deferredCurrentLineIndex
+                        else
+                            currentLineIndex
 
                     if (isLoadingLyrics) {
                         item {
@@ -1152,21 +1151,22 @@ fun Lyrics(
                         ) { index, item ->
                             val isSelected = selectedIndices.contains(index)
 
-                            val distance =
-                                kotlin.math.abs(index - displayedCurrentLineIndex)
+                            val distance = kotlin.math.abs(index - displayedCurrentLineIndex)
                             val animatedScale by animateFloatAsState(when {
-                                !isSynced || index == displayedCurrentLineIndex -> 1f
-                                distance == 1 -> 0.95f
-                                distance >= 2 -> 0.9f
+                                !isSynced || index == displayedCurrentLineIndex -> 1.05f
+                                distance == 1 -> 1f
+                                distance >= 2 -> 0.95f
                                 else -> 1f
-                            }, tween(if (animateLyrics) 250 else 0))
+                            }, tween(if (animateLyrics) 400 else 0)) // Aumentada duración
+
                             val animatedAlpha by animateFloatAsState(when {
                                 !isSynced || (isSelectionModeActive && isSelected) -> 1f
                                 index == displayedCurrentLineIndex -> 1f
                                 kotlin.math.abs(index - displayedCurrentLineIndex) == 1 -> 0.7f
                                 kotlin.math.abs(index - displayedCurrentLineIndex) == 2 -> 0.4f
                                 else -> 0.2f
-                            }, tween(if (animateLyrics) 250 else 0))
+                            }, tween(if (animateLyrics) 400 else 0)) // Aumentada duración
+
                             val itemModifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
@@ -1189,28 +1189,7 @@ fun Lyrics(
                                         } else if (isSynced && changeLyrics) {
                                             playerConnection.player.seekTo(item.time)
                                             scope.launch {
-                                                lazyListState.scrollToItem(index)
-                                                val itemInfo =
-                                                    lazyListState.layoutInfo.visibleItemsInfo
-                                                        .firstOrNull { it.index == index }
-                                                if (itemInfo != null) {
-                                                    val viewportHeight =
-                                                        lazyListState.layoutInfo.viewportEndOffset -
-                                                                lazyListState.layoutInfo.viewportStartOffset
-                                                    val center =
-                                                        lazyListState.layoutInfo.viewportStartOffset +
-                                                                (viewportHeight / 2)
-                                                    val itemCenter =
-                                                        itemInfo.offset + itemInfo.size / 2
-                                                    val offset = itemCenter - center
-
-                                                    if (kotlin.math.abs(offset) > 10) {
-                                                        lazyListState.animateScrollBy(
-                                                            value = offset.toFloat(),
-                                                            animationSpec = tween(durationMillis = 1500)
-                                                        )
-                                                    }
-                                                }
+                                                performSmoothPageScroll(index, 1500) // Usar la función mejorada
                                             }
                                             lastPreviewTime = 0L
                                         }
@@ -1235,42 +1214,261 @@ fun Lyrics(
                                     horizontal = if (isFullscreen) 16.dp else 24.dp,
                                     vertical = 8.dp
                                 )
-                                .alpha(animatedAlpha)
                                 .graphicsLayer {
-                                    scaleX = animatedScale
-                                    scaleY = animatedScale
+                                    this.alpha = animatedAlpha
+                                    this.scaleX = animatedScale
+                                    this.scaleY = animatedScale
                                 }
 
-                            Text(
-                                text = item.text,
-                                fontSize = 25.sp,
-                                color = animateColorAsState(if (index == displayedCurrentLineIndex && isSynced) {
-                                    if (isFullscreen)
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        textColor
+                            val isActiveLine = index == displayedCurrentLineIndex && isSynced
+
+                            Column(
+                                modifier = itemModifier,
+                                horizontalAlignment = when (lyricsTextPosition) {
+                                    LyricsPosition.LEFT -> Alignment.Start
+                                    LyricsPosition.CENTER -> Alignment.CenterHorizontally
+                                    LyricsPosition.RIGHT -> Alignment.End
+                                }
+                            ) {
+                                if (isActiveLine) {
+                                    val fillProgress = remember { Animatable(0f) }
+                                    val pulseProgress = remember { Animatable(0f) }
+
+                                    LaunchedEffect(index) {
+                                        fillProgress.snapTo(0f)
+                                        fillProgress.animateTo(
+                                            targetValue = 1f,
+                                            animationSpec = tween(
+                                                durationMillis = 1200,
+                                                easing = FastOutSlowInEasing
+                                            )
+                                        )
+                                    }
+
+                                    LaunchedEffect(Unit) {
+                                        while (true) {
+                                            pulseProgress.animateTo(
+                                                targetValue = 1f,
+                                                animationSpec = tween(
+                                                    durationMillis = 3000,
+                                                    easing = LinearEasing
+                                                )
+                                            )
+                                            pulseProgress.snapTo(0f)
+                                        }
+                                    }
+
+                                    val fill = fillProgress.value
+                                    val pulse = pulseProgress.value
+                                    val pulseEffect = (kotlin.math.sin(pulse * Math.PI.toFloat()) * 0.15f).coerceIn(0f, 0.15f)
+                                    val glowIntensity = (fill + pulseEffect).coerceIn(0f, 1.2f)
+
+                                    val glowBrush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                        0.0f to expressiveAccent.copy(alpha = 0.3f),
+                                        (fill * 0.7f).coerceIn(0f, 1f) to expressiveAccent.copy(alpha = 0.9f),
+                                        fill to expressiveAccent,
+                                        (fill + 0.1f).coerceIn(0f, 1f) to expressiveAccent.copy(alpha = 0.7f),
+                                        1.0f to expressiveAccent.copy(alpha = if (fill >= 1f) 1f else 0.3f)
+                                    )
+
+                                    val styledText = buildAnnotatedString {
+                                        withStyle(
+                                            style = SpanStyle(
+                                                shadow = androidx.compose.ui.graphics.Shadow(
+                                                    color = expressiveAccent.copy(alpha = 0.8f * glowIntensity),
+                                                    offset = Offset(0f, 0f),
+                                                    blurRadius = 28f * (1f + pulseEffect)
+                                                ),
+                                                brush = glowBrush
+                                            )
+                                        ) {
+                                            append(item.text)
+                                        }
+                                    }
+
+                                    val bounceScale = if (fill < 0.3f) {
+                                        1f + (kotlin.math.sin(fill * 3.33f * Math.PI.toFloat()) * 0.03f)
+                                    } else {
+                                        1f
+                                    }
+
+                                    Text(
+                                        text = styledText,
+                                        fontSize = if (isFullscreen) 25.sp else 24.sp,
+                                        textAlign = when (lyricsTextPosition) {
+                                            LyricsPosition.LEFT -> TextAlign.Left
+                                            LyricsPosition.CENTER -> TextAlign.Center
+                                            LyricsPosition.RIGHT -> TextAlign.Right
+                                        },
+                                        fontWeight = FontWeight.ExtraBold,
+                                        modifier = Modifier
+                                            .graphicsLayer {
+                                                scaleX = bounceScale
+                                                scaleY = bounceScale
+                                            }
+                                    )
                                 } else {
-                                    if (isFullscreen)
+                                    // Línea inactiva con color expresivo
+                                    val lineColor = if (isFullscreen) {
                                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                                    else
-                                        textColor.copy(alpha = 0.8f)
-                                }, animationSpec = tween(if (animateLyrics) 250 else 0)).value,
-                                textAlign = when (lyricsTextPosition) {
-                                    LyricsPosition.LEFT -> TextAlign.Left
-                                    LyricsPosition.CENTER -> TextAlign.Center
-                                    LyricsPosition.RIGHT -> TextAlign.Right
-                                },
-                                fontWeight = if (index == displayedCurrentLineIndex && isSynced)
-                                    FontWeight.ExtraBold
-                                else
-                                    FontWeight.Bold,
-                                modifier = itemModifier
-                            )
+                                    } else {
+                                        expressiveAccent.copy(alpha = 0.7f)
+                                    }
+
+                                    Text(
+                                        text = item.text,
+                                        fontSize = if (isFullscreen) 25.sp else 24.sp,
+                                        color = animateColorAsState(
+                                            targetValue = lineColor,
+                                            animationSpec = tween(if (animateLyrics) 250 else 0)
+                                        ).value,
+                                        textAlign = when (lyricsTextPosition) {
+                                            LyricsPosition.LEFT -> TextAlign.Left
+                                            LyricsPosition.CENTER -> TextAlign.Center
+                                            LyricsPosition.RIGHT -> TextAlign.Right
+                                        },
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
 
-                // Letters not found
+                AnimatedVisibility(
+                    visible = (!isAutoScrollEnabled && isSynced) || isSelectionModeActive,
+                    enter = slideInVertically { it } + fadeIn(),
+                    exit = slideOutVertically { it } + fadeOut(),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = if (isFullscreen && showControls) 220.dp else 16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AnimatedVisibility(
+                            visible = !isAutoScrollEnabled && isSynced,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                tonalElevation = 4.dp,
+                                modifier = Modifier
+                                    .clickable {
+                                        scope.launch {
+                                            performSmoothPageScroll(currentLineIndex, 1500)
+                                        }
+                                        isAutoScrollEnabled = true
+                                    }
+                                    .padding(12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.sync),
+                                        contentDescription = stringResource(R.string.auto_scroll),
+                                        modifier = Modifier.size(20.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.auto_scroll),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+
+                        // Selection mode buttons (for floating mode)
+                        AnimatedVisibility(
+                            visible = isSelectionModeActive && !isFullscreen,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Close button
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .background(
+                                            color = Color.Black.copy(alpha = 0.3f),
+                                            shape = CircleShape
+                                        )
+                                        .clickable {
+                                            isSelectionModeActive = false
+                                            selectedIndices.clear()
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.close),
+                                        contentDescription = stringResource(R.string.cancel),
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+
+                                // Share button
+                                Row(
+                                    modifier = Modifier
+                                        .background(
+                                            color = if (selectedIndices.isNotEmpty())
+                                                Color.White.copy(alpha = 0.9f)
+                                            else
+                                                Color.White.copy(alpha = 0.5f),
+                                            shape = RoundedCornerShape(24.dp)
+                                        )
+                                        .clickable(enabled = selectedIndices.isNotEmpty()) {
+                                            if (selectedIndices.isNotEmpty()) {
+                                                val sortedIndices = selectedIndices.sorted()
+                                                val selectedLyricsText = sortedIndices
+                                                    .mapNotNull { lines.getOrNull(it)?.text }
+                                                    .joinToString("\n")
+
+                                                if (selectedLyricsText.isNotBlank()) {
+                                                    shareDialogData = Triple(
+                                                        selectedLyricsText,
+                                                        mediaMetadata?.title ?: "",
+                                                        mediaMetadata?.artists?.joinToString { it.name } ?: ""
+                                                    )
+                                                    showShareDialog = true
+                                                }
+                                                isSelectionModeActive = false
+                                                selectedIndices.clear()
+                                            }
+                                        }
+                                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.media3_icon_share),
+                                        contentDescription = stringResource(R.string.share_selected),
+                                        tint = Color.Black,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.share),
+                                        color = Color.Black,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Lyrics not found
                 if (lyrics == LYRICS_NOT_FOUND) {
                     if (isFullscreen) {
                         Card(
@@ -1331,95 +1529,14 @@ fun Lyrics(
                     }
                 }
             }
-
         }
 
-
-        // Buttons for floating mode (not full screen)
+        // Buttons for floating mode (not full screen) - SE MANTIENEN IGUAL
         if (!isFullscreen) {
             mediaMetadata?.let { metadata ->
                 if (isSelectionModeActive) {
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Close button
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .background(
-                                        color = Color.Black.copy(alpha = 0.3f),
-                                        shape = CircleShape
-                                    )
-                                    .clickable {
-                                        isSelectionModeActive = false
-                                        selectedIndices.clear()
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.close),
-                                    contentDescription = stringResource(R.string.cancel),
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-
-                            // Share button
-                            Row(
-                                modifier = Modifier
-                                    .background(
-                                        color = if (selectedIndices.isNotEmpty())
-                                            Color.White.copy(alpha = 0.9f)
-                                        else
-                                            Color.White.copy(alpha = 0.5f),
-                                        shape = RoundedCornerShape(24.dp)
-                                    )
-                                    .clickable(enabled = selectedIndices.isNotEmpty()) {
-                                        if (selectedIndices.isNotEmpty()) {
-                                            val sortedIndices = selectedIndices.sorted()
-                                            val selectedLyricsText = sortedIndices
-                                                .mapNotNull { lines.getOrNull(it)?.text }
-                                                .joinToString("\n")
-
-                                            if (selectedLyricsText.isNotBlank()) {
-                                                shareDialogData = Triple(
-                                                    selectedLyricsText,
-                                                    metadata.title,
-                                                    metadata.artists.joinToString { it.name }
-                                                )
-                                                showShareDialog = true
-                                            }
-                                            isSelectionModeActive = false
-                                            selectedIndices.clear()
-                                        }
-                                    }
-                                    .padding(horizontal = 24.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.media3_icon_share),
-                                    contentDescription = stringResource(R.string.share_selected),
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = stringResource(R.string.share),
-                                    color = Color.Black,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
+                    // Selection mode buttons are now shown in the AnimatedVisibility above
+                    // This code block can remain as a fallback or be removed
                 } else {
                     // Normal buttons in floating mode
                     Row(
@@ -1493,9 +1610,9 @@ fun Lyrics(
             }
         )
     }
-
 }
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ShareLyricsDialog(
@@ -1611,7 +1728,6 @@ private fun ShareLyricsDialog(
         }
     }
 }
-
 
 // Preview time constant
 val LyricsPreviewTime = 2.seconds

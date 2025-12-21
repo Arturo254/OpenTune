@@ -279,7 +279,8 @@ enum class PlayerBackgroundStyle {
 
 enum class PlayerButtonsStyle {
     DEFAULT,
-    SECONDARY,
+    PRIMARY,
+    TERTIARY
 }
 
 val TopSize = stringPreferencesKey("topSize")

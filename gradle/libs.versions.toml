@@ -5,7 +5,7 @@ json = "20241224"
 kotlin = "2.1.0"
 compose = "1.9.4"
 lifecycle = "2.9.4"
-material3 = "1.5.0-alpha08"
+material3 = "1.5.0-alpha10"
 media3 = "1.8.0"
 room = "2.6.1"
 hilt = "2.55"
@@ -17,7 +17,7 @@ loggingInterceptor = "5.0.0-alpha.14"
 blurry = "4.0.1"
 materialRipple = "1.9.4"
 roomRuntimeAndroid = "2.7.2"
-extractor = "06b7ae2"
+extractor = "main-SNAPSHOT"
 composeReorderable = "3.0.0"
 uiAndroid = "1.9.2"
 materialIconsExtended = "1.7.6"
@@ -29,20 +29,21 @@ constraintlayout = "2.2.1"
 itextg = "5.5.10"
 mpandroidchart = "v3.1.0"
 
+
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 guava = { group = "com.google.guava", name = "guava", version = "33.4.0-android" }
 coroutines-guava = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-guava", version = "1.10.1" }
-concurrent-futures = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version = "1.2.0" }
+concurrent-futures = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version = "1.3.0" }
 
 gradle = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 activity = { group = "androidx.activity", name = "activity-compose", version = "1.10.0" }
-navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.8.5" }
-hilt-navigation = { group = "androidx.hilt", name = "hilt-navigation-compose", version = "1.2.0" }
-datastore = { group = "androidx.datastore", name = "datastore-preferences", version = "1.1.2" }
+navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.6" }
+hilt-navigation = { group = "androidx.hilt", name = "hilt-navigation-compose", version = "1.3.0" }
+datastore = { group = "androidx.datastore", name = "datastore-preferences", version = "1.2.0" }
 
 compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "compose" }
-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.7.6" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.10.0" }
 compose-ui = { group = "androidx.compose.ui", name = "ui", version = "compose" }
 compose-ui-util = { group = "androidx.compose.ui", name = "ui-util", version.ref = "compose" }
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "compose" }
@@ -93,7 +94,7 @@ junit = { group = "junit", name = "junit", version = "4.13.2" }
 
 timber = { group = "com.jakewharton.timber", name = "timber", version = "5.0.1" }
 
-newpipe-extractor = { module  = "com.github.mostafaalagamy:MetrolistExtractor", name = "PipePipeExtractor", version = "a194151" }
+newpipe-extractor = { module = "com.github.mostafaalagamy:MetrolistExtractor", version.ref = "extractor" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }

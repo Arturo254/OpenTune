@@ -22,7 +22,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.ShapeLine
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -48,34 +53,25 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.RoundedPolygon
 import com.arturo254.opentune.R
 
-/**
- * Data class que representa una forma disponible
- */
 data class SmallButtonShapeOption(
     val name: String,
     val shape: RoundedPolygon,
     val displayName: String
 )
 
-/**
- * Enum para los diferentes tipos de selectores
- */
 enum class ShapeType {
     SMALL_BUTTONS,
     PLAY_PAUSE,
     MINIPLAYER_THUMBNAIL
 }
 
-/**
- * Bottom Sheet selector de formas unificado con tabs
- * Diseño Material 3 Expressive con animaciones sutiles y jerarquía clara
- */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UnifiedShapeBottomSheet(
     selectedSmallButtonsShape: String,
@@ -96,7 +92,6 @@ fun UnifiedShapeBottomSheet(
         }
     ) }
 
-    // Lista COMPLETA de formas disponibles
     val availableShapes = remember {
         listOf(
             SmallButtonShapeOption("Pill", MaterialShapes.Pill, "Pill"),
@@ -138,43 +133,26 @@ fun UnifiedShapeBottomSheet(
     }
 
     val tabTitles = listOf("Small Buttons", "Play/Pause", "MiniPlayer")
-    val tabIcons = listOf(R.drawable.scatter_plot, R.drawable.play, R.drawable.album)
+    val tabIcons = listOf(Icons.Default.ShapeLine, Icons.Default.PlayArrow, Icons.Default.Album)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp,
-        dragHandle = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Drag handle personalizado Material 3 Expressive
-                Box(
-                    modifier = Modifier
-                        .padding(top = 16.dp, bottom = 12.dp)
-                        .width(40.dp)
-                        .height(4.dp)
-                        .clip(MaterialShapes.Pill.toShape())
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                )
-            }
-        }
+        tonalElevation = 0.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp)
         ) {
-            // Título principal con jerarquía clara
             Text(
                 text = "Shape Selector",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 4.dp)
             )
 
             Text(
@@ -184,13 +162,12 @@ fun UnifiedShapeBottomSheet(
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
-            // Tabs con iconos - Material 3 Expressive
             TabRow(
                 selectedTabIndex = selectedTabIndex,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 contentColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
-                    .padding(bottom = 24.dp)
+                    .padding(bottom = 20.dp)
                     .clip(RoundedCornerShape(12.dp))
             ) {
                 tabTitles.forEachIndexed { index, title ->
@@ -199,7 +176,7 @@ fun UnifiedShapeBottomSheet(
                         onClick = { selectedTabIndex = index },
                         icon = {
                             Icon(
-                                painter = painterResource(tabIcons[index]),
+                                imageVector = tabIcons[index],
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -207,7 +184,7 @@ fun UnifiedShapeBottomSheet(
                         text = {
                             Text(
                                 text = title,
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelMedium
                             )
                         },
                         selectedContentColor = MaterialTheme.colorScheme.primary,
@@ -216,7 +193,6 @@ fun UnifiedShapeBottomSheet(
                 }
             }
 
-            // Grid de formas con espaciado coherente
             val currentSelectedShape = when (selectedTabIndex) {
                 0 -> selectedSmallButtonsShape
                 1 -> selectedPlayPauseShape
