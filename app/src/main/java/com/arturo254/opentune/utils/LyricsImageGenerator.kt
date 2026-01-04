@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.DashPathEffect
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
@@ -107,7 +108,13 @@ object ComposeToImage {
         borderEnabled: Boolean = false,
         borderColor: Int? = null,
         borderWidth: Float = 2f,
-        logoSize: String = "MEDIUM"
+        logoSize: String = "MEDIUM",
+        coverArtStyle: String = "ROUNDED",
+        lyricsStyle: String = "NORMAL",
+        showAccentLine: Boolean = false,
+        accentColor: Int? = null,
+        spacingBetweenElements: Float = 16f,
+        lyricsLineSpacing: Float = 1.3f
     ): Bitmap = withContext(Dispatchers.Default) {
         val imageSize = 1080
         val bitmap = createBitmap(imageSize, imageSize)
@@ -117,6 +124,7 @@ object ComposeToImage {
         val mainTextColor = textColor ?: 0xFFFFFFFF.toInt()
         val secTextColor = secondaryTextColor ?: 0xFFB0B0B0.toInt()
         val bColor = borderColor ?: mainTextColor
+        val aColor = accentColor ?: mainTextColor
 
         val outerPadding = imageSize * (padding / 380f)
         val thumbnailSize = imageSize * 0.21f
@@ -128,6 +136,7 @@ object ComposeToImage {
         }
         val logoSizePx = imageSize * 0.073f * logoSizeMultiplier
         val cornerRadiusPx = (cornerRadius / 28f) * (imageSize * 0.073f)
+        val elementSpacing = imageSize * (spacingBetweenElements / 380f)
 
         val bgRect = RectF(0f, 0f, imageSize.toFloat(), imageSize.toFloat())
         renderBackground(
@@ -159,9 +168,11 @@ object ComposeToImage {
                 coverArt,
                 outerPadding,
                 thumbnailSize,
-                mainTextColor
+                mainTextColor,
+                coverArtStyle
             )
-            renderSongMetadataHighRes(
+
+            val metadataHeight = renderSongMetadataHighRes(
                 canvas,
                 songTitle,
                 artistName,
@@ -172,8 +183,19 @@ object ComposeToImage {
                 secTextColor,
                 fontStyle,
                 showSongTitle,
-                showArtistName
+                showArtistName,
+                elementSpacing
             )
+
+            if (showAccentLine) {
+                renderAccentLine(
+                    canvas,
+                    outerPadding,
+                    outerPadding + thumbnailSize + elementSpacing + metadataHeight + elementSpacing,
+                    imageSize,
+                    aColor
+                )
+            }
         }
 
         renderLyricsHighRes(
@@ -187,7 +209,11 @@ object ComposeToImage {
             fontStyle,
             showCoverArt,
             textAlignment,
-            textShadowEnabled
+            textShadowEnabled,
+            lyricsStyle,
+            elementSpacing,
+            showAccentLine,
+            lyricsLineSpacing
         )
 
         if (showLogo && logoPosition != "NONE") {
@@ -295,11 +321,18 @@ object ComposeToImage {
         coverArt: Bitmap?,
         padding: Float,
         size: Float,
-        textColor: Int
+        textColor: Int,
+        coverArtStyle: String
     ) {
         coverArt?.let { artwork ->
             val rect = RectF(padding, padding, padding + size, padding + size)
-            val cornerRadius = size * 0.25f
+
+            val cornerRadius = when (coverArtStyle) {
+                "CIRCLE" -> size / 2f
+                "SQUARE" -> size * 0.05f
+                "ROUNDED" -> size * 0.25f
+                else -> size * 0.25f
+            }
 
             val bgPaint = Paint().apply {
                 color = textColor
@@ -342,10 +375,10 @@ object ComposeToImage {
         secondaryTextColor: Int,
         fontStyle: String,
         showSongTitle: Boolean,
-        showArtistName: Boolean
-    ) {
-        val spacing = imageSize * 0.042f
-        val startX = padding + thumbnailSize + spacing
+        showArtistName: Boolean,
+        elementSpacing: Float
+    ): Float {
+        val startX = padding + thumbnailSize + elementSpacing
         val maxWidth = (imageSize - startX - padding).toInt()
 
         val titleTypeface = when (fontStyle) {
@@ -406,6 +439,33 @@ object ComposeToImage {
                 artistLayout.draw(this)
             }
         }
+
+        return textBlockHeight
+    }
+
+    private fun renderAccentLine(
+        canvas: Canvas,
+        padding: Float,
+        yPosition: Float,
+        imageSize: Int,
+        accentColor: Int
+    ) {
+        val linePaint = Paint().apply {
+            color = accentColor
+            strokeWidth = imageSize * 0.0028f
+            isAntiAlias = true
+            style = Paint.Style.FILL
+        }
+
+        val lineRect = RectF(
+            padding,
+            yPosition,
+            imageSize - padding,
+            yPosition + imageSize * 0.0028f
+        )
+
+        val cornerRadius = imageSize * 0.0019f
+        canvas.drawRoundRect(lineRect, cornerRadius, cornerRadius, linePaint)
     }
 
     private fun renderLyricsHighRes(
@@ -419,7 +479,11 @@ object ComposeToImage {
         fontStyle: String,
         showCoverArt: Boolean,
         textAlignment: String,
-        textShadowEnabled: Boolean
+        textShadowEnabled: Boolean,
+        lyricsStyle: String,
+        elementSpacing: Float,
+        showAccentLine: Boolean,
+        lineSpacing: Float
     ) {
         val lyricsTypeface = when (fontStyle) {
             "REGULAR" -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -436,7 +500,11 @@ object ComposeToImage {
         }
 
         val maxWidth = (imageSize * 0.85f).toInt()
-        val headerHeight = if (showCoverArt) padding + thumbnailSize + (imageSize * 0.084f) else padding
+        val headerHeight = if (showCoverArt) {
+            padding + thumbnailSize + elementSpacing + (if (showAccentLine) elementSpacing * 1.5f else 0f)
+        } else {
+            padding
+        }
         val footerHeight = imageSize * 0.148f
         val maxHeight = imageSize - headerHeight - footerHeight
 
@@ -447,7 +515,11 @@ object ComposeToImage {
             color = textColor
             typeface = lyricsTypeface
             isAntiAlias = true
-            letterSpacing = 0.015f
+            letterSpacing = if (lyricsStyle == "CONDENSED") -0.025f else 0.015f
+
+            if (lyricsStyle == "ITALIC") {
+                textSkewX = -0.25f
+            }
         }
 
         if (textShadowEnabled) {
@@ -465,7 +537,7 @@ object ComposeToImage {
             layout = StaticLayout.Builder.obtain(lyrics, 0, lyrics.length, paint, maxWidth)
                 .setAlignment(alignment)
                 .setIncludePad(false)
-                .setLineSpacing(0f, 1.3f)
+                .setLineSpacing(0f, lineSpacing)
                 .build()
             if (layout.height <= maxHeight) break
             textSize -= imageSize * 0.0028f
@@ -476,7 +548,7 @@ object ComposeToImage {
             layout = StaticLayout.Builder.obtain(lyrics, 0, lyrics.length, paint, maxWidth)
                 .setAlignment(alignment)
                 .setIncludePad(false)
-                .setLineSpacing(0f, 1.3f)
+                .setLineSpacing(0f, lineSpacing)
                 .build()
         }
 
@@ -503,49 +575,6 @@ object ComposeToImage {
             context, R.drawable.opentune, logoSize.toInt(), logoSize.toInt()
         ) ?: return
 
-        val (logoX, logoY) = when (logoPosition) {
-            "BOTTOM_LEFT" -> Pair(padding, imageSize - padding - logoSize * 1.29f)
-            "BOTTOM_RIGHT" -> Pair(
-                imageSize - padding - logoSize - (imageSize * 0.185f * logoSizeMultiplier),
-                imageSize - padding - logoSize * 1.29f
-            )
-            "TOP_LEFT" -> Pair(padding, padding)
-            "TOP_RIGHT" -> Pair(
-                imageSize - padding - logoSize - (imageSize * 0.185f * logoSizeMultiplier),
-                padding
-            )
-            else -> Pair(padding, imageSize - padding - logoSize * 1.29f)
-        }
-
-        val circleRadius = logoSize * 1.29f
-        val circleCenterX = logoX + circleRadius / 2f
-        val circleCenterY = logoY + circleRadius / 2f
-
-        val circleBgPaint = Paint().apply {
-            color = textColor
-            alpha = 38
-            isAntiAlias = true
-        }
-        canvas.drawCircle(circleCenterX, circleCenterY, circleRadius / 2f, circleBgPaint)
-
-        val circleBorderPaint = Paint().apply {
-            color = textColor
-            alpha = 76
-            style = Paint.Style.STROKE
-            strokeWidth = imageSize * 0.00093f
-            isAntiAlias = true
-        }
-        canvas.drawCircle(circleCenterX, circleCenterY, circleRadius / 2f, circleBorderPaint)
-
-        val paint = Paint().apply {
-            colorFilter = PorterDuffColorFilter(textColor, PorterDuff.Mode.SRC_IN)
-            isAntiAlias = true
-        }
-
-        val logoOffsetX = logoX + (circleRadius - logoSize) / 2f
-        val logoOffsetY = logoY + (circleRadius - logoSize) / 2f
-        canvas.drawBitmap(logoBitmap, logoOffsetX, logoOffsetY, paint)
-
         val appName = context.getString(R.string.app_name)
         val textPaint = TextPaint().apply {
             color = textColor
@@ -557,10 +586,30 @@ object ComposeToImage {
 
         val textBounds = Rect()
         textPaint.getTextBounds(appName, 0, appName.length, textBounds)
+        val textWidth = textBounds.width()
         val textHeight = textBounds.height()
 
-        val textX = logoX + circleRadius + (imageSize * 0.0315f)
-        val textY = circleCenterY + textHeight / 2f
+        val totalWidth = logoSize + (imageSize * 0.0315f) + textWidth
+        val totalHeight = maxOf(logoSize, textHeight.toFloat())
+
+        val (logoX, logoY) = when (logoPosition) {
+            "BOTTOM_LEFT" -> Pair(padding, imageSize - padding - totalHeight)
+            "BOTTOM_RIGHT" -> Pair(imageSize - padding - totalWidth, imageSize - padding - totalHeight)
+            "TOP_LEFT" -> Pair(padding, padding)
+            "TOP_RIGHT" -> Pair(imageSize - padding - totalWidth, padding)
+            else -> Pair(padding, imageSize - padding - totalHeight)
+        }
+
+        val paint = Paint().apply {
+            colorFilter = PorterDuffColorFilter(textColor, PorterDuff.Mode.SRC_IN)
+            isAntiAlias = true
+        }
+
+        val logoCenterY = logoY + totalHeight / 2f - logoSize / 2f
+        canvas.drawBitmap(logoBitmap, logoX, logoCenterY, paint)
+
+        val textX = logoX + logoSize + (imageSize * 0.0315f)
+        val textY = logoY + totalHeight / 2f + textHeight / 2f
 
         canvas.drawText(appName, textX, textY, textPaint)
     }

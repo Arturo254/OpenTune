@@ -269,7 +269,7 @@ fun Thumbnail(
                                 modifier = Modifier
                                     .width(horizontalLazyGridItemWidth)
                                     .fillMaxSize()
-                                    .padding(horizontal = PlayerHorizontalPadding)
+//                                    .padding(horizontal = PlayerHorizontalPadding)
                                     .pointerInput(Unit) {
                                         detectTapGestures(
                                             onTap = {
