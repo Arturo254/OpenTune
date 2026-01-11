@@ -320,6 +320,8 @@ fun SongListItem(
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     isSelected: Boolean = false,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
     badges: @Composable RowScope.() -> Unit = {
         if (showLikedIcon && song.song.liked) {
             Icon(
@@ -369,100 +371,102 @@ fun SongListItem(
             }
         }
     },
-    isActive: Boolean = false,
-    isPlaying: Boolean = false,
     trailingContent: @Composable RowScope.() -> Unit = {},
-) = ListItem(
-    title = song.song.title,
-    subtitle =
-        joinByBullet(
+    inSelectionMode: Boolean = false,
+    onSelectionChange: ((Boolean) -> Unit)? = null,
+) {
+    ListItem(
+        title = song.song.title,
+        subtitle = joinByBullet(
             song.artists.joinToString { it.name },
-            makeTimeString(song.song.duration * 1000L),
+            makeTimeString(song.song.duration * 1000L)
         ),
-    badges = badges,
-    thumbnailContent = {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.size(ListThumbnailSize),
-        ) {
-            if (albumIndex != null) {
-                AnimatedVisibility(
-                    visible = !isActive,
-                    enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
-                    exit = shrinkOut(shrinkTowards = Alignment.Center) + fadeOut(),
-                ) {
-                    if (isSelected) {
-                        Icon(
-                            painter = painterResource(R.drawable.done),
-                            modifier = Modifier.align(Alignment.Center),
-                            contentDescription = null,
-                        )
-                    } else {
-                        Text(
-                            text = albumIndex.toString(),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
+        badges = badges,
+        thumbnailContent = {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(ListThumbnailSize),
+            ) {
+                if (albumIndex != null) {
+                    AnimatedVisibility(
+                        visible = !isActive,
+                        enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
+                        exit = shrinkOut(shrinkTowards = Alignment.Center) + fadeOut(),
+                    ) {
+                        if (isSelected) {
+                            Icon(
+                                painter = painterResource(R.drawable.done),
+                                modifier = Modifier.align(Alignment.Center),
+                                contentDescription = null,
+                            )
+                        } else {
+                            Text(
+                                text = albumIndex.toString(),
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        }
                     }
-                }
-            } else {
-                if (isSelected) {
-                    Box(
-                        contentAlignment = Alignment.Center,
+                } else {
+                    if (isSelected) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .zIndex(1000f)
+                                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                                    .background(Color.Black.copy(alpha = 0.5f)),
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.done),
+                                modifier = Modifier.align(Alignment.Center),
+                                contentDescription = null,
+                            )
+                        }
+                    }
+                    AsyncImage(
+                        model = song.song.thumbnailUrl,
+                        contentDescription = null,
                         modifier =
                             Modifier
-                                .fillMaxSize()
-                                .zIndex(1000f)
-                                .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                                .background(Color.Black.copy(alpha = 0.5f)),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.done),
-                            modifier = Modifier.align(Alignment.Center),
-                            contentDescription = null,
-                        )
-                    }
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                    )
                 }
-                AsyncImage(
-                    model = song.song.thumbnailUrl,
-                    contentDescription = null,
+
+                PlayingIndicatorBox(
+                    isActive = isActive,
+                    playWhenReady = isPlaying,
+                    color = if (albumIndex != null) MaterialTheme.colorScheme.onBackground else Color.White,
                     modifier =
                         Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                            .fillMaxSize()
+                            .background(
+                                color =
+                                    if (albumIndex != null) {
+                                        Color.Transparent
+                                    } else {
+                                        Color.Black.copy(
+                                            alpha = 0.4f,
+                                        )
+                                    },
+                                shape = RoundedCornerShape(ThumbnailCornerRadius),
+                            ),
                 )
             }
-
-            PlayingIndicatorBox(
-                isActive = isActive,
-                playWhenReady = isPlaying,
-                color = if (albumIndex != null) MaterialTheme.colorScheme.onBackground else Color.White,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(
-                            color =
-                                if (albumIndex != null) {
-                                    Color.Transparent
-                                } else {
-                                    Color.Black.copy(
-                                        alpha = 0.4f,
-                                    )
-                                },
-                            shape = RoundedCornerShape(ThumbnailCornerRadius),
-                        ),
-            )
-        }
-    },
-    trailingContent = trailingContent,
-    modifier = modifier,
-    isActive = isActive,
-)
+        },
+        trailingContent = trailingContent,
+        modifier = modifier,
+        isActive = isActive,
+    )
+}
 
 @Composable
 fun SongGridItem(
     song: Song,
     modifier: Modifier = Modifier,
     showLikedIcon: Boolean = true,
+
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {

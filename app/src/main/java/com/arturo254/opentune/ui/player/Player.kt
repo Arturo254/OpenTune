@@ -27,7 +27,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,6 +56,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -768,329 +771,240 @@ fun BottomSheetPlayer(
         },
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
-            val playPauseRoundness by animateDpAsState(
-                targetValue = if (isPlaying) 24.dp else 36.dp,
-                animationSpec = tween(durationMillis = 90, easing = LinearEasing),
-                label = "playPauseRoundness",
-            )
-
+            // Título con marquesina y click largo para copiar
             Row(
-                horizontalArrangement =
-                    when (playerTextAlignment) {
-                        PlayerTextAlignment.SIDED -> Arrangement.Start
-                        PlayerTextAlignment.CENTER -> Arrangement.Center
-                    },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = PlayerHorizontalPadding),
-            ) {
-                AnimatedContent(
-                    targetState = mediaMetadata.title,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                    label = "",
-                ) { title ->
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = onBackgroundColor,
-                        modifier =
-                            Modifier
-                                .basicMarquee()
-                                .clickable(enabled = mediaMetadata.album != null) {
-                                    navController.navigate("album/${mediaMetadata.album!!.id}")
-                                    state.collapseSoft()
-                                },
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(6.dp))
-
-            Row(
-                horizontalArrangement =
-                    when (playerTextAlignment) {
-                        PlayerTextAlignment.SIDED -> Arrangement.Start
-                        PlayerTextAlignment.CENTER -> Arrangement.Center
-                    },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = PlayerHorizontalPadding),
-            ) {
-                mediaMetadata.artists.fastForEachIndexed { index, artist ->
-                    AnimatedContent(
-                        targetState = artist.name,
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        label = "",
-                    ) { name ->
-                        Text(
-                            text = name,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = onBackgroundColor,
-                            maxLines = 1,
-                            modifier =
-                                Modifier.clickable(enabled = artist.id != null) {
-                                    navController.navigate("artist/${artist.id}")
-                                    state.collapseSoft()
-                                },
-                        )
-                    }
-
-                    if (index != mediaMetadata.artists.lastIndex) {
-                        AnimatedContent(
-                            targetState = ", ",
-                            transitionSpec = { fadeIn() togetherWith fadeOut() },
-                            label = "",
-                        ) { comma ->
-                            Text(
-                                text = comma,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = onBackgroundColor,
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.Start,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .padding(horizontal = PlayerHorizontalPadding),
             ) {
-                Box(
-                    modifier = smallButtonModifier()
-                        .clickable {
-                            playerConnection.service.startRadioSeamlessly()
-                        },
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.radio),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(iconButtonColor),
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(24.dp),
-                    )
-                }
-
-                Spacer(modifier = Modifier.size(12.dp))
-
-                Box(
-                    modifier = smallButtonModifier()
-                        .clickable {
-                            if (download?.state == Download.STATE_COMPLETED) {
-                                DownloadService.sendRemoveDownload(
-                                    context,
-                                    ExoDownloadService::class.java,
-                                    mediaMetadata.id,
-                                    false,
-                                )
-                            } else {
-                                database.transaction {
-                                    insert(mediaMetadata)
-                                }
-                                val downloadRequest =
-                                    DownloadRequest
-                                        .Builder(mediaMetadata.id, mediaMetadata.id.toUri())
-                                        .setCustomCacheKey(mediaMetadata.id)
-                                        .setData(mediaMetadata.title.toByteArray())
-                                        .build()
-                                DownloadService.sendAddDownload(
-                                    context,
-                                    ExoDownloadService::class.java,
-                                    downloadRequest,
-                                    false,
-                                )
-                            }
-                        },
-                ) {
-                    if (download?.state == Download.STATE_DOWNLOADING) {
-                        val progress = download!!.percentDownloaded / 100f
-                        val animatedProgress by animateFloatAsState(
-                            targetValue = progress,
-                            animationSpec = tween(
-                                durationMillis = 300,
-                                easing = FastOutSlowInEasing
-                            ),
-                            label = "downloadProgress"
-                        )
-
-                        Canvas(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(2.dp)
-                        ) {
-                            val strokeWidth = 3.dp.toPx()
-                            val radius = (size.minDimension - strokeWidth) / 2
-                            val center = Offset(size.width / 2, size.height / 2)
-
-                            // Background circle (gray)
-                            drawCircle(
-                                color = iconButtonColor.copy(alpha = 0.3f),
-                                radius = radius,
-                                center = center,
-                                style = Stroke(width = strokeWidth)
-                            )
-
-                            // Progress circle
-                            if (animatedProgress > 0f) {
-                                drawArc(
-                                    color = iconButtonColor,
-                                    startAngle = -90f,
-                                    sweepAngle = 360f * animatedProgress,
-                                    useCenter = false,
-                                    topLeft = Offset(
-                                        center.x - radius,
-                                        center.y - radius
-                                    ),
-                                    size = Size(radius * 2, radius * 2),
-                                    style = Stroke(
-                                        width = strokeWidth,
-                                        cap = StrokeCap.Round
-                                    )
-                                )
-                            }
-                        }
-                    }
-
-                    val iconResource = when (download?.state) {
-                        Download.STATE_COMPLETED -> R.drawable.offline
-                        Download.STATE_DOWNLOADING -> R.drawable.pause
-                        Download.STATE_FAILED -> R.drawable.error
-                        else -> R.drawable.download
-                    }
-
-                    val iconAlpha by animateFloatAsState(
-                        targetValue = if (download?.state == Download.STATE_DOWNLOADING) 0.8f else 1f,
-                        animationSpec = tween(durationMillis = 200),
-                        label = "iconAlpha"
-                    )
-
-                    val iconScale by animateFloatAsState(
-                        targetValue = if (download?.state == Download.STATE_DOWNLOADING) 0.9f else 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        ),
-                        label = "iconScale"
-                    )
-
-                    Image(
-                        painter = painterResource(iconResource),
-                        contentDescription = when (download?.state) {
-                            Download.STATE_COMPLETED -> stringResource(R.string.download)
-                            Download.STATE_DOWNLOADING -> stringResource(R.string.downloading)
-                            Download.STATE_FAILED -> stringResource(R.string.download_errorup)
-                            else -> stringResource(R.string.download)
-                        },
-                        colorFilter = ColorFilter.tint(
-                            when (download?.state) {
-                                Download.STATE_FAILED -> MaterialTheme.colorScheme.error
-                                else -> iconButtonColor
-                            }
-                        ),
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(24.dp)
-                            .scale(iconScale)
-                            .alpha(iconAlpha),
-                    )
-
-                    // Small progress text
-                    if (download?.state == Download.STATE_DOWNLOADING) {
-                        val progress = (download!!.percentDownloaded).toInt()
-                        Text(
-                            text = "$progress%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = iconButtonColor,
-                            fontSize = 8.sp,
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .offset(y = (-2).dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.size(12.dp))
-
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(smallButtonShape.toShape())
-                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
                     AnimatedContent(
-                        label = "sleepTimer",
-                        targetState = sleepTimerEnabled,
-                    ) { sleepTimerEnabled ->
-                        if (sleepTimerEnabled) {
-                            Text(
-                                text = makeTimeString(sleepTimerTimeLeft),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = onBackgroundColor,
-                                maxLines = 1,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
-                                    .clickable(onClick = playerConnection.service.sleepTimer::clear)
-                                    .basicMarquee(),
-                            )
-                        } else {
-                            Box(
-                                modifier = smallButtonModifier()
-                                    .clickable {
-                                        showSleepTimerDialog = true
-                                    },
-                            ) {
-                                Image(
-                                    painter = painterResource(R.drawable.bedtime),
-                                    colorFilter = ColorFilter.tint(iconButtonColor),
-                                    contentDescription = null,
+                        targetState = mediaMetadata.title,
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        label = "",
+                    ) { title ->
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = onBackgroundColor,
+                            modifier =
+                                Modifier
+                                    .basicMarquee(iterations = 1, initialDelayMillis = 3000, velocity = 30.dp)
+                                    .combinedClickable(
+                                        enabled = true,
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        onClick = {
+                                            if (mediaMetadata.album != null) {
+                                                navController.navigate("album/${mediaMetadata.album.id}")
+                                                state.collapseSoft()
+                                            }
+                                        },
+                                        onLongClick = {
+                                            clipboardManager.setText(AnnotatedString(title))
+                                            Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
+                                        }
+                                    ),
+                        )
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
+                    // Artistas con navegación
+                    if (mediaMetadata.artists.any { it.name.isNotBlank() }) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .basicMarquee(iterations = 1, initialDelayMillis = 3000, velocity = 30.dp)
+                        ) {
+                            mediaMetadata.artists.forEachIndexed { index, artist ->
+                                Text(
+                                    text = artist.name,
+                                    style = MaterialTheme.typography.titleMedium.copy(color = onBackgroundColor),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .size(24.dp),
+                                        .clickable(enabled = artist.id != null) {
+                                            artist.id?.let {
+                                                navController.navigate("artist/$it")
+                                                state.collapseSoft()
+                                            }
+                                        }
                                 )
+                                if (index != mediaMetadata.artists.lastIndex) {
+                                    Text(
+                                        text = ", ",
+                                        style = MaterialTheme.typography.titleMedium.copy(color = onBackgroundColor)
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(12.dp))
 
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = smallButtonModifier()
-                        .clickable {
-                            menuState.show {
-                                PlayerMenu(
-                                    mediaMetadata = mediaMetadata,
-                                    navController = navController,
-                                    playerBottomSheetState = state,
-                                    onShowDetailsDialog = { showDetailsDialog = true },
-                                    onDismiss = menuState::dismiss,
+                // BOTONES DE ACCIÓN ALINEADOS A LA DERECHA
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Botón Like/Favorito
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(
+                                RoundedCornerShape(
+                                    topStart = 50.dp, bottomStart = 50.dp,
+                                    topEnd = 5.dp, bottomEnd = 5.dp
+                                )
+                            )
+                            .background(textButtonColor)
+                            .clickable {
+                                playerConnection.toggleLike()
+                            }
+                    ) {
+                        Image(
+                            painter = painterResource(
+                                if (currentSong?.song?.liked == true)
+                                    R.drawable.favorite
+                                else R.drawable.favorite_border
+                            ),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(
+                                if (currentSong?.song?.liked == true)
+                                    MaterialTheme.colorScheme.error
+                                else iconButtonColor
+                            ),
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(24.dp)
+                        )
+                    }
+
+                    // Botón Download
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(textButtonColor)
+                            .clickable {
+                                when (download?.state) {
+                                    Download.STATE_COMPLETED -> {
+                                        DownloadService.sendRemoveDownload(
+                                            context,
+                                            ExoDownloadService::class.java,
+                                            mediaMetadata.id,
+                                            false,
+                                        )
+                                    }
+                                    Download.STATE_QUEUED, Download.STATE_DOWNLOADING -> {
+                                        DownloadService.sendRemoveDownload(
+                                            context,
+                                            ExoDownloadService::class.java,
+                                            mediaMetadata.id,
+                                            false,
+                                        )
+                                    }
+                                    else -> {
+                                        database.transaction {
+                                            insert(mediaMetadata)
+                                        }
+                                        val downloadRequest =
+                                            DownloadRequest
+                                                .Builder(mediaMetadata.id, mediaMetadata.id.toUri())
+                                                .setCustomCacheKey(mediaMetadata.id)
+                                                .setData(mediaMetadata.title.toByteArray())
+                                                .build()
+                                        DownloadService.sendAddDownload(
+                                            context,
+                                            ExoDownloadService::class.java,
+                                            downloadRequest,
+                                            false,
+                                        )
+                                    }
+                                }
+                            }
+                    ) {
+                        when (download?.state) {
+                            Download.STATE_COMPLETED -> {
+                                Image(
+                                    painter = painterResource(R.drawable.offline),
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.tint(iconButtonColor),
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .size(24.dp)
                                 )
                             }
-                        },
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.more_horiz),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(iconButtonColor),
-                    )
+                            Download.STATE_QUEUED, Download.STATE_DOWNLOADING -> {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = iconButtonColor
+                                )
+                            }
+                            else -> {
+                                Image(
+                                    painter = painterResource(R.drawable.download),
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.tint(iconButtonColor),
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .size(24.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Botón More Options
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(
+                                RoundedCornerShape(
+                                    topStart = 5.dp, bottomStart = 5.dp,
+                                    topEnd = 50.dp, bottomEnd = 50.dp
+                                )
+                            )
+                            .background(textButtonColor)
+                            .clickable {
+                                menuState.show {
+                                    PlayerMenu(
+                                        mediaMetadata = mediaMetadata,
+                                        navController = navController,
+                                        playerBottomSheetState = state,
+                                        onShowDetailsDialog = { showDetailsDialog = true },
+                                        onDismiss = menuState::dismiss,
+                                    )
+                                }
+                            }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.more_vert),
+                            contentDescription = null,
+                            tint = iconButtonColor,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(24.dp)
+                        )
+                    }
                 }
             }
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(12.dp))
 
+            // Slider (mantén tu implementación actual)
             when (sliderStyle) {
                 SliderStyle.DEFAULT -> {
                     Slider(
@@ -1107,7 +1021,7 @@ fun BottomSheetPlayer(
                             sliderPosition = null
                         },
                         colors = PlayerSliderColors.getSliderColors(
-                            textButtonColor = TextBackgroundColor,
+                            textButtonColor = onBackgroundColor,
                             playerBackground = playerBackground,
                             useDarkTheme = useDarkTheme
                         ),
@@ -1130,15 +1044,16 @@ fun BottomSheetPlayer(
                             sliderPosition = null
                         },
                         colors = PlayerSliderColors.getSliderColors(
-                            textButtonColor = TextBackgroundColor,
+                            textButtonColor = onBackgroundColor,
                             playerBackground = playerBackground,
                             useDarkTheme = useDarkTheme
                         ),
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                         squigglesSpec =
                             SquigglySlider.SquigglesSpec(
-                                amplitude = if (isPlaying) (2.dp).coerceAtLeast(2.dp) else 0.dp,
+                                amplitude = if (isPlaying) (4.dp).coerceAtLeast(2.dp) else 0.dp,
                                 strokeWidth = 3.dp,
+                                wavelength = 36.dp,
                             ),
                     )
                 }
@@ -1162,7 +1077,7 @@ fun BottomSheetPlayer(
                             PlayerSliderTrack(
                                 sliderState = sliderState,
                                 colors = PlayerSliderColors.getSliderColors(
-                                    textButtonColor = TextBackgroundColor,
+                                    textButtonColor = onBackgroundColor,
                                     playerBackground = playerBackground,
                                     useDarkTheme = useDarkTheme
                                 )
@@ -1175,6 +1090,7 @@ fun BottomSheetPlayer(
 
             Spacer(Modifier.height(4.dp))
 
+            // Tiempos
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
@@ -1186,7 +1102,7 @@ fun BottomSheetPlayer(
                 Text(
                     text = makeTimeString(sliderPosition ?: position),
                     style = MaterialTheme.typography.labelMedium,
-                    color = TextBackgroundColor,
+                    color = onBackgroundColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1194,7 +1110,7 @@ fun BottomSheetPlayer(
                 Text(
                     text = if (duration != C.TIME_UNSET) makeTimeString(duration) else "",
                     style = MaterialTheme.typography.labelMedium,
-                    color = TextBackgroundColor,
+                    color = onBackgroundColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1202,115 +1118,164 @@ fun BottomSheetPlayer(
 
             Spacer(Modifier.height(12.dp))
 
+            // CONTROLES DE REPRODUCCIÓN CON ANIMACIONES AL PRESIONAR
             Row(
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = PlayerHorizontalPadding),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = PlayerHorizontalPadding)
             ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    ResizableIconButton(
-                        icon = when (repeatMode) {
-                            Player.REPEAT_MODE_OFF, Player.REPEAT_MODE_ALL -> R.drawable.repeat
-                            Player.REPEAT_MODE_ONE -> R.drawable.repeat_one
-                            else -> throw IllegalStateException()
-                        },
-                        color = TextBackgroundColor,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .padding(4.dp)
-                            .align(Alignment.Center)
-                            .alpha(if (repeatMode == Player.REPEAT_MODE_OFF) 0.5f else 1f),
-                        onClick = {
-                            playerConnection.player.toggleRepeatMode()
-                        },
-                    )
+                val backInteractionSource = remember { MutableInteractionSource() }
+                val nextInteractionSource = remember { MutableInteractionSource() }
+                val playPauseInteractionSource = remember { MutableInteractionSource() }
+                val isPlayPausePressed by playPauseInteractionSource.collectIsPressedAsState()
+                val isBackPressed by backInteractionSource.collectIsPressedAsState()
+                val isNextPressed by nextInteractionSource.collectIsPressedAsState()
+
+                // Pesos animados con spring animation
+                val playPauseWeight by animateFloatAsState(
+                    targetValue = when {
+                        isPlayPausePressed -> 1.9f
+                        isBackPressed || isNextPressed -> 1.1f
+                        else -> 1.3f
+                    },
+                    animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
+                    label = "playPauseWeight"
+                )
+                val backButtonWeight by animateFloatAsState(
+                    targetValue = when {
+                        isBackPressed -> 0.65f
+                        isPlayPausePressed -> 0.35f
+                        else -> 0.45f
+                    },
+                    animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
+                    label = "backButtonWeight"
+                )
+                val nextButtonWeight by animateFloatAsState(
+                    targetValue = when {
+                        isNextPressed -> 0.65f
+                        isPlayPausePressed -> 0.35f
+                        else -> 0.45f
+                    },
+                    animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
+                    label = "nextButtonWeight"
+                )
+
+                // Colores de botones laterales basados en fondo del player
+                val sideButtonColor = if (playerBackground == PlayerBackgroundStyle.BLUR ||
+                    playerBackground == PlayerBackgroundStyle.GRADIENT) {
+                    Color.White.copy(alpha = 0.2f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHighest
                 }
 
-                Box(modifier = Modifier.weight(1f)) {
-                    ResizableIconButton(
-                        icon = R.drawable.skip_previous,
-                        enabled = canSkipPrevious,
-                        color = TextBackgroundColor,
-                        modifier =
-                            Modifier
-                                .size(32.dp)
-                                .align(Alignment.Center),
-                        onClick = playerConnection::seekToPrevious,
-                    )
+                val sideButtonContentColor = if (playerBackground == PlayerBackgroundStyle.BLUR ||
+                    playerBackground == PlayerBackgroundStyle.GRADIENT) {
+                    Color.White
+                } else {
+                    MaterialTheme.colorScheme.onSurface
                 }
 
-                Spacer(Modifier.width(8.dp))
-
+                // Botón Previous
                 Box(
-                    modifier =
-                        Modifier
-                            .size(85.dp)
-                            .rotate(if (isPlaying) playPauseRotation else 0f)
-                            .clip(currentPlayPauseShape.toShape())
-                            .background(textButtonColor)
-                            .clickable {
-                                if (playbackState == STATE_ENDED) {
-                                    playerConnection.player.seekTo(0, 0)
-                                    playerConnection.player.playWhenReady = true
-                                } else {
-                                    playerConnection.player.togglePlayPause()
-                                }
-                            },
+                    modifier = Modifier
+                        .height(68.dp)
+                        .weight(backButtonWeight)
+                        .clip(RoundedCornerShape(50))
+                        .background(sideButtonColor)
+                        .clickable(
+                            enabled = canSkipPrevious,
+                            indication = null,
+                            interactionSource = backInteractionSource
+                        ) {
+                            playerConnection.seekToPrevious()
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter =
-                            painterResource(
-                                if (playbackState ==
-                                    STATE_ENDED
-                                ) {
-                                    R.drawable.replay
-                                } else if (isPlaying) {
-                                    R.drawable.pause
-                                } else {
-                                    R.drawable.play
-                                },
-                            ),
+                    Icon(
+                        painter = painterResource(R.drawable.skip_previous),
                         contentDescription = null,
-                        colorFilter = ColorFilter.tint(iconButtonColor),
-                        modifier =
-                            Modifier
-                                .align(Alignment.Center)
-                                .size(36.dp)
-                                .rotate(if (isPlaying) -playPauseRotation else 0f),
+                        tint = sideButtonContentColor.copy(
+                            alpha = if (canSkipPrevious) 1f else 0.5f
+                        ),
+                        modifier = Modifier.size(32.dp)
                     )
                 }
 
-                Spacer(Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-                Box(modifier = Modifier.weight(1f)) {
-                    ResizableIconButton(
-                        icon = R.drawable.skip_next,
-                        enabled = canSkipNext,
-                        color = TextBackgroundColor,
-                        modifier =
-                            Modifier
-                                .size(32.dp)
-                                .align(Alignment.Center),
-                        onClick = playerConnection::seekToNext,
-                    )
+                // Botón Play/Pause con texto (opcional)
+                Box(
+                    modifier = Modifier
+                        .height(68.dp)
+                        .weight(playPauseWeight)
+                        .clip(RoundedCornerShape(50))
+                        .background(textButtonColor)
+                        .clickable(
+                            indication = null,
+                            interactionSource = playPauseInteractionSource
+                        ) {
+                            if (playbackState == STATE_ENDED) {
+                                playerConnection.player.seekTo(0, 0)
+                                playerConnection.player.playWhenReady = true
+                            } else {
+                                playerConnection.player.togglePlayPause()
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                if (isPlaying) R.drawable.pause else R.drawable.play
+                            ),
+                            contentDescription = null,
+                            tint = iconButtonColor,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isPlaying) stringResource(R.string.media3_controls_pause_description) else stringResource(R.string.play),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = iconButtonColor
+                        )
+                    }
                 }
 
-                Box(modifier = Modifier.weight(1f)) {
-                    ResizableIconButton(
-                        icon = if (currentSong?.song?.liked == true) R.drawable.favorite else R.drawable.favorite_border,
-                        color = if (currentSong?.song?.liked == true) MaterialTheme.colorScheme.error else TextBackgroundColor,
-                        modifier =
-                            Modifier
-                                .size(32.dp)
-                                .padding(4.dp)
-                                .align(Alignment.Center),
-                        onClick = playerConnection::toggleLike,
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Botón Next
+                Box(
+                    modifier = Modifier
+                        .height(68.dp)
+                        .weight(nextButtonWeight)
+                        .clip(RoundedCornerShape(50))
+                        .background(sideButtonColor)
+                        .clickable(
+                            enabled = canSkipNext,
+                            indication = null,
+                            interactionSource = nextInteractionSource
+                        ) {
+                            playerConnection.seekToNext()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.skip_next),
+                        contentDescription = null,
+                        tint = sideButtonContentColor.copy(
+                            alpha = if (canSkipNext) 1f else 0.5f
+                        ),
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
         }
+
 
         // Animated background effects
         Box(
