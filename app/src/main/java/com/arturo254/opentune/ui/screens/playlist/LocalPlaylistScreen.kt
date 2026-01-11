@@ -6,7 +6,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
@@ -47,14 +46,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -64,7 +60,6 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -100,9 +95,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.util.fastSumBy
@@ -121,14 +114,11 @@ import com.arturo254.opentune.LocalDownloadUtil
 import com.arturo254.opentune.LocalPlayerAwareWindowInsets
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
-import com.arturo254.opentune.constants.AlbumThumbnailSize
 import com.arturo254.opentune.constants.ListItemHeight
 import com.arturo254.opentune.constants.PlaylistEditLockKey
 import com.arturo254.opentune.constants.PlaylistSongSortDescendingKey
 import com.arturo254.opentune.constants.PlaylistSongSortType
 import com.arturo254.opentune.constants.PlaylistSongSortTypeKey
-import com.arturo254.opentune.constants.SwipeToRemoveSongKey
-import com.arturo254.opentune.constants.ThumbnailCornerRadius
 import com.arturo254.opentune.db.entities.Playlist
 import com.arturo254.opentune.db.entities.PlaylistSong
 import com.arturo254.opentune.db.entities.PlaylistSongMap
@@ -138,7 +128,6 @@ import com.arturo254.opentune.extensions.togglePlayPause
 import com.arturo254.opentune.models.toMediaMetadata
 import com.arturo254.opentune.playback.ExoDownloadService
 import com.arturo254.opentune.playback.queues.ListQueue
-import com.arturo254.opentune.ui.component.AutoResizeText
 import com.arturo254.opentune.ui.component.DefaultDialog
 import com.arturo254.opentune.ui.component.DraggableScrollbar
 import com.arturo254.opentune.ui.component.EmptyPlaceholder
@@ -610,19 +599,6 @@ fun LocalPlaylistScreen(
                                     }
                                 }
 
-                                val swipeRemoveEnabled by rememberPreference(SwipeToRemoveSongKey, defaultValue = false)
-                                val dismissBoxState = rememberSwipeToDismissBoxState(
-                                    positionalThreshold = { totalDistance -> totalDistance * 0.5f }
-                                )
-
-                                LaunchedEffect(dismissBoxState.currentValue) {
-                                    if (swipeRemoveEnabled &&
-                                        (dismissBoxState.currentValue == SwipeToDismissBoxValue.StartToEnd ||
-                                                dismissBoxState.currentValue == SwipeToDismissBoxValue.EndToStart)) {
-                                        deleteFromPlaylist()
-                                    }
-                                }
-
                                 AnimatedVisibility(
                                     visible = isVisible,
                                     exit = shrinkVertically(animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
@@ -708,39 +684,10 @@ fun LocalPlaylistScreen(
                                             }
                                         }
 
-                                        if (locked || selection) {
+                                        if (locked || !editable) {
                                             songContent()
                                         } else {
-                                            SwipeToDismissBox(
-                                                state = dismissBoxState,
-                                                backgroundContent = {
-                                                    val color by animateColorAsState(
-                                                        targetValue = when (dismissBoxState.dismissDirection) {
-                                                            SwipeToDismissBoxValue.StartToEnd,
-                                                            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                                                            else -> Color.Transparent
-                                                        },
-                                                        label = "swipe_background_color"
-                                                    )
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .clip(RoundedCornerShape(12.dp))
-                                                            .background(color)
-                                                            .padding(horizontal = 20.dp),
-                                                        contentAlignment = Alignment.CenterEnd
-                                                    ) {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.delete),
-                                                            contentDescription = null,
-                                                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                                                            modifier = Modifier.size(24.dp)
-                                                        )
-                                                    }
-                                                },
-                                            ) {
-                                                songContent()
-                                            }
+                                            songContent()
                                         }
 
                                         if (!isLast) {
@@ -801,19 +748,6 @@ fun LocalPlaylistScreen(
                                             }
                                         }
                                         wrappedSongs.remove(songWrapper)
-                                    }
-                                }
-
-                                val swipeRemoveEnabled by rememberPreference(SwipeToRemoveSongKey, defaultValue = false)
-                                val dismissBoxState = rememberSwipeToDismissBoxState(
-                                    positionalThreshold = { totalDistance -> totalDistance * 0.5f }
-                                )
-
-                                LaunchedEffect(dismissBoxState.currentValue) {
-                                    if (swipeRemoveEnabled &&
-                                        (dismissBoxState.currentValue == SwipeToDismissBoxValue.StartToEnd ||
-                                                dismissBoxState.currentValue == SwipeToDismissBoxValue.EndToStart)) {
-                                        deleteFromPlaylist()
                                     }
                                 }
 
@@ -905,39 +839,10 @@ fun LocalPlaylistScreen(
                                             }
                                         }
 
-                                        if (locked || !editable) {
+                                        if (locked || selection) {
                                             songContent()
                                         } else {
-                                            SwipeToDismissBox(
-                                                state = dismissBoxState,
-                                                backgroundContent = {
-                                                    val color by animateColorAsState(
-                                                        targetValue = when (dismissBoxState.dismissDirection) {
-                                                            SwipeToDismissBoxValue.StartToEnd,
-                                                            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                                                            else -> Color.Transparent
-                                                        },
-                                                        label = "swipe_background_color"
-                                                    )
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .clip(RoundedCornerShape(12.dp))
-                                                            .background(color)
-                                                            .padding(horizontal = 20.dp),
-                                                        contentAlignment = Alignment.CenterEnd
-                                                    ) {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.delete),
-                                                            contentDescription = null,
-                                                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                                                            modifier = Modifier.size(24.dp)
-                                                        )
-                                                    }
-                                                },
-                                            ) {
-                                                songContent()
-                                            }
+                                            songContent()
                                         }
 
                                         if (!isLast) {
