@@ -362,6 +362,7 @@ Si encuentras valor en **OpenTune** y quieres contribuir a su desarrollo continu
 Agradecimientos especiales a los siguientes contribuidores y colaboradores:
 
 - **mostafaalagamy** - Implementación de MetroList
+‎Vivi Music (Inspiración de diseño) 
 - **Fabito02** - Apoyo incondicional desde el principio
 - **Traductores de la comunidad** - Haciendo OpenTune accesible mundialmente
 - **Testers beta** - Ayudando a mejorar la estabilidad y usabilidad
