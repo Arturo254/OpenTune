@@ -163,21 +163,6 @@ fun MiniPlayer(
         animationSpec = animationSpec
     )
 
-    // Animación INFINITA de rotación para el thumbnail
-    // Se ejecuta continuamente mientras isPlaying = true
-    val infiniteTransition = rememberInfiniteTransition(label = "thumbnail_rotation")
-    val thumbnailRotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 8000, // 8 segundos para una rotación completa (velocidad lenta)
-                easing = LinearEasing
-            ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
 
     // Convertir RoundedPolygon a Shape usando la API oficial
     // Cambia a Square cuando está en pausa, usa la forma seleccionada cuando está reproduciendo
@@ -315,7 +300,6 @@ fun MiniPlayer(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .size(40.dp)
-                                .rotate(if (isPlaying) thumbnailRotation else 0f) // Solo rota cuando está reproduciendo
                                 .clip(currentThumbnailShape)
                                 .border(
                                     width = 1.dp,

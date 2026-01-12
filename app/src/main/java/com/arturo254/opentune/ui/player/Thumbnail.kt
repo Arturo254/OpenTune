@@ -105,6 +105,7 @@ fun Thumbnail(
         PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.onBackground
         PlayerBackgroundStyle.BLUR -> Color.White
         PlayerBackgroundStyle.GRADIENT -> Color.White
+        PlayerBackgroundStyle.APPLE_MUSIC -> Color.White
     }
 
     val thumbnailLazyGridState = rememberLazyGridState()

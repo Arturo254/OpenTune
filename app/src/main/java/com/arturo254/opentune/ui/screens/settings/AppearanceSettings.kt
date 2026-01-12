@@ -404,6 +404,7 @@ fun AppearanceSettings(
                             PlayerBackgroundStyle.DEFAULT -> stringResource(R.string.follow_theme)
                             PlayerBackgroundStyle.GRADIENT -> stringResource(R.string.gradient)
                             PlayerBackgroundStyle.BLUR -> stringResource(R.string.player_background_blur)
+                            PlayerBackgroundStyle.APPLE_MUSIC -> stringResource(R.string.apple_music)
                         }
                     },
                     values = availableBackgroundStyles
@@ -419,13 +420,9 @@ fun AppearanceSettings(
                 {
                     UnifiedShapeSelectorButton(
                         smallButtonsShape = smallButtonsShapeState.value,
-                        playPauseShape = playPauseShapeState.value,
                         miniPlayerShape = miniPlayerThumbnailShapeState.value,
                         onSmallButtonsShapeSelected = { newShape ->
                             smallButtonsShapeState.value = newShape
-                        },
-                        onPlayPauseShapeSelected = { newShape ->
-                            playPauseShapeState.value = newShape
                         },
                         onMiniPlayerShapeSelected = { newShape ->
                             miniPlayerThumbnailShapeState.value = newShape

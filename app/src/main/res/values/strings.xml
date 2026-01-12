@@ -654,4 +654,6 @@
     <string name="pause_action">Pause</string>
     <string name="next_action">Next</string>
     <string name="previous_action">Previous</string>
+    <string name="loading_lyrics">Loading lyrics</string>
+    <string name="apple_music">Apple music</string>
 </resources>

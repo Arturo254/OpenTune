@@ -278,6 +278,7 @@ enum class PlayerBackgroundStyle {
     DEFAULT,
     GRADIENT,
     BLUR,
+    APPLE_MUSIC,
 }
 
 
