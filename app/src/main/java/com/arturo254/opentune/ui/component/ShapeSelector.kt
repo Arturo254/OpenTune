@@ -75,10 +75,8 @@ enum class ShapeType {
 @Composable
 fun UnifiedShapeBottomSheet(
     selectedSmallButtonsShape: String,
-    selectedPlayPauseShape: String,
     selectedMiniPlayerShape: String,
     onSmallButtonsShapeSelected: (String) -> Unit,
-    onPlayPauseShapeSelected: (String) -> Unit,
     onMiniPlayerShapeSelected: (String) -> Unit,
     onDismiss: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(),
@@ -195,8 +193,7 @@ fun UnifiedShapeBottomSheet(
 
             val currentSelectedShape = when (selectedTabIndex) {
                 0 -> selectedSmallButtonsShape
-                1 -> selectedPlayPauseShape
-                2 -> selectedMiniPlayerShape
+                1 -> selectedMiniPlayerShape
                 else -> selectedSmallButtonsShape
             }
 
@@ -213,8 +210,7 @@ fun UnifiedShapeBottomSheet(
                         onClick = {
                             when (selectedTabIndex) {
                                 0 -> onSmallButtonsShapeSelected(shapeOption.name)
-                                1 -> onPlayPauseShapeSelected(shapeOption.name)
-                                2 -> onMiniPlayerShapeSelected(shapeOption.name)
+                                1 -> onMiniPlayerShapeSelected(shapeOption.name)
                             }
                             onDismiss()
                         }
@@ -316,10 +312,8 @@ private fun SmallButtonShapeItem(
 @Composable
 fun UnifiedShapeSelectorButton(
     smallButtonsShape: String,
-    playPauseShape: String,
     miniPlayerShape: String,
     onSmallButtonsShapeSelected: (String) -> Unit,
-    onPlayPauseShapeSelected: (String) -> Unit,
     onMiniPlayerShapeSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -345,10 +339,8 @@ fun UnifiedShapeSelectorButton(
     if (showBottomSheet) {
         UnifiedShapeBottomSheet(
             selectedSmallButtonsShape = smallButtonsShape,
-            selectedPlayPauseShape = playPauseShape,
             selectedMiniPlayerShape = miniPlayerShape,
             onSmallButtonsShapeSelected = onSmallButtonsShapeSelected,
-            onPlayPauseShapeSelected = onPlayPauseShapeSelected,
             onMiniPlayerShapeSelected = onMiniPlayerShapeSelected,
             onDismiss = { showBottomSheet = false },
             sheetState = sheetState,

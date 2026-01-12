@@ -64,6 +64,10 @@ val AudioOffload = booleanPreferencesKey("audioOffload")
 
 val PlayerTextAlignmentKey = stringPreferencesKey("playerTextAlignment")
 
+val SwipeToSongKey = booleanPreferencesKey("SwipeToSong")
+val SwipeToRemoveSongKey = booleanPreferencesKey("SwipeToRemoveSong")
+
+
 val RotateBackgroundKey = booleanPreferencesKey("rotate_background")
 
 
@@ -274,6 +278,7 @@ enum class PlayerBackgroundStyle {
     DEFAULT,
     GRADIENT,
     BLUR,
+    APPLE_MUSIC,
 }
 
 

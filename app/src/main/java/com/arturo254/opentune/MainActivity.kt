@@ -1067,16 +1067,30 @@ class MainActivity : ComponentActivity() {
                                             animationSpec = tween(300)
                                         ) + fadeOut(animationSpec = tween(300))
                                     ) {
-                                        Lyrics(
-                                            sliderPositionProvider = {
-                                                // Obtener posición del slider desde el player connection
-                                                null // o la lógica que tengas para obtener la posición del slider
-                                            },
-                                            onNavigateBack = {
-                                                showFullscreenLyrics = false
-                                            },
-                                            modifier = Modifier.fillMaxSize()
-                                        )
+                                        // Usar directamente LyricsScreen que ya es una pantalla completa
+                                        val playerConnection = LocalPlayerConnection.current
+                                        val mediaMetadata by playerConnection?.mediaMetadata?.collectAsState()
+                                            ?: return@AnimatedVisibility
+
+                                        if (mediaMetadata != null) {
+                                            Lyrics(
+                                                sliderPositionProvider = { null },
+                                                onNavigateBack = {
+                                                    showFullscreenLyrics = false
+                                                },
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            // Mostrar placeholder o cerrar
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(MaterialTheme.colorScheme.background),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text("No hay canción reproduciéndose")
+                                            }
+                                        }
                                     }
 
                                     // Detectar automáticamente si es tablet y landscape
