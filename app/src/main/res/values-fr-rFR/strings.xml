@@ -169,47 +169,38 @@
     <!-- Noun -->
     <plurals name="n_song">
         <item quantity="one">"%d titre"</item>
-        <item quantity="many">"%d titres"</item>
         <item quantity="other">"%d titres"</item>
     </plurals>
     <plurals name="n_artist">
         <item quantity="one">"%d artiste"</item>
-        <item quantity="many">"%d artistes"</item>
         <item quantity="other">"%d artistes"</item>
     </plurals>
     <plurals name="n_album">
         <item quantity="one">"%d album"</item>
-        <item quantity="many">"%d albums"</item>
         <item quantity="other">"%d albums"</item>
     </plurals>
     <plurals name="n_playlist">
         <item quantity="one">"%d playlist"</item>
-        <item quantity="many">"%d playlists"</item>
         <item quantity="other">"%d playlists"</item>
     </plurals>
     <plurals name="n_week">
         <item quantity="one">"%d semaine"</item>
-        <item quantity="many">"%d semaines"</item>
         <item quantity="other">"%d semaines"</item>
     </plurals>
     <plurals name="n_month">
         <item quantity="one">"%d mois"</item>
-        <item quantity="many">"%d mois"</item>
         <item quantity="other">"%d mois"</item>
     </plurals>
     <plurals name="n_year">
         <item quantity="one">"%d année"</item>
-        <item quantity="many">"%d années"</item>
         <item quantity="other">"%d années"</item>
     </plurals>
     <plurals name="n_element">
         <item quantity="one">"%d élément"</item>
-        <item quantity="many">"%d éléments"</item>
         <item quantity="other">"%d éléments"</item>
     </plurals>
     <plurals name="n_time">
         <item quantity="one">"%d fois"</item>
-        <item quantity="many">"%d fois"</item>
         <item quantity="other">"%d fois"</item>
     </plurals>
 
