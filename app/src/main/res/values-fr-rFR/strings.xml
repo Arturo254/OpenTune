@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <!-- Bottom navigation -->
     <string name="home">"Accueil"</string>
     <string name="songs">"Titres"</string>
@@ -11,7 +9,6 @@
     <!-- Top bar -->
     <plurals name="n_selected">
         <item quantity="one">"%d sélectionné"</item>
-        <item quantity="many">"%d sélectionnés"</item>
         <item quantity="other">"%d sélectionnés"</item>
     </plurals>
 
