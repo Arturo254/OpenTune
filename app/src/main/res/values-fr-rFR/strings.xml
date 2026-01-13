@@ -445,7 +445,6 @@
     <string name="backup_info_description">"Lorsque vous sauvegardez vos données, vos téléchargements ne sont pas inclus. Il est donc recommandé de vider votre cache via l'application pour des performances optimales. Le service de sauvegarde est sécurisé, garantissant la confidentialité et la protection de vos données."</string>
     <string name="backup_description">"Créez un fichier de sauvegarde de vos données actuelles"</string>
     <string name="restore_description">"Récupérez vos données à partir d'un fichier de sauvegarde"</string>
-    <string name="keep_listening">"continuer_à_écouter"</string>
     <string name="link_copied">"lien_copié"</string>
     <string name="redireccion">"redirection"</string>
     <string name="Version">"Version"</string>
