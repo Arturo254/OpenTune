@@ -406,7 +406,6 @@
     <string name="unmute">"Activer le son"</string>
     <plurals name="seconds">
         <item quantity="one">"1 seconde"</item>
-        <item quantity="many">"%d secondes"</item>
         <item quantity="other">"%d secondes"</item>
     </plurals>
     <string name="mute">"Muet"</string>
