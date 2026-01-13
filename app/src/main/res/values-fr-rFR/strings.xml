@@ -30,13 +30,13 @@
     <string name="yesterday">Hier</string>
     <string name="this_week">Cette semaine</string>
     <string name="last_week">La semaine dernière</string>
-    <string name="local_history">Locale</string>
-    <string name="remote_history">Télécommande</string>
+    <string name="local_history">Historique local</string>
+    <string name="remote_history">Historique à distance</string>
 
     <!-- Stats -->
     <string name="most_played_songs">Les titres les plus joués</string>
     <string name="most_played_artists">Les artistes les plus joués</string>
-    <string name="most_played_albums">Les albums les plus joués</string>
+    <string name="most_played_albums">Les albums les plus écoutés</string>
     <string name="weeks">Semaines</string>
     <string name="months">Mois</string>
     <string name="years">Années</string>
@@ -47,7 +47,7 @@
     <string name="search_yt_music">Rechercher sur YouTube Music…</string>
     <string name="search_library">Rechercher dans la Bibliothèque…</string>
     <string name="filter_library">Bibliothèque</string>
-    <string name="filter_liked">Aimés</string>
+    <string name="filter_liked">Favoris</string>
     <string name="filter_downloaded">Téléchargés</string>
     <string name="filter_all">Tous</string>
     <string name="filter_songs">Titres</string>
@@ -67,7 +67,7 @@
     <string name="other_versions">Autres versions</string>
 
     <!-- Library -->
-    <string name="liked">Aimés</string>
+    <string name="liked">Favoris</string>
     <string name="offline">Téléchargés</string>
     <string name="my_top">Mon Top</string>
     <string name="library_song_empty">Les titres de la bibliothèque apparaîtront ici</string>
@@ -81,7 +81,7 @@
     <string name="sync_playlist">Synchroniser la playlist</string>
     <string name="playlist_is_empty">La playlist est vide</string>
     <string name="remove_download_playlist_confirm">Voulez-vous vraiment supprimer tous les titres de la playlist « %s » du stockage des titres téléchargés ?</string>
-    <string name="delete_playlist_confirm">Voulez-vous vraiment supprimer la playlist « %s » ?</string>
+    <string name="delete_playlist_confirm">Voulez-vous vraiment supprimer la playlist \"%s\" ?</string>
     <string name="elements_selected">%1$d Éléments sélectionnés</string>
     <string name="allows_for_sync_witch_youtube">Remarque : Ceci permet la synchronisation avec YouTube Music. Ce paramètre ne peut pas être modifié ultérieurement.</string>
 
@@ -118,7 +118,7 @@
     <string name="select">Tout sélectionner</string>
     <string name="like_all">J\’aime tout</string>
     <string name="dislike_all">Je n\’aime plus</string>
-    <string name="tempo_and_pitch">Durée et tonalité</string>
+    <string name="tempo_and_pitch">Durée et Tonalité</string>
 
     <!-- Sort menu -->
     <string name="sort_by_create_date">Date d\’ajout</string>
@@ -156,15 +156,15 @@
     <string name="create_playlist">Créer une playlist</string>
     <string name="playlist_name">Nom de la playlist</string>
     <string name="error_playlist_name_empty">Le nom de la playlist ne peut pas être vide.</string>
-    <string name="already_in_playlist">Déjà dans la playlist :</string>
+    <string name="already_in_playlist">Déjà présent dans la playlist :</string>
     <string name="edit_artist">Modifier l\’artiste</string>
     <string name="artist_name">Nom de l\’artiste</string>
     <string name="error_artist_name_empty">Le nom de l\’artiste ne peut pas être vide.</string>
     <string name="duplicates">Doublons</string>
     <string name="skip_duplicates">Ignorer les doublons</string>
     <string name="add_anyway">Ajouter quand même</string>
-    <string name="duplicates_description_single">Le titre est déjà dans votre playlist</string>
-    <string name="duplicates_description_multiple">%d titres sont déjà dans votre playlist</string>
+    <string name="duplicates_description_single">Le titre est déjà dans votre playlist.</string>
+    <string name="duplicates_description_multiple">%d titres sont déjà dans votre playlist.</string>
 
     <!-- Noun -->
     <plurals name="n_song">
@@ -207,7 +207,7 @@
     <!-- Snackbar -->
     <string name="playlist_imported">Playlist importée</string>
     <string name="imported_playlist">Playlist importée</string>
-    <string name="removed_song_from_playlist">Suppression de « %s » de la playlist</string>
+    <string name="removed_song_from_playlist">Suppression de \"%s\" de la playlist</string>
     <string name="playlist_synced">Playlist synchronisée</string>
     <string name="undo">Défaire</string>
     
@@ -222,14 +222,14 @@
     </plurals>
     <string name="error_no_stream">Aucun flux disponible</string>
     <string name="error_no_internet">Pas de connexion réseau</string>
-    <string name="error_timeout">Temps mort</string>
+    <string name="error_timeout">Délai d\'attente </string>
     <string name="error_unknown">Erreur inconnue</string>
     <string name="seek_backward">5 secondes en arrière</string>
     <string name="seek_forward">5 secondes en avant</string>
 
     <!-- Player action -->
     <string name="action_like">J\’aime</string>
-    <string name="action_remove_like">Supprimer les mentions « J\’aime »</string>
+    <string name="action_remove_like">Supprimer les mentions \"J\’aime\"</string>
     <string name="action_shuffle_on">Lecture aléatoire activée</string>
     <string name="action_shuffle_off">Lecture aléatoire désactivée</string>
     <string name="repeat_mode_off">Mode répétition désactivé</string>
@@ -248,7 +248,7 @@
     <string name="settings">Paramètres</string>
     <string name="login_settings">Paramètres de connexion</string>
     <string name="use_login_for_browse">Utilisez la connexion pour parcourir le contenu premium</string>
-    <string name="use_login_for_browse_desc">Cela peut afficher les albums premium uniquement si vous êtes connecté avec un compte Premium</string>
+    <string name="use_login_for_browse_desc">Cela peut afficher les albums premium uniquement si vous êtes connecté avec un compte Premium.</string>
     <string name="general_settings">Paramètres généraux</string>
     <string name="appearance">Apparence</string>
     <string name="theme">Thème</string>
@@ -263,7 +263,7 @@
     <string name="player_background_blur">Flou</string>
     <string name="enable_squiggly_slider">Activer le curseur ondulé</string>
     <string name="enable_swipe_thumbnail">Activer le balayage pour changer de titre</string>
-    <string name="pure_black">Noir pur</string>
+    <string name="pure_black">Noir intense</string>
     <string name="customize_navigation_tabs">Personnaliser les onglets de navigation</string>
     <string name="player">Lecteur</string>
     <string name="player_text_alignment">Alignement du texte du lecteur</string>
@@ -317,7 +317,7 @@
     <string name="set_first_lyrics_provider">Fournisseur de paroles préféré</string>
     <string name="player_and_audio">Lecteur et Audio</string>
     <string name="audio_quality">Qualité audio</string>
-    <string name="audio_quality_max">Max (bêta)</string>
+    <string name="audio_quality_max">Maximale</string>
     <string name="audio_quality_auto">Auto</string>
     <string name="audio_quality_high">Haute</string>
     <string name="audio_quality_low">Faible</string>
@@ -343,9 +343,9 @@
     <string name="clear_all_downloads">Effacer tous les téléchargements</string>
     <string name="max_image_cache_size">Taille maximale du cache d\’images</string>
     <string name="clear_image_cache">Vider le cache d\’images</string>
-    <string name="max_song_cache_size">Taille maximale du cache des chansons</string>
-    <string name="clear_song_cache">Vider le cache des chansons</string>
-    <string name="size_used">%s utilisé</string>
+    <string name="max_song_cache_size">Taille maximale du cache des titres</string>
+    <string name="clear_song_cache">Vider le cache des titres</string>
+    <string name="size_used">%s utilisée</string>
      <string name="privacy">Confidentialité</string>
     <string name="listen_history">Écouter l\’historique</string>
     <string name="search_history">Historique de recherche</string>
@@ -394,7 +394,7 @@
     <string name="NewVersion">Nouvelle version</string>
     <string name="Changelog">Journal des modifications</string>
     <string name="changelogs">Journaux des modifications</string>
-    <string name="no_changes">aucun changement</string>
+    <string name="no_changes">Aucun changement</string>
     <string name="Translate">Traduire</string>
     <string name="Redirección">Redirection</string>
     <string name="poeditor_redirect">Vous êtes sur le point d\’être redirigé vers poeditor.com</string>
