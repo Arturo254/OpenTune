@@ -1,46 +1,46 @@
 <resources>
     <!-- Bottom navigation -->
-    <string name="home">"Accueil"</string>
-    <string name="songs">"Titres"</string>
-    <string name="artists">"Artistes"</string>
-    <string name="albums">"Albums"</string>
-    <string name="playlists">"Playlists"</string>
+    <string name="home">Accueil</string>
+    <string name="songs">Titres</string>
+    <string name="artists">Artistes</string>
+    <string name="albums">Albums</string>
+    <string name="playlists">Playlists</string>
 
     <!-- Top bar -->
     <plurals name="n_selected">
-        <item quantity="one">"%d sélectionné"</item>
-        <item quantity="other">"%d sélectionnés"</item>
+        <item quantity="one">%d sélectionné</item>
+        <item quantity="other">%d sélectionnés</item>
     </plurals>
 
     <!-- Home -->
-    <string name="history">"Historique"</string>
-    <string name="stats">"Statistiques"</string>
-    <string name="mood_and_genres">"Humeur et Genres"</string>
-    <string name="account">"Compte"</string>
-    <string name="quick_picks">"Sélection Rapide"</string>
-    <string name="quick_picks_empty">"Écoutez des titres pour générer votre sélection rapide"</string>
-    <string name="new_release_albums">"Nouveautés"</string>
-    <string name="forgotten_favorites">"Favoris oubliés"</string>
-    <string name="similar_to">"Similaire à"</string>
+    <string name="history">Historique</string>
+    <string name="stats">Statistiques</string>
+    <string name="mood_and_genres">Ambiance et Genres</string>
+    <string name="account">Compte</string>
+    <string name="quick_picks">Sélection Rapide</string>
+    <string name="quick_picks_empty">Écoutez des titres pour générer votre sélection rapide</string>
+    <string name="new_release_albums">Nouveautés</string>
+    <string name="forgotten_favorites">Favoris oubliés</string>
+    <string name="similar_to">Similaire à</string>
     <string name="keep_listening">Continuez à écouter</string>
-    <string name="your_ytb_playlists">"Votre compte YouTube"</string>
+    <string name="your_ytb_playlists">Votre compte YouTube</string>
 
     <!-- History -->
-    <string name="today">"Aujourd'hui"</string>
-    <string name="yesterday">"Hier"</string>
-    <string name="this_week">"Cette semaine"</string>
-    <string name="last_week">"La semaine dernière"</string>
-    <string name="local_history">"Locale"</string>
-    <string name="remote_history">"Télécommande"</string>
+    <string name="today">Aujourd'hui</string>
+    <string name="yesterday">Hier</string>
+    <string name="this_week">Cette semaine</string>
+    <string name="last_week">La semaine dernière</string>
+    <string name="local_history">Locale</string>
+    <string name="remote_history">Télécommande</string>
 
     <!-- Stats -->
-    <string name="most_played_songs">"Les titres les plus joués"</string>
-    <string name="most_played_artists">"Les artistes les plus joués"</string>
-    <string name="most_played_albums">"Les albums les plus joués"</string>
-    <string name="weeks">"Semaines"</string>
-    <string name="months">"Mois"</string>
-    <string name="years">"Années"</string>
-    <string name="continuous">"Continu"</string>
+    <string name="most_played_songs">Les titres les plus joués</string>
+    <string name="most_played_artists">Les artistes les plus joués</string>
+    <string name="most_played_albums">Les albums les plus joués</string>
+    <string name="weeks">Semaines</string>
+    <string name="months">Mois</string>
+    <string name="years">Années</string>
+    <string name="continuous">Continu</string>
 
     <!-- Search -->
     <string name="search">"Recherche"</string>
