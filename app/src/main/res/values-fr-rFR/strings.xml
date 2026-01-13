@@ -217,7 +217,6 @@
     <string name="end_of_song">"Fin du titre"</string>
     <plurals name="minute">
         <item quantity="one">"1 minute"</item>
-        <item quantity="many">"%d minutes"</item>
         <item quantity="other">"%d minutes"</item>
     </plurals>
     <string name="error_no_stream">"Aucun flux disponible"</string>
