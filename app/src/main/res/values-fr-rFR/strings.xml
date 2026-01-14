@@ -502,17 +502,17 @@
     <string name="selection_mode_active">Mode de sélection active</string>
  
     <!-- Avatar Selection -->
-    <string name="avatar_selection"></string>
-    <string name="choose_predefined_avatar"></string>
+    <string name="avatar_selection">Sélection d\'avatar</string>
+    <string name="choose_predefined_avatar">Choisissez un avatar prédéfini</string>
     <!-- Avatar Descriptions for Predefined Avatars -->
-    <string name="geometric_avatar_1"></string>
-    <string name="geometric_avatar_2"></string>
-    <string name="geometric_avatar_3"></string>
-    <string name="geometric_avatar_4"></string>
-    <string name="geometric_avatar_5"></string>
-    <string name="geometric_avatar_6"></string>
-    <string name="purple_initial_avatar"></string>
-    <string name="blue_initial_avatar"></string>
+    <string name="geometric_avatar_1">Avatar Géométrique 1</string>
+    <string name="geometric_avatar_2">Avatar Géométrique 2</string>
+    <string name="geometric_avatar_3">Avatar Géométrique 3</string>
+    <string name="geometric_avatar_4">Avatar Géométrique 4</string>
+    <string name="geometric_avatar_5">Avatar Géométrique 5</string>
+    <string name="geometric_avatar_6">Avatar Géométrique 6</string>
+    <string name="purple_initial_avatar">Avatar avec initiales violettes</string>
+    <string name="blue_initial_avatar">Avatar avec initiales bleues</string>
     <string name="green_initial_avatar"></string>
     <string name="orange_initial_avatar"></string>
     <string name="red_initial_avatar"></string>
