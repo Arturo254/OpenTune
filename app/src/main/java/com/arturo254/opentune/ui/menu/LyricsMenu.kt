@@ -1,5 +1,6 @@
 package com.arturo254.opentune.ui.menu
 
+import android.annotation.SuppressLint
 import android.app.SearchManager
 import android.content.Intent
 import androidx.compose.animation.animateContentSize
@@ -17,11 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,19 +53,22 @@ import com.arturo254.opentune.R
 import com.arturo254.opentune.db.entities.LyricsEntity
 import com.arturo254.opentune.models.MediaMetadata
 import com.arturo254.opentune.ui.component.DefaultDialog
-import com.arturo254.opentune.ui.component.GridMenu
-import com.arturo254.opentune.ui.component.GridMenuItem
 import com.arturo254.opentune.ui.component.ListDialog
 import com.arturo254.opentune.ui.component.TextFieldDialog
+import com.arturo254.opentune.ui.component.MenuItemData
+import com.arturo254.opentune.ui.component.MenuGroup
+import com.arturo254.opentune.ui.component.NewAction
+import com.arturo254.opentune.ui.component.NewActionGrid
 import com.arturo254.opentune.viewmodels.LyricsMenuViewModel
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LyricsMenu(
     lyricsProvider: () -> LyricsEntity?,
     mediaMetadataProvider: () -> MediaMetadata,
     onDismiss: () -> Unit,
-    onLyricsUpdated: () -> Unit = {}, // NUEVO: Callback para notificar actualización
+    onLyricsUpdated: () -> Unit = {},
     viewModel: LyricsMenuViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -88,7 +94,6 @@ fun LyricsMenu(
                         ),
                     )
                 }
-                // NUEVO: Notificar que las letras fueron actualizadas
                 onLyricsUpdated()
                 onDismiss()
             },
@@ -224,7 +229,6 @@ fun LyricsMenu(
                                         ),
                                     )
                                 }
-                                // NUEVO: Notificar actualización antes de cerrar
                                 onLyricsUpdated()
                                 showSearchResultDialog = false
                                 onDismiss()
@@ -304,35 +308,90 @@ fun LyricsMenu(
         }
     }
 
-    GridMenu(
-        contentPadding =
-            PaddingValues(
-                start = 8.dp,
-                top = 8.dp,
-                end = 8.dp,
-                bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
-            ),
+    // Header con información de la canción
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        GridMenuItem(
-            icon = R.drawable.edit,
-            title = R.string.edit,
-        ) {
-            showEditDialog = true
-        }
-        GridMenuItem(
-            icon = R.drawable.cached,
-            title = R.string.refetch,
-        ) {
-            viewModel.refetchLyrics(mediaMetadataProvider(), lyricsProvider())
-            // NUEVO: Notificar actualización cuando se recargan las letras
-            onLyricsUpdated()
-            onDismiss()
-        }
-        GridMenuItem(
-            icon = R.drawable.search,
-            title = R.string.search,
-        ) {
-            showSearchDialog = true
+        Text(
+            text = mediaMetadataProvider().title,
+            style = MaterialTheme.typography.titleLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Text(
+            text = mediaMetadataProvider().artists.joinToString { it.name },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    HorizontalDivider()
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    LazyColumn(
+        contentPadding = PaddingValues(
+            start = 0.dp,
+            top = 0.dp,
+            end = 0.dp,
+            bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
+        ),
+    ) {
+        // Grid de acciones principales
+        item {
+            NewActionGrid(
+                actions = listOf(
+                    NewAction(
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.edit),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        text = stringResource(R.string.edit),
+                        onClick = { showEditDialog = true }
+                    ),
+                    NewAction(
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.cached),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        text = stringResource(R.string.refetch),
+                        onClick = {
+                            viewModel.refetchLyrics(mediaMetadataProvider(), lyricsProvider())
+                            onLyricsUpdated()
+                            onDismiss()
+                        }
+                    ),
+                    NewAction(
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.search),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        text = stringResource(R.string.search),
+                        onClick = { showSearchDialog = true }
+                    )
+                ),
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp)
+            )
         }
     }
 }
