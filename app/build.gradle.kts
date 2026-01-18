@@ -50,6 +50,17 @@ android {
         }
     }
 
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/NOTICE.md"
+            excludes += "META-INF/CONTRIBUTORS.md"
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+        }
+    }
+
     buildFeatures {
         buildConfig = true
         compose = true
@@ -84,6 +95,7 @@ android {
         includeInApk = false
         includeInBundle = false
     }
+
 }
 
 ksp {

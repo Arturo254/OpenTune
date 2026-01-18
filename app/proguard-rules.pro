@@ -89,3 +89,26 @@
 -dontwarn java.beans.Introspector
 -dontwarn java.beans.PropertyDescriptor
 -dontwarn okhttp3.internal.Util
+
+
+## Rules for PipePipeExtractor
+-keep class project.pipepipe.extractor.** { *; }
+-keep class project.pipepipe.shared.** { *; }
+
+## Netty rules (used by PipePipeExtractor dependencies)
+-dontwarn io.netty.**
+-dontwarn org.apache.log4j.**
+-dontwarn org.apache.logging.log4j.**
+-dontwarn reactor.blockhound.**
+-dontwarn io.micrometer.context.**
+-dontwarn javax.enterprise.inject.**
+
+## Lettuce (Redis client used by PipePipeExtractor)
+-dontwarn io.lettuce.core.**
+
+## Reactor
+-dontwarn reactor.util.context.**
+
+## Keep Wire protobuf classes
+-keep class com.squareup.wire.** { *; }
+

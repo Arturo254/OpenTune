@@ -5,7 +5,7 @@ json = "20241224"
 kotlin = "2.1.0"
 compose = "1.9.4"
 lifecycle = "2.9.4"
-material3 = "1.5.0-alpha11"
+material3 = "1.5.0-alpha12"
 media3 = "1.8.0"
 room = "2.6.1"
 hilt = "2.55"
@@ -17,7 +17,7 @@ loggingInterceptor = "5.0.0-alpha.14"
 blurry = "4.0.1"
 materialRipple = "1.10.0"
 roomRuntimeAndroid = "2.7.2"
-extractor = "main-SNAPSHOT"
+extractor = "e30358b"
 composeReorderable = "3.0.0"
 uiAndroid = "1.9.2"
 materialIconsExtended = "1.7.6"
@@ -94,7 +94,7 @@ junit = { group = "junit", name = "junit", version = "4.13.2" }
 
 timber = { group = "com.jakewharton.timber", name = "timber", version = "5.0.1" }
 
-newpipe-extractor = { module = "com.github.mostafaalagamy:MetrolistExtractor", version.ref = "extractor" }
+newpipe-extractor = { module = "com.github.mostafaalagamy:MetroExtractor", version.ref = "extractor" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
