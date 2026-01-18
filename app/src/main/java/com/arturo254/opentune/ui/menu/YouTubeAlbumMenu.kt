@@ -7,13 +7,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -58,13 +61,14 @@ import com.arturo254.opentune.db.entities.Song
 import com.arturo254.opentune.extensions.toMediaItem
 import com.arturo254.opentune.playback.ExoDownloadService
 import com.arturo254.opentune.playback.queues.YouTubeAlbumRadio
-import com.arturo254.opentune.ui.component.DownloadGridMenu
-import com.arturo254.opentune.ui.component.GridMenu
-import com.arturo254.opentune.ui.component.GridMenuItem
 import com.arturo254.opentune.ui.component.ListDialog
 import com.arturo254.opentune.ui.component.ListItem
 import com.arturo254.opentune.ui.component.SongListItem
 import com.arturo254.opentune.ui.component.YouTubeListItem
+import com.arturo254.opentune.ui.component.MenuItemData
+import com.arturo254.opentune.ui.component.MenuGroup
+import com.arturo254.opentune.ui.component.NewAction
+import com.arturo254.opentune.ui.component.NewActionGrid
 import com.arturo254.opentune.utils.reportException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -210,11 +214,6 @@ fun YouTubeAlbumMenu(
                             Modifier
                                 .fillParentMaxWidth()
                                 .height(ListItemHeight)
-                                .clickable {
-                                    showSelectArtistDialog = false
-                                    onDismiss()
-                                    navController.navigate("artist/${artist.id}")
-                                }
                                 .padding(horizontal = 24.dp),
                     ) {
                         Text(
@@ -250,104 +249,238 @@ fun YouTubeAlbumMenu(
         },
     )
 
+    Spacer(modifier = Modifier.height(20.dp))
+
     HorizontalDivider()
 
-    GridMenu(
-        contentPadding =
-            PaddingValues(
-                start = 8.dp,
-                top = 8.dp,
-                end = 8.dp,
-                bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
-            ),
+    Spacer(modifier = Modifier.height(12.dp))
+
+    LazyColumn(
+        contentPadding = PaddingValues(
+            start = 0.dp,
+            top = 0.dp,
+            end = 0.dp,
+            bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
+        ),
     ) {
-        GridMenuItem(
-            icon = R.drawable.radio,
-            title = R.string.start_radio,
-        ) {
-            playerConnection.playQueue(YouTubeAlbumRadio(albumItem.playlistId))
-            onDismiss()
-        }
-        GridMenuItem(
-            icon = R.drawable.playlist_play,
-            title = R.string.play_next,
-        ) {
-            album
-                ?.songs
-                ?.map { it.toMediaItem() }
-                ?.let(playerConnection::playNext)
-            onDismiss()
-        }
-        GridMenuItem(
-            icon = R.drawable.queue_music,
-            title = R.string.add_to_queue,
-        ) {
-            album
-                ?.songs
-                ?.map { it.toMediaItem() }
-                ?.let(playerConnection::addToQueue)
-            onDismiss()
-        }
-        GridMenuItem(
-            icon = R.drawable.playlist_add,
-            title = R.string.add_to_playlist,
-        ) {
-            showChoosePlaylistDialog = true
-        }
-        DownloadGridMenu(
-            state = downloadState,
-            onDownload = {
-                album?.songs?.forEach { song ->
-                    val downloadRequest =
-                        DownloadRequest
-                            .Builder(song.id, song.id.toUri())
-                            .setCustomCacheKey(song.id)
-                            .setData(song.song.title.toByteArray())
-                            .build()
-                    DownloadService.sendAddDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        downloadRequest,
-                        false,
+        // Grid de acciones principales
+        item {
+            NewActionGrid(
+                actions = listOf(
+                    NewAction(
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.radio),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        text = stringResource(R.string.start_radio),
+                        onClick = {
+                            playerConnection.playQueue(YouTubeAlbumRadio(albumItem.playlistId))
+                            onDismiss()
+                        }
+                    ),
+                    NewAction(
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.playlist_add),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        text = stringResource(R.string.add_to_playlist),
+                        onClick = { showChoosePlaylistDialog = true }
+                    ),
+                    NewAction(
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.share),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        text = stringResource(R.string.share),
+                        onClick = {
+                            val intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, albumItem.shareLink)
+                            }
+                            context.startActivity(Intent.createChooser(intent, null))
+                            onDismiss()
+                        }
                     )
-                }
-            },
-            onRemoveDownload = {
-                album?.songs?.forEach { song ->
-                    DownloadService.sendRemoveDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        song.id,
-                        false,
-                    )
-                }
-            },
-        )
+                ),
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp)
+            )
+        }
+
+        // Grupo: Ver artista
         albumItem.artists?.let { artists ->
-            GridMenuItem(
-                icon = R.drawable.artist,
-                title = R.string.view_artist,
-            ) {
-                if (artists.size == 1) {
-                    navController.navigate("artist/${artists[0].id}")
-                    onDismiss()
-                } else {
-                    showSelectArtistDialog = true
-                }
+            item {
+                MenuGroup(
+                    items = listOf(
+                        MenuItemData(
+                            title = { Text(text = stringResource(R.string.view_artist)) },
+                            description = {
+                                Text(
+                                    text = artists.joinToString { it.name },
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.artist),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            onClick = {
+                                if (artists.size == 1) {
+                                    navController.navigate("artist/${artists[0].id}")
+                                    onDismiss()
+                                } else {
+                                    showSelectArtistDialog = true
+                                }
+                            }
+                        )
+                    )
+                )
             }
+
+            item { Spacer(modifier = Modifier.height(12.dp)) }
         }
-        GridMenuItem(
-            icon = R.drawable.share,
-            title = R.string.share,
-        ) {
-            val intent =
-                Intent().apply {
-                    action = Intent.ACTION_SEND
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, albumItem.shareLink)
-                }
-            context.startActivity(Intent.createChooser(intent, null))
-            onDismiss()
+
+        // Grupo: Reproducción
+        item {
+            MenuGroup(
+                items = listOf(
+                    MenuItemData(
+                        title = { Text(text = stringResource(R.string.play_next)) },
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.playlist_play),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        },
+                        onClick = {
+                            album
+                                ?.songs
+                                ?.map { it.toMediaItem() }
+                                ?.let(playerConnection::playNext)
+                            onDismiss()
+                        }
+                    ),
+                    MenuItemData(
+                        title = { Text(text = stringResource(R.string.add_to_queue)) },
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.queue_music),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        },
+                        onClick = {
+                            album
+                                ?.songs
+                                ?.map { it.toMediaItem() }
+                                ?.let(playerConnection::addToQueue)
+                            onDismiss()
+                        }
+                    )
+                )
+            )
+        }
+
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+
+        // Grupo: Descarga
+        item {
+            MenuGroup(
+                items = listOf(
+                    when (downloadState) {
+                        Download.STATE_COMPLETED -> {
+                            MenuItemData(
+                                title = { Text(text = stringResource(R.string.remove_download)) },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.offline),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                },
+                                onClick = {
+                                    album?.songs?.forEach { song ->
+                                        DownloadService.sendRemoveDownload(
+                                            context,
+                                            ExoDownloadService::class.java,
+                                            song.id,
+                                            false,
+                                        )
+                                    }
+                                }
+                            )
+                        }
+
+                        Download.STATE_QUEUED, Download.STATE_DOWNLOADING -> {
+                            MenuItemData(
+                                title = { Text(text = stringResource(R.string.downloading)) },
+                                icon = {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                },
+                                onClick = {
+                                    album?.songs?.forEach { song ->
+                                        DownloadService.sendRemoveDownload(
+                                            context,
+                                            ExoDownloadService::class.java,
+                                            song.id,
+                                            false,
+                                        )
+                                    }
+                                }
+                            )
+                        }
+
+                        else -> {
+                            MenuItemData(
+                                title = { Text(text = stringResource(R.string.download)) },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.download),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                },
+                                onClick = {
+                                    album?.songs?.forEach { song ->
+                                        val downloadRequest =
+                                            DownloadRequest
+                                                .Builder(song.id, song.id.toUri())
+                                                .setCustomCacheKey(song.id)
+                                                .setData(song.song.title.toByteArray())
+                                                .build()
+                                        DownloadService.sendAddDownload(
+                                            context,
+                                            ExoDownloadService::class.java,
+                                            downloadRequest,
+                                            false,
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                )
+            )
         }
     }
 }
