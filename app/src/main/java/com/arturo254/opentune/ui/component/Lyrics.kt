@@ -62,6 +62,7 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -157,10 +158,24 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.saket.squiggles.SquigglySlider
+import kotlin.math.exp
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.platform.LocalLayoutDirection
+import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
+import kotlin.math.exp
+import kotlin.math.roundToInt
 
 @RequiresApi(Build.VERSION_CODES.M)
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class
+)
 @SuppressLint("UnusedBoxWithConstraintsScope", "StringFormatInvalid",
     "LocalContextGetResourceValueCall"
 )
@@ -223,6 +238,10 @@ fun Lyrics(
     var isAnimating by remember { mutableStateOf(false) }
     val maxSelectionLimit = 5
 
+
+    val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
+    val canSkipNext by playerConnection.canSkipNext.collectAsState()
+
     // Optimized cache system
     var lyricsCache by remember { mutableStateOf<Map<String, LyricsEntity>>(emptyMap()) }
     var currentLyricsEntity by remember(currentSongId) {
@@ -248,6 +267,19 @@ fun Lyrics(
         if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
     }
 
+
+    var progress by remember { mutableFloatStateOf(0f) }
+    val animatedProgress by
+    animateFloatAsState(
+        targetValue = progress,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessVeryLow,
+                visibilityThreshold = 1 / 1000f,
+            ),
+    )
+
     var position by rememberSaveable(playbackState) { mutableLongStateOf(playerConnection.player.currentPosition) }
     var duration by rememberSaveable(playbackState) { mutableLongStateOf(playerConnection.player.duration) }
 
@@ -257,13 +289,11 @@ fun Lyrics(
     }
     val textColor = expressiveAccent
 
-    // Determinar color del texto según el fondo
     val textBackgroundColor = when (playerBackground) {
         PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.onBackground
         PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT, PlayerBackgroundStyle.APPLE_MUSIC -> Color.White
     }
 
-    // Background colors para gradientes
     val primaryColor = MaterialTheme.colorScheme.primary
     val secondaryColor = MaterialTheme.colorScheme.secondary
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
@@ -283,7 +313,7 @@ fun Lyrics(
 
             withContext(Dispatchers.IO) {
                 try {
-                    // Usar colores del tema como fallback
+
                     val fallbackColors = listOf(primaryColor, secondaryColor, tertiaryColor)
                     gradientColorsCache[currentMetadata.id] = fallbackColors
                     withContext(Dispatchers.Main) { gradientColors = fallbackColors }
@@ -328,7 +358,7 @@ fun Lyrics(
                                 com.arturo254.opentune.di.LyricsHelperEntryPoint::class.java
                             )
                             val lyricsHelper = entryPoint.lyricsHelper()
-                            val fetchedLyrics: String? = currentMetadata?.let { lyricsHelper.getLyrics(it) }
+                            val fetchedLyrics: String? = currentMetadata.let { lyricsHelper.getLyrics(it) }
 
                             val entity = if (!fetchedLyrics.isNullOrBlank()) {
                                 LyricsEntity(songId, fetchedLyrics)
@@ -734,27 +764,31 @@ fun Lyrics(
 
                         if (isLoadingLyrics) {
                             item {
-                                ShimmerHost {
-                                    repeat(6) {
-                                        Box(
-                                            contentAlignment = when (lyricsTextPosition) {
-                                                LyricsPosition.LEFT -> Alignment.CenterStart
-                                                LyricsPosition.CENTER -> Alignment.Center
-                                                LyricsPosition.RIGHT -> Alignment.CenterEnd
-                                            },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(
-                                                    horizontal = 16.dp,
-                                                    vertical = 6.dp
-                                                )
-                                        ) {
-                                            TextPlaceholder()
-                                        }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 64.dp),
+                                    contentAlignment = when (lyricsTextPosition) {
+                                        LyricsPosition.LEFT -> Alignment.CenterStart
+                                        LyricsPosition.CENTER -> Alignment.Center
+                                        LyricsPosition.RIGHT -> Alignment.CenterEnd
+                                    }
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        androidx.compose.material3.ContainedLoadingIndicator(
+                                            modifier = Modifier.size(56.dp),
+                                            containerColor = expressiveAccent.copy(alpha = 0.15f),
+                                            indicatorColor = expressiveAccent
+                                        )
+
                                     }
                                 }
                             }
-                        } else {
+                        }
+                        else {
                             itemsIndexed(
                                 items = lines,
                                 key = { index, item -> "$index-${item.time}" }
@@ -979,120 +1013,233 @@ fun Lyrics(
                     }
                 }
             }
-
-            // REPRODUCTOR FIJO - IGUAL AL ORIGINAL
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp)
             ) {
-                // Album artwork, title, artist, and buttons
+
+                val coroutineScope = rememberCoroutineScope()
+                val offsetXAnimatable = remember { Animatable(0f) }
+                var dragStartTime by remember { mutableLongStateOf(0L) }
+                var totalDragDistance by remember { mutableFloatStateOf(0f) }
+                val layoutDirection = LocalLayoutDirection.current
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Left side - Album artwork and text info
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable {
-                                    if (playbackState == androidx.media3.common.Player.STATE_ENDED) {
-                                        playerConnection.player.seekTo(0, 0)
-                                        playerConnection.player.playWhenReady = true
-                                    } else {
-                                        if (isPlaying) playerConnection.player.pause() else playerConnection.player.play()
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .pointerInput(Unit) {
+                                detectHorizontalDragGestures(
+                                    onDragStart = {
+                                        dragStartTime = System.currentTimeMillis()
+                                        totalDragDistance = 0f
+                                    },
+                                    onDragCancel = {
+                                        coroutineScope.launch {
+                                            offsetXAnimatable.animateTo(
+                                                targetValue = 0f,
+                                                animationSpec = spring(
+                                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                                    stiffness = Spring.StiffnessLow
+                                                )
+                                            )
+                                        }
+                                    },
+                                    onHorizontalDrag = { _, dragAmount ->
+                                        val adjustedDragAmount = if (layoutDirection == LayoutDirection.Rtl)
+                                            -dragAmount else dragAmount
+                                        val allowLeft = adjustedDragAmount < 0 && canSkipNext
+                                        val allowRight = adjustedDragAmount > 0 && canSkipPrevious
+
+                                        if (allowLeft || allowRight) {
+                                            totalDragDistance += adjustedDragAmount.absoluteValue
+                                            coroutineScope.launch {
+                                                offsetXAnimatable.snapTo(offsetXAnimatable.value + adjustedDragAmount)
+                                            }
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        val dragDuration = System.currentTimeMillis() - dragStartTime
+                                        val velocity = if (dragDuration > 0)
+                                            totalDragDistance / dragDuration else 0f
+                                        val currentOffset = offsetXAnimatable.value
+
+                                        val minDistanceThreshold = 50f
+                                        val velocityThreshold = (0.73f * -8.25f) + 8.5f
+                                        val autoSwipeThreshold = calculateAutoSwipeThreshold(0.73f)
+
+                                        val shouldChangeSong = (
+                                                currentOffset.absoluteValue > minDistanceThreshold &&
+                                                        velocity > velocityThreshold
+                                                ) || (currentOffset.absoluteValue > autoSwipeThreshold)
+
+                                        if (shouldChangeSong) {
+                                            val isRightSwipe = currentOffset > 0
+                                            if (isRightSwipe && canSkipPrevious) {
+                                                playerConnection.seekToPrevious()
+                                            } else if (!isRightSwipe && canSkipNext) {
+                                                playerConnection.seekToNext()
+                                            }
+                                        }
+
+                                        coroutineScope.launch {
+                                            offsetXAnimatable.animateTo(
+                                                targetValue = 0f,
+                                                animationSpec = spring(
+                                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                                    stiffness = Spring.StiffnessLow
+                                                )
+                                            )
+                                        }
                                     }
-                                }
-                        ) {
-                            currentMetadata?.let { metadata ->
-                                AsyncImage(
-                                    model = metadata.thumbnailUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
                                 )
                             }
-
-                            // Overlay and Icon
-                            val overlayAlpha by androidx.compose.animation.core.animateFloatAsState(
-                                targetValue = if (isPlaying) 0.4f else 0.4f,
-                                label = "overlay_alpha"
-                            )
-
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
+                                .fillMaxWidth()
+                        ) {
                             Box(
+                                contentAlignment = Alignment.Center,
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Color.Black.copy(alpha = overlayAlpha))
-                            )
-
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = playbackState == androidx.media3.common.Player.STATE_ENDED || !isPlaying || isPlaying,
-                                enter = fadeIn(),
-                                exit = fadeOut()
-                            ) {
-                                Icon(
-                                    painter = painterResource(
+                                    .size(56.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
                                         if (playbackState == androidx.media3.common.Player.STATE_ENDED) {
-                                            R.drawable.replay
-                                        } else if (isPlaying) {
-                                            R.drawable.pause
+                                            playerConnection.player.seekTo(0, 0)
+                                            playerConnection.player.playWhenReady = true
                                         } else {
-                                            R.drawable.play
+                                            if (isPlaying) playerConnection.player.pause() else playerConnection.player.play()
                                         }
-                                    ),
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
+                                    }
+                            ) {
+                                currentMetadata?.let { metadata ->
+                                    AsyncImage(
+                                        model = metadata.thumbnailUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+
+                                // Overlay and Icon
+                                val overlayAlpha by androidx.compose.animation.core.animateFloatAsState(
+                                    targetValue = if (isPlaying) 0.4f else 0.4f,
+                                    label = "overlay_alpha"
                                 )
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black.copy(alpha = overlayAlpha))
+                                )
+
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = playbackState == androidx.media3.common.Player.STATE_ENDED || !isPlaying || isPlaying,
+                                    enter = fadeIn(),
+                                    exit = fadeOut()
+                                ) {
+                                    Icon(
+                                        painter = painterResource(
+                                            if (playbackState == androidx.media3.common.Player.STATE_ENDED) {
+                                                R.drawable.replay
+                                            } else if (isPlaying) {
+                                                R.drawable.pause
+                                            } else {
+                                                R.drawable.play
+                                            }
+                                        ),
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                currentMetadata?.let { metadata ->
+                                    Text(
+                                        text = metadata.title,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        color = textBackgroundColor,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Text(
+                                        text = if (metadata.artists.isNotEmpty()) {
+                                            metadata.artists.joinToString(", ") { it.name }
+                                        } else {
+                                            stringResource(R.string.unknown)
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontSize = 14.sp
+                                        ),
+                                        color = textBackgroundColor.copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                        // Iconos sutiles de flecha que aparecen al deslizar
+                        if (offsetXAnimatable.value.absoluteValue > 20f) {
+                            // Icono izquierdo (skip_previous cuando deslizas a la derecha)
+                            if (offsetXAnimatable.value > 0 && canSkipPrevious) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterStart)
+                                        .padding(start = 8.dp)
+                                        .alpha((offsetXAnimatable.value.absoluteValue / 100f).coerceIn(0.2f, 0.6f))
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.skip_previous),
+                                        contentDescription = null,
+                                        tint = textBackgroundColor,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
 
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            currentMetadata?.let { metadata ->
-                                Text(
-                                    text = metadata.title,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.SemiBold
-                                    ),
-                                    color = textBackgroundColor,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                Text(
-                                    text = if (metadata.artists.isNotEmpty()) {
-                                        metadata.artists.joinToString(", ") { it.name }
-                                    } else {
-                                        stringResource(R.string.unknown)
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontSize = 14.sp
-                                    ),
-                                    color = textBackgroundColor.copy(alpha = 0.7f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                            // Icono derecho (skip_next cuando deslizas a la izquierda)
+                            if (offsetXAnimatable.value < 0 && canSkipNext) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd)
+                                        .padding(end = 8.dp)
+                                        .alpha((offsetXAnimatable.value.absoluteValue / 100f).coerceIn(0.2f, 0.6f))
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.skip_next),
+                                        contentDescription = null,
+                                        tint = textBackgroundColor,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }
 
-                    // Right side - Action buttons
+                    // Right side - Action buttons (sin cambios)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1519,6 +1666,14 @@ private fun ShareLyricsDialog(
             }
         }
     }
+}
+
+
+/**
+ * Calculates the auto-swipe threshold based on swipe sensitivity.
+ */
+private fun calculateAutoSwipeThreshold(swipeSensitivity: Float): Int {
+    return (600 / (1f + exp(-(-11.44748 * swipeSensitivity + 9.04945)))).roundToInt()
 }
 
 // Preview time constant

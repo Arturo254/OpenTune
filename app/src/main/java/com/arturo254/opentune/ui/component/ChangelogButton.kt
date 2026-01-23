@@ -28,6 +28,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -259,6 +260,7 @@ private fun ImprovedTabRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ReleasesContent(
     releases: List<Release>,
@@ -268,13 +270,14 @@ private fun ReleasesContent(
     onRetry: () -> Unit
 ) {
     when {
-        isLoading -> LoadingIndicator("Cargando releases...")
+        isLoading -> LoadingIndicator(message = "Cargando releases…")
         error != null -> ErrorContent(error, onRetry)
         releases.isEmpty() -> EmptyContent("No hay releases disponibles")
         else -> SuccessReleasesContent(releases, lastUpdated)
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CommitsContent(
     commits: List<Commit>,
@@ -284,42 +287,43 @@ private fun CommitsContent(
     onRetry: () -> Unit
 ) {
     when {
-        isLoading -> LoadingIndicator("Cargando commits...")
+        isLoading -> LoadingIndicator(message = "Cargando commits…")
         error != null -> ErrorContent(error, onRetry)
         commits.isEmpty() -> EmptyContent("No hay commits disponibles")
         else -> SuccessCommitsContent(commits, lastUpdated)
     }
 }
 
+@ExperimentalMaterial3ExpressiveApi
 @Composable
-private fun LoadingIndicator(message: String) {
+private fun LoadingIndicator(
+    message: String,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
-            contentAlignment = Alignment.Center
+                .padding(vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 3.dp
-                )
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            androidx.compose.material3.LoadingIndicator(
+                modifier = Modifier.size(48.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

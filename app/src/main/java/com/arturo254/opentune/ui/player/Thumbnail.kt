@@ -69,7 +69,7 @@ import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerHorizontalPadding
 import com.arturo254.opentune.constants.SwipeThumbnailKey
-import com.arturo254.opentune.constants.ThumbnailCornerRadius
+import com.arturo254.opentune.ui.component.AppConfig // AÑADIR ESTE IMPORT
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
 import kotlinx.coroutines.delay
@@ -100,6 +100,13 @@ fun Thumbnail(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT
     )
+
+    var thumbnailCornerRadius by remember { mutableStateOf(16f) } // Valor por defecto
+
+    // Cargar el valor guardado
+    LaunchedEffect(Unit) {
+        thumbnailCornerRadius = AppConfig.getThumbnailCornerRadius(context)
+    }
 
     val textBackgroundColor = when (playerBackground) {
         PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.onBackground
@@ -270,7 +277,6 @@ fun Thumbnail(
                                 modifier = Modifier
                                     .width(horizontalLazyGridItemWidth)
                                     .fillMaxSize()
-//                                    .padding(horizontal = PlayerHorizontalPadding)
                                     .pointerInput(Unit) {
                                         detectTapGestures(
                                             onTap = {
@@ -290,7 +296,8 @@ fun Thumbnail(
                                 Box(
                                     modifier = Modifier
                                         .size(containerMaxWidth - (PlayerHorizontalPadding * 2))
-                                        .clip(RoundedCornerShape(ThumbnailCornerRadius * 2))
+                                        // CAMBIADO: Usar thumbnailCornerRadius en lugar de la constante
+                                        .clip(RoundedCornerShape(thumbnailCornerRadius.dp * 2))
                                 ) {
                                     Box(
                                         modifier = Modifier
