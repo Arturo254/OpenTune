@@ -6,6 +6,7 @@ import android.text.format.Formatter
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -955,42 +956,164 @@ fun BottomSheetPlayer(
                                                 !playerConnection.player.shuffleModeEnabled
                                         }
                                         ExtraButtonType.SLEEP_TIMER -> {
-                                            showSleepTimerDialog = true
+                                            if (sleepTimerEnabled) {
+                                                playerConnection.service.sleepTimer.clear()
+                                            } else {
+                                                showSleepTimerDialog = true
+                                            }
                                         }
                                         else -> {}
                                     }
                                 }
                         ) {
-                            Icon(
-                                painter = painterResource(
-                                    when (extraButtonType) {
-                                        ExtraButtonType.REPEAT -> when (repeatMode) {
-                                            Player.REPEAT_MODE_OFF -> R.drawable.media3_icon_repeat_all
-                                            Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
-                                            Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
-                                            else -> R.drawable.repeat
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                if (extraButtonType == ExtraButtonType.SLEEP_TIMER && sleepTimerEnabled) {
+                                    val progress = if (playerConnection.service.sleepTimer.pauseWhenSongEnd) {
+                                        val duration = playerConnection.player.duration
+                                        if (duration > 0) {
+                                            1f - (sleepTimerTimeLeft.toFloat() / duration.toFloat())
+                                        } else {
+                                            0f
                                         }
-                                        ExtraButtonType.SHUFFLE -> R.drawable.shuffle
-                                        ExtraButtonType.SLEEP_TIMER -> R.drawable.bedtime
-                                        else -> R.drawable.more_vert
+                                    } else {
+                                        val triggerTime = playerConnection.service.sleepTimer.triggerTime
+                                        val currentTime = System.currentTimeMillis()
+
+                                        if (triggerTime > currentTime) {
+                                            val elapsedTime = triggerTime - currentTime
+                                            val totalEstimated = elapsedTime + sleepTimerTimeLeft
+                                            if (totalEstimated > 0) {
+                                                1f - (sleepTimerTimeLeft.toFloat() / totalEstimated.toFloat())
+                                            } else {
+                                                1f
+                                            }
+                                        } else {
+                                            1f
+                                        }
                                     }
-                                ),
-                                contentDescription = null,
-                                tint = when (extraButtonType) {
-                                    ExtraButtonType.REPEAT -> when (repeatMode) {
-                                        Player.REPEAT_MODE_OFF -> iconButtonColor
-                                        else -> MaterialTheme.colorScheme.surfaceContainer
+
+                                    val animatedProgress by animateFloatAsState(
+                                        targetValue = progress,
+                                        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                                        label = "sleepTimerProgress"
+                                    )
+
+                                    val pulseAnimation by animateFloatAsState(
+                                        targetValue = if (animatedProgress > 0.9f) 1.05f else 1f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                            stiffness = Spring.StiffnessMediumLow
+                                        ),
+                                        label = "pulseAnimation"
+                                    )
+
+                                    val progressColor by animateColorAsState(
+                                        targetValue = when {
+                                            animatedProgress > 0.9f -> MaterialTheme.colorScheme.error
+                                            animatedProgress > 0.7f -> MaterialTheme.colorScheme.tertiary
+                                            animatedProgress > 0.4f -> MaterialTheme.colorScheme.secondary
+                                            else -> MaterialTheme.colorScheme.primary
+                                        },
+                                        animationSpec = tween(durationMillis = 300),
+                                        label = "progressColor"
+                                    )
+
+                                    val iconColor by animateColorAsState(
+                                        targetValue = when {
+                                            animatedProgress > 0.9f -> MaterialTheme.colorScheme.error
+                                            animatedProgress > 0 -> iconButtonColor
+                                            else -> iconButtonColor
+                                        },
+                                        animationSpec = tween(durationMillis = 300),
+                                        label = "iconColor"
+                                    )
+
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            progress = { 1f },
+                                            modifier = Modifier
+                                                .size(44.dp)
+                                                .scale(pulseAnimation),
+                                            color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f),
+                                            strokeWidth = 4.dp,
+                                            strokeCap = StrokeCap.Round
+                                        )
+
+                                        CircularProgressIndicator(
+                                            progress = { animatedProgress },
+                                            modifier = Modifier
+                                                .size(44.dp)
+                                                .scale(pulseAnimation),
+                                            color = progressColor,
+                                            strokeWidth = 4.dp,
+                                            strokeCap = StrokeCap.Round,
+                                            trackColor = Color.Transparent
+                                        )
+
+
+                                        if (animatedProgress > 0.1f && animatedProgress < 0.95f) {
+                                            Text(
+                                                text = "${(animatedProgress * 100).toInt()}%",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = iconColor,
+                                                fontSize = 7.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.offset(y = (10).dp)
+                                            )
+                                        }
+
+                                        else if (animatedProgress >= 0.95f) {
+                                            Text(
+                                                text = "¡Pronto!",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.error,
+                                                fontSize = 6.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.offset(y = (10).dp)
+                                            )
+                                        }
                                     }
-                                    ExtraButtonType.SHUFFLE ->
-                                        if (playerConnection.player.shuffleModeEnabled)
-                                            MaterialTheme.colorScheme.primary
-                                        else iconButtonColor
-                                    else -> iconButtonColor
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .size(24.dp)
-                            )
+                                }
+
+                                Icon(
+                                    painter = painterResource(
+                                        when (extraButtonType) {
+                                            ExtraButtonType.REPEAT -> when (repeatMode) {
+                                                Player.REPEAT_MODE_OFF -> R.drawable.repeat
+                                                Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
+                                                Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
+                                                else -> R.drawable.repeat
+                                            }
+                                            ExtraButtonType.SHUFFLE -> R.drawable.shuffle
+                                            ExtraButtonType.SLEEP_TIMER -> R.drawable.bedtime
+                                            else -> R.drawable.more_vert
+                                        }
+                                    ),
+                                    contentDescription = null,
+                                    tint = when (extraButtonType) {
+                                        ExtraButtonType.REPEAT -> when (repeatMode) {
+                                            Player.REPEAT_MODE_OFF -> iconButtonColor
+                                            else -> MaterialTheme.colorScheme.primary
+                                        }
+                                        ExtraButtonType.SHUFFLE ->
+                                            if (playerConnection.player.shuffleModeEnabled)
+                                                MaterialTheme.colorScheme.primary
+                                            else iconButtonColor
+                                        ExtraButtonType.SLEEP_TIMER ->
+                                            if (sleepTimerEnabled)
+                                                MaterialTheme.colorScheme.primary
+                                            else iconButtonColor
+                                        else -> iconButtonColor
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                         }
                     }
 
