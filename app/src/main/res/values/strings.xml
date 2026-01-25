@@ -593,9 +593,9 @@
     <string name="changing_language">Changing language…</string>
     <string name="auto_scroll">Auto scroll</string>
     <string name="tertiary_color_style">Tertiary color</string>
-    <string name="details_desc">View the song\\\'s information</string>
+    <string name="details_desc">View the song\'s information</string>
     <string name="equalizer_desc">Adjust the audio equalizer</string>
-    <string name="advanced_desc">Change the song\\\'s tempo and pitch</string>
+    <string name="advanced_desc">Change the song\'s tempo and pitch</string>
     <string name="check_out_album_share">Check out %1$s by %2$s on YouTube Music: %3$s</string>
     <string name="album_text">Album</string>
     <string name="by_text">"By "</string>

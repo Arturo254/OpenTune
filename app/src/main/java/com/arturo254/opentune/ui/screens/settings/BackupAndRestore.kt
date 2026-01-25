@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
@@ -299,15 +300,18 @@ fun BackupAndRestore(
                         // Reset VISITOR_DATA
                         viewModel.resetVisitorData(context)
 
-                        delay(500) // Short delay to ensure completion
+                        delay(500)
 
                         withContext(Dispatchers.Main) {
                             playerCacheSize = 0L
                             isClearing = false
                             showVisitorDataResetDialog = false
+
+                            delay(300)
+                            restartApp(context)
                         }
                     } catch (e: Exception) {
-                        Log.e("BackupRestore", "Error when resetting VISITOR_DATA", e)
+                        Log.e("BackupRestore", "Error al restablecer VISITOR_DATA", e)
                         withContext(Dispatchers.Main) {
                             isClearing = false
                             showVisitorDataResetDialog = false
@@ -821,4 +825,18 @@ sealed class UploadStatus {
     data object Uploading : UploadStatus()
     data class Success(val fileUrl: String) : UploadStatus()
     data object Failure : UploadStatus()
+}
+
+fun restartApp(context: Context) {
+    val packageManager = context.packageManager
+    val intent = packageManager.getLaunchIntentForPackage(context.packageName)
+
+    intent?.let {
+        val componentName = it.component
+        val mainIntent = Intent.makeRestartActivityTask(componentName)
+        mainIntent.setPackage(context.packageName)
+
+        context.startActivity(mainIntent)
+        Runtime.getRuntime().exit(0)
+    }
 }
