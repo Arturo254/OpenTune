@@ -128,13 +128,18 @@ import com.arturo254.opentune.LocalDownloadUtil
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.DarkModeKey
+import com.arturo254.opentune.constants.DefaultExtraButtonType
 import com.arturo254.opentune.constants.DefaultPlayPauseButtonShape
+import com.arturo254.opentune.constants.DefaultPlayerExtraButton
 import com.arturo254.opentune.constants.DefaultSmallButtonsShape
+import com.arturo254.opentune.constants.ExtraButtonType
 import com.arturo254.opentune.constants.PlayPauseButtonShapeKey
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerButtonsStyle
 import com.arturo254.opentune.constants.PlayerButtonsStyleKey
+import com.arturo254.opentune.constants.PlayerExtraButtonKey
+import com.arturo254.opentune.constants.PlayerExtraButtonTypeKey
 import com.arturo254.opentune.constants.PlayerHorizontalPadding
 import com.arturo254.opentune.constants.PlayerTextAlignmentKey
 import com.arturo254.opentune.constants.PureBlackKey
@@ -300,9 +305,9 @@ fun BottomSheetPlayer(
         if (useBlackBackground && playerBackground != PlayerBackgroundStyle.BLUR) {
             gradientColors = listOf(Color.Black, Color.Black)
         }
-        if (useBlackBackground && playerBackground != PlayerBackgroundStyle.GRADIENT) {
+        if (useBlackBackground && playerBackground != PlayerBackgroundStyle.GRADIENT && playerBackground != PlayerBackgroundStyle.APPLE_MUSIC) {
             gradientColors = listOf(Color.Black, Color.Black)
-        } else if (playerBackground == PlayerBackgroundStyle.GRADIENT) {
+        } else if (playerBackground == PlayerBackgroundStyle.GRADIENT || playerBackground == PlayerBackgroundStyle.APPLE_MUSIC) {
             withContext(Dispatchers.IO) {
                 val result = runCatching {
                     ImageLoader(context)
@@ -752,6 +757,72 @@ fun BottomSheetPlayer(
                             }
                         }
                     }
+
+
+                    PlayerBackgroundStyle.APPLE_MUSIC -> {
+                        AnimatedContent(
+                            targetState = gradientColors,
+                            transitionSpec = {
+                                fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
+                            },
+                            label = "appleMusicBackground"
+                        ) { colors ->
+                            if (colors.isNotEmpty()) {
+                                Box(modifier = Modifier.alpha(backgroundAlpha)) {
+                                    val color1 = colors[0]
+                                    val color2 = colors.getOrElse(1) { colors[0].copy(alpha = 0.8f) }
+                                    val color3 = colors.getOrElse(2) { colors[0].copy(alpha = 0.6f) }
+
+                                    Canvas(modifier = Modifier.fillMaxSize().blur(100.dp)) {
+                                        // Main vertical gradient base
+                                        drawRect(
+                                            brush = Brush.verticalGradient(
+                                                listOf(color1, color2, color3)
+                                            )
+                                        )
+
+                                        // Multiple circular "color blobs" for a dynamic feel
+                                        drawCircle(
+                                            brush = Brush.radialGradient(
+                                                colors = listOf(color1, Color.Transparent),
+                                                center = Offset(size.width * 0.2f, size.height * 0.2f),
+                                                radius = size.width * 0.8f
+                                            ),
+                                            center = Offset(size.width * 0.2f, size.height * 0.2f),
+                                            radius = size.width * 0.8f
+                                        )
+
+                                        drawCircle(
+                                            brush = Brush.radialGradient(
+                                                colors = listOf(color2, Color.Transparent),
+                                                center = Offset(size.width * 0.8f, size.height * 0.5f),
+                                                radius = size.width * 0.7f
+                                            ),
+                                            center = Offset(size.width * 0.8f, size.height * 0.5f),
+                                            radius = size.width * 0.7f
+                                        )
+
+                                        drawCircle(
+                                            brush = Brush.radialGradient(
+                                                colors = listOf(color3, Color.Transparent),
+                                                center = Offset(size.width * 0.3f, size.height * 0.8f),
+                                                radius = size.width * 0.9f
+                                            ),
+                                            center = Offset(size.width * 0.3f, size.height * 0.8f),
+                                            radius = size.width * 0.9f
+                                        )
+                                    }
+
+                                    // Dark overlay for text readability
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = 0.25f))
+                                    )
+                                }
+                            }
+                        }
+                    }
                     else -> {
                         PlayerBackgroundStyle.DEFAULT
                     }
@@ -771,7 +842,6 @@ fun BottomSheetPlayer(
         },
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
-            // Título con marquesina y click largo para copiar
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
@@ -818,7 +888,6 @@ fun BottomSheetPlayer(
 
                     Spacer(Modifier.height(6.dp))
 
-                    // Artistas con navegación
                     if (mediaMetadata.artists.any { it.name.isNotBlank() }) {
                         Row(
                             modifier = Modifier
@@ -852,19 +921,89 @@ fun BottomSheetPlayer(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // BOTONES DE ACCIÓN ALINEADOS A LA DERECHA
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Botón Like/Favorito
+                    val (showExtraButton, _) = rememberPreference(
+                        key = PlayerExtraButtonKey,
+                        defaultValue = DefaultPlayerExtraButton
+                    )
+                    val (extraButtonType, _) = rememberEnumPreference(
+                        key = PlayerExtraButtonTypeKey,
+                        defaultValue = DefaultExtraButtonType
+                    )
+
+                    if (showExtraButton && extraButtonType != ExtraButtonType.NONE) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(
+                                    RoundedCornerShape(
+                                        topStart = 50.dp, bottomStart = 50.dp,
+                                        topEnd = 5.dp, bottomEnd = 5.dp
+                                    )
+                                )
+                                .background(textButtonColor)
+                                .clickable {
+                                    when (extraButtonType) {
+                                        ExtraButtonType.REPEAT -> {
+                                            playerConnection.player.toggleRepeatMode()
+                                        }
+                                        ExtraButtonType.SHUFFLE -> {
+                                            playerConnection.player.shuffleModeEnabled =
+                                                !playerConnection.player.shuffleModeEnabled
+                                        }
+                                        ExtraButtonType.SLEEP_TIMER -> {
+                                            showSleepTimerDialog = true
+                                        }
+                                        else -> {}
+                                    }
+                                }
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    when (extraButtonType) {
+                                        ExtraButtonType.REPEAT -> when (repeatMode) {
+                                            Player.REPEAT_MODE_OFF -> R.drawable.media3_icon_repeat_all
+                                            Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
+                                            Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
+                                            else -> R.drawable.repeat
+                                        }
+                                        ExtraButtonType.SHUFFLE -> R.drawable.shuffle
+                                        ExtraButtonType.SLEEP_TIMER -> R.drawable.bedtime
+                                        else -> R.drawable.more_vert
+                                    }
+                                ),
+                                contentDescription = null,
+                                tint = when (extraButtonType) {
+                                    ExtraButtonType.REPEAT -> when (repeatMode) {
+                                        Player.REPEAT_MODE_OFF -> iconButtonColor
+                                        else -> MaterialTheme.colorScheme.surfaceContainer
+                                    }
+                                    ExtraButtonType.SHUFFLE ->
+                                        if (playerConnection.player.shuffleModeEnabled)
+                                            MaterialTheme.colorScheme.primary
+                                        else iconButtonColor
+                                    else -> iconButtonColor
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .size(24.dp)
+                            )
+                        }
+                    }
+
+                    // Botón Like
                     Box(
                         modifier = Modifier
                             .size(42.dp)
                             .clip(
                                 RoundedCornerShape(
-                                    topStart = 50.dp, bottomStart = 50.dp,
-                                    topEnd = 5.dp, bottomEnd = 5.dp
+                                    topStart = if (showExtraButton && extraButtonType != ExtraButtonType.NONE) 5.dp else 50.dp,
+                                    bottomStart = if (showExtraButton && extraButtonType != ExtraButtonType.NONE) 5.dp else 50.dp,
+                                    topEnd = 5.dp,
+                                    bottomEnd = 5.dp
                                 )
                             )
                             .background(textButtonColor)

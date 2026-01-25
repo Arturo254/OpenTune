@@ -656,4 +656,8 @@
     <string name="previous_action">Previous</string>
     <string name="loading_lyrics">Loading lyrics</string>
     <string name="apple_music">Apple music</string>
+    <string name="extra_button_type">Extra button</string>
+    <string name="none">None</string>
+    <string name="repeat">Repeat</string>
+    <string name="show_extra_button">Show extra button in the player</string>
 </resources>
