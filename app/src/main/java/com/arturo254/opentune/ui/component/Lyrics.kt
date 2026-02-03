@@ -794,177 +794,68 @@ fun Lyrics(
                                 key = { index, item -> "$index-${item.time}" }
                             ) { index, item ->
                                 val isSelected = selectedIndices.contains(index)
-
-                                val distance = kotlin.math.abs(index - displayedCurrentLineIndex)
-                                val animatedScale by animateFloatAsState(when {
-                                    !isSynced || index == displayedCurrentLineIndex -> 1.05f
-                                    distance == 1 -> 1f
-                                    distance >= 2 -> 0.95f
-                                    else -> 1f
-                                }, tween(if (animateLyrics) 400 else 0))
-
-                                val animatedAlpha by animateFloatAsState(when {
-                                    !isSynced || (isSelectionModeActive && isSelected) -> 1f
-                                    index == displayedCurrentLineIndex -> 1f
-                                    kotlin.math.abs(index - displayedCurrentLineIndex) == 1 -> 0.7f
-                                    kotlin.math.abs(index - displayedCurrentLineIndex) == 2 -> 0.4f
-                                    else -> 0.2f
-                                }, tween(if (animateLyrics) 400 else 0))
-
-                                val itemModifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .combinedClickable(
-                                        enabled = true,
-                                        onClick = {
-                                            if (isSelectionModeActive) {
-                                                if (isSelected) {
-                                                    selectedIndices.remove(index)
-                                                    if (selectedIndices.isEmpty()) {
-                                                        isSelectionModeActive = false
-                                                    }
-                                                } else {
-                                                    if (selectedIndices.size < maxSelectionLimit) {
-                                                        selectedIndices.add(index)
-                                                    } else {
-                                                        showMaxSelectionToast = true
-                                                    }
-                                                }
-                                            } else if (isSynced && changeLyrics) {
-                                                playerConnection.player.seekTo(item.time)
-                                                scope.launch {
-                                                    performSmoothPageScroll(index, 1500)
-                                                }
-                                                lastPreviewTime = 0L
-                                            }
-                                        },
-                                        onLongClick = {
-                                            if (!isSelectionModeActive) {
-                                                isSelectionModeActive = true
-                                                selectedIndices.add(index)
-                                            } else if (!isSelected && selectedIndices.size < maxSelectionLimit) {
-                                                selectedIndices.add(index)
-                                            } else if (!isSelected) {
-                                                showMaxSelectionToast = true
-                                            }
-                                        }
-                                    )
-                                    .background(
-                                        if (isSelected && isSelectionModeActive)
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                        else Color.Transparent
-                                    )
-                                    .padding(
-                                        horizontal = 24.dp,
-                                        vertical = 4.dp
-                                    )
-                                    .graphicsLayer {
-                                        this.alpha = animatedAlpha
-                                        this.scaleX = animatedScale
-                                        this.scaleY = animatedScale
-                                    }
-
-                                val isActiveLine = index == displayedCurrentLineIndex && isSynced
-
-                                Column(
-                                    modifier = itemModifier,
-                                    horizontalAlignment = when (lyricsTextPosition) {
-                                        LyricsPosition.LEFT -> Alignment.Start
-                                        LyricsPosition.CENTER -> Alignment.CenterHorizontally
-                                        LyricsPosition.RIGHT -> Alignment.End
-                                    }
-                                ) {
-                                    if (isActiveLine) {
-                                        val fillProgress = remember { Animatable(0f) }
-                                        val pulseProgress = remember { Animatable(0f) }
-
-                                        LaunchedEffect(index) {
-                                            fillProgress.snapTo(0f)
-                                            fillProgress.animateTo(
-                                                targetValue = 1f,
-                                                animationSpec = tween(
-                                                    durationMillis = 1200,
-                                                    easing = FastOutSlowInEasing
-                                                )
-                                            )
-                                        }
-
-                                        LaunchedEffect(Unit) {
-                                            while (true) {
-                                                pulseProgress.animateTo(
-                                                    targetValue = 1f,
-                                                    animationSpec = tween(
-                                                        durationMillis = 3000,
-                                                        easing = LinearEasing
-                                                    )
-                                                )
-                                                pulseProgress.snapTo(0f)
-                                            }
-                                        }
-
-                                        val fill = fillProgress.value
-                                        val pulse = pulseProgress.value
-                                        val pulseEffect = (kotlin.math.sin(pulse * Math.PI.toFloat()) * 0.15f).coerceIn(0f, 0.15f)
-                                        val glowIntensity = (fill + pulseEffect).coerceIn(0f, 1.2f)
-
-                                        val glowBrush = androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                            0.0f to expressiveAccent.copy(alpha = 0.3f),
-                                            (fill * 0.7f).coerceIn(0f, 1f) to expressiveAccent.copy(alpha = 0.9f),
-                                            fill to expressiveAccent,
-                                            (fill + 0.1f).coerceIn(0f, 1f) to expressiveAccent.copy(alpha = 0.7f),
-                                            1.0f to expressiveAccent.copy(alpha = if (fill >= 1f) 1f else 0.3f)
-                                        )
-
-                                        val styledText = buildAnnotatedString {
-                                            withStyle(
-                                                style = SpanStyle(
-                                                    shadow = androidx.compose.ui.graphics.Shadow(
-                                                        color = expressiveAccent.copy(alpha = 0.8f * glowIntensity),
-                                                        offset = Offset(0f, 0f),
-                                                        blurRadius = 28f * (1f + pulseEffect)
-                                                    ),
-                                                    brush = glowBrush
-                                                )
-                                            ) {
-                                                append(item.text)
-                                            }
-                                        }
-
-                                        val bounceScale = if (fill < 0.3f) {
-                                            1f + (kotlin.math.sin(fill * 3.33f * Math.PI.toFloat()) * 0.03f)
-                                        } else {
-                                            1f
-                                        }
-
-                                        Text(
-                                            text = styledText,
-                                            fontSize = 25.sp,
-                                            textAlign = when (lyricsTextPosition) {
-                                                LyricsPosition.LEFT -> TextAlign.Left
-                                                LyricsPosition.CENTER -> TextAlign.Center
-                                                LyricsPosition.RIGHT -> TextAlign.Right
-                                            },
-                                            fontWeight = FontWeight.ExtraBold,
-                                            modifier = Modifier
-                                                .graphicsLayer {
-                                                    scaleX = bounceScale
-                                                    scaleY = bounceScale
-                                                }
-                                        )
-                                    } else {
-                                        Text(
-                                            text = item.text,
-                                            fontSize = 25.sp,
-                                            color = expressiveAccent.copy(alpha = 0.7f),
-                                            textAlign = when (lyricsTextPosition) {
-                                                LyricsPosition.LEFT -> TextAlign.Left
-                                                LyricsPosition.CENTER -> TextAlign.Center
-                                                LyricsPosition.RIGHT -> TextAlign.Right
-                                            },
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                    }
+                                val nextEntryTime = lines.getOrNull(index + 1)?.time
+                                val currentTime = sliderPosition ?: position
+                                val isSynced = remember(lyrics) {
+                                    !lyrics.isNullOrEmpty() && lyrics.startsWith("[")
                                 }
+                                val isActiveLine = index == displayedCurrentLineIndex && isSynced
+                                val distance = kotlin.math.abs(index - displayedCurrentLineIndex)
+
+                                LyricsLine(
+                                    entry = item,
+                                    isSynced = isSynced,
+                                    isActive = isActiveLine,
+                                    distanceFromCurrent = distance,
+                                    lyricsTextPosition = lyricsTextPosition,
+                                    textColor = expressiveAccent,
+                                    textSize = 25f,
+                                    lineSpacing = 4f,
+                                    onClick = {
+                                        if (isSelectionModeActive) {
+                                            if (isSelected) {
+                                                selectedIndices.remove(index)
+                                                if (selectedIndices.isEmpty()) {
+                                                    isSelectionModeActive = false
+                                                }
+                                            } else {
+                                                if (selectedIndices.size < maxSelectionLimit) {
+                                                    selectedIndices.add(index)
+                                                } else {
+                                                    showMaxSelectionToast = true
+                                                }
+                                            }
+                                        } else if (isSynced && changeLyrics) {
+                                            playerConnection.player.seekTo(item.time)
+                                            scope.launch {
+                                                performSmoothPageScroll(index, 1500)
+                                            }
+                                            lastPreviewTime = 0L
+                                        }
+                                    },
+                                    onLongClick = {
+                                        if (!isSelectionModeActive) {
+                                            isSelectionModeActive = true
+                                            selectedIndices.add(index)
+                                        } else if (!isSelected && selectedIndices.size < maxSelectionLimit) {
+                                            selectedIndices.add(index)
+                                        } else if (!isSelected) {
+                                            showMaxSelectionToast = true
+                                        }
+                                    },
+                                    isSelected = isSelected,
+                                    isSelectionModeActive = isSelectionModeActive,
+                                    isAutoScrollActive = isAutoScrollEnabled,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(
+                                            if (isSelected && isSelectionModeActive)
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                            else Color.Transparent
+                                        )
+                                        .padding(horizontal = 24.dp, vertical = 4.dp)
+                                )
                             }
                         }
                     }

@@ -112,6 +112,8 @@ val LyricsScrollKey = booleanPreferencesKey("lyricsScrollKey")
 val DiscordUseDetailsKey = booleanPreferencesKey("discordUseDetails")
 
 
+val AppleMusicLyricsBlurKey = booleanPreferencesKey("apple_music_lyrics_blur")
+
 val ArtistViewTypeKey = stringPreferencesKey("artistViewType")
 val AlbumViewTypeKey = stringPreferencesKey("albumViewType")
 val PlaylistViewTypeKey = stringPreferencesKey("playlistViewType")
