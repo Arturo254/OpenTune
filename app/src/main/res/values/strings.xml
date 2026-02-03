@@ -660,4 +660,10 @@
     <string name="none">None</string>
     <string name="repeat">Repeat</string>
     <string name="show_extra_button">Show extra button in the player</string>
+    <string name="cancel_timer">Cancel timer</string>
+    <string name="start_timer">Start</string>
+    <string name="sleep_timer_active">Active timer:</string>
+    <string name="sleep_timer_desc">Schedule automatic shutdown</string>
+
+
 </resources>

@@ -322,28 +322,11 @@ enum class SearchSource {
 
 val VisitorDataKey = stringPreferencesKey("visitorData")
 val DataSyncIdKey = stringPreferencesKey("dataSyncId")
-val AccountPhotoUrlKey = stringPreferencesKey("account_photo_url")
 val InnerTubeCookieKey = stringPreferencesKey("innerTubeCookie")
 val AccountNameKey = stringPreferencesKey("accountName")
 val AccountEmailKey = stringPreferencesKey("accountEmail")
 val AccountChannelHandleKey = stringPreferencesKey("accountChannelHandle")
 val UseLoginForBrowse = booleanPreferencesKey("useLoginForBrowse")
-
-
-
-// Player Extra Button
-val PlayerExtraButtonKey = booleanPreferencesKey("player_extra_button")
-const val DefaultPlayerExtraButton = false
-
-val PlayerExtraButtonTypeKey = stringPreferencesKey("player_extra_button_type")
-val DefaultExtraButtonType = ExtraButtonType.NONE
-
-enum class ExtraButtonType {
-    NONE,
-    REPEAT,
-    SHUFFLE,
-    SLEEP_TIMER,
-}
 
 val LanguageCodeToName =
     mapOf(

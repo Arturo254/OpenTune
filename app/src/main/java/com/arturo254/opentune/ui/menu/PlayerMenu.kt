@@ -33,14 +33,17 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,6 +55,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -90,11 +94,14 @@ import com.arturo254.opentune.ui.component.NewActionGrid
 import com.arturo254.opentune.utils.joinByBullet
 import com.arturo254.opentune.utils.makeTimeString
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.round
+import kotlin.math.roundToInt
 
 @Composable
 fun PlayerMenu(
@@ -122,6 +129,41 @@ fun PlayerMenu(
         remember(mediaMetadata.artists) {
             mediaMetadata.artists.filter { it.id != null }
         }
+
+    // Sleep Timer - Misma lógica exacta que Player.kt
+    val sleepTimerEnabled =
+        remember(
+            playerConnection.service.sleepTimer.triggerTime,
+            playerConnection.service.sleepTimer.pauseWhenSongEnd
+        ) {
+            playerConnection.service.sleepTimer.isActive
+        }
+
+    var sleepTimerTimeLeft by remember {
+        mutableLongStateOf(0L)
+    }
+
+    LaunchedEffect(sleepTimerEnabled) {
+        if (sleepTimerEnabled) {
+            while (isActive) {
+                sleepTimerTimeLeft =
+                    if (playerConnection.service.sleepTimer.pauseWhenSongEnd) {
+                        playerConnection.player.duration - playerConnection.player.currentPosition
+                    } else {
+                        playerConnection.service.sleepTimer.triggerTime - System.currentTimeMillis()
+                    }
+                delay(1000L)
+            }
+        }
+    }
+
+    var showSleepTimerDialog by remember {
+        mutableStateOf(false)
+    }
+
+    var sleepTimerValue by remember {
+        mutableFloatStateOf(30f)
+    }
 
     var showChoosePlaylistDialog by rememberSaveable {
         mutableStateOf(false)
@@ -244,6 +286,117 @@ fun PlayerMenu(
         )
     }
 
+    if (showSleepTimerDialog) {
+        AlertDialog(
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            onDismissRequest = { showSleepTimerDialog = false },
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.bedtime),
+                    contentDescription = null
+                )
+            },
+            title = { Text(stringResource(R.string.sleep_timer)) },
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Botón para cancelar si hay temporizador activo
+                    if (sleepTimerEnabled) {
+                        TextButton(
+                            onClick = {
+                                showSleepTimerDialog = false
+                                playerConnection.service.sleepTimer.clear()
+                            },
+                        ) {
+                            Text(stringResource(R.string.cancel_timer))
+                        }
+                    }
+
+                    // Botón OK (cambia función según estado)
+                    TextButton(
+                        onClick = {
+                            showSleepTimerDialog = false
+                            if (sleepTimerEnabled) {
+                                // Si ya hay timer activo, OK solo cierra el diálogo
+                            } else {
+                                // Si no hay timer, inicia uno nuevo
+                                playerConnection.service.sleepTimer.start(sleepTimerValue.roundToInt())
+                            }
+                        },
+                    ) {
+                        Text(
+                            text = if (sleepTimerEnabled)
+                                stringResource(android.R.string.ok)
+                            else
+                                stringResource(R.string.start_timer)
+                        )
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showSleepTimerDialog = false },
+                ) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Mostrar estado actual si hay timer activo
+                    if (sleepTimerEnabled) {
+                        Text(
+                            text = stringResource(R.string.sleep_timer_active),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        Text(
+                            text = if (playerConnection.service.sleepTimer.pauseWhenSongEnd) {
+                                stringResource(R.string.end_of_song)
+                            } else {
+                                makeTimeString(sleepTimerTimeLeft)
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+
+                    // Configuración del timer (mostrar solo si no hay timer activo)
+                    if (!sleepTimerEnabled) {
+                        Text(
+                            text = pluralStringResource(
+                                R.plurals.minute,
+                                sleepTimerValue.roundToInt(),
+                                sleepTimerValue.roundToInt()
+                            ),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+
+                        Slider(
+                            value = sleepTimerValue,
+                            onValueChange = { sleepTimerValue = it },
+                            valueRange = 5f..120f,
+                            steps = (120 - 5) / 5 - 1,
+                        )
+
+                        OutlinedButton(
+                            onClick = {
+                                showSleepTimerDialog = false
+                                playerConnection.service.sleepTimer.start(-1)
+                            },
+                        ) {
+                            Text(stringResource(R.string.end_of_song))
+                        }
+                    }
+                }
+            },
+        )
+    }
+
     if (isQueueTrigger != true) {
         // State to track if audio is muted
         var isMuted by remember { mutableStateOf(false) }
@@ -290,6 +443,45 @@ fun PlayerMenu(
                         .weight(1f)
                         .height(36.dp),
                 )
+            }
+
+            if (sleepTimerEnabled) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.bedtime),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = if (playerConnection.service.sleepTimer.pauseWhenSongEnd) {
+                            stringResource(R.string.end_of_song)
+                        } else {
+                            makeTimeString(sleepTimerTimeLeft)
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    IconButton(
+                        onClick = { showSleepTimerDialog = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.edit),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -579,6 +771,39 @@ fun PlayerMenu(
                     )
 
                     if (isQueueTrigger != true) {
+                        add(
+                            MenuItemData(
+                                title = { Text(text = stringResource(R.string.sleep_timer)) },
+                                description = {
+                                    Text(
+                                        text = if (sleepTimerEnabled) {
+                                            if (playerConnection.service.sleepTimer.pauseWhenSongEnd) {
+                                                stringResource(R.string.end_of_song)
+                                            } else {
+                                                makeTimeString(sleepTimerTimeLeft)
+                                            }
+                                        } else {
+                                            stringResource(R.string.sleep_timer_desc)
+                                        }
+                                    )
+                                },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.bedtime),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = if (sleepTimerEnabled) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        }
+                                    )
+                                },
+                                onClick = {
+                                    showSleepTimerDialog = true
+                                }
+                            )
+                        )
                         add(
                             MenuItemData(
                                 title = { Text(text = stringResource(R.string.equalizer)) },

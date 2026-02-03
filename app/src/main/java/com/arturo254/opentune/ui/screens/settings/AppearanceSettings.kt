@@ -42,14 +42,11 @@ import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.AnimateLyricsKey
 import com.arturo254.opentune.constants.ChipSortTypeKey
 import com.arturo254.opentune.constants.DarkModeKey
-import com.arturo254.opentune.constants.DefaultExtraButtonType
 import com.arturo254.opentune.constants.DefaultMiniPlayerThumbnailShape
 import com.arturo254.opentune.constants.DefaultOpenTabKey
 import com.arturo254.opentune.constants.DefaultPlayPauseButtonShape
-import com.arturo254.opentune.constants.DefaultPlayerExtraButton
 import com.arturo254.opentune.constants.DefaultSmallButtonsShape
 import com.arturo254.opentune.constants.DynamicThemeKey
-import com.arturo254.opentune.constants.ExtraButtonType
 import com.arturo254.opentune.constants.GridItemSize
 import com.arturo254.opentune.constants.GridItemsSizeKey
 import com.arturo254.opentune.constants.LibraryFilter
@@ -61,8 +58,6 @@ import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerButtonsStyle
 import com.arturo254.opentune.constants.PlayerButtonsStyleKey
-import com.arturo254.opentune.constants.PlayerExtraButtonKey
-import com.arturo254.opentune.constants.PlayerExtraButtonTypeKey
 import com.arturo254.opentune.constants.PlayerTextAlignmentKey
 import com.arturo254.opentune.constants.PureBlackKey
 import com.arturo254.opentune.constants.RotateBackgroundKey
@@ -421,19 +416,6 @@ fun AppearanceSettings(
                     }
                 )},
 
-                {
-                    UnifiedShapeSelectorButton(
-                        smallButtonsShape = smallButtonsShapeState.value,
-                        miniPlayerShape = miniPlayerThumbnailShapeState.value,
-                        onSmallButtonsShapeSelected = { newShape ->
-                            smallButtonsShapeState.value = newShape
-                        },
-                        onMiniPlayerShapeSelected = { newShape ->
-                            miniPlayerThumbnailShapeState.value = newShape
-                        }
-                    )
-                },
-
                 {EnumListPreference(
                     title = { Text(stringResource(R.string.player_buttons_style)) },
                     icon = { Icon(painterResource(R.drawable.palette), null) },
@@ -528,49 +510,7 @@ fun AppearanceSettings(
                     description = stringResource(R.string.animate_lyrics_desc),
                     checked = animateLyrics,
                     onCheckedChange = onAnimateLyricsChange
-                )},
-
-                {
-                    val (showExtraButton, onShowExtraButtonChange) = rememberPreference(
-                        key = PlayerExtraButtonKey,
-                        defaultValue = DefaultPlayerExtraButton
-                    )
-
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.show_extra_button)) },
-                        icon = { Icon(painterResource(R.drawable.check_circle), null) },
-                        checked = showExtraButton,
-                        onCheckedChange = onShowExtraButtonChange
-                    )
-                },
-
-                {
-                    val (showExtraButton, _) = rememberPreference(
-                        key = PlayerExtraButtonKey,
-                        defaultValue = DefaultPlayerExtraButton
-                    )
-                    val (extraButtonType, onExtraButtonTypeChange) = rememberEnumPreference(
-                        key = PlayerExtraButtonTypeKey,
-                        defaultValue = DefaultExtraButtonType
-                    )
-
-                    AnimatedVisibility(visible = showExtraButton) {
-                        EnumListPreference(
-                            title = { Text(stringResource(R.string.extra_button_type)) },
-                            icon = { Icon(painterResource(R.drawable.touch_app), null) },
-                            selectedValue = extraButtonType,
-                            onValueSelected = onExtraButtonTypeChange,
-                            valueText = {
-                                when (it) {
-                                    ExtraButtonType.NONE -> stringResource(R.string.none)
-                                    ExtraButtonType.REPEAT -> stringResource(R.string.repeat)
-                                    ExtraButtonType.SHUFFLE -> stringResource(R.string.shuffle)
-                                    ExtraButtonType.SLEEP_TIMER -> stringResource(R.string.sleep_timer)
-                                }
-                            }
-                        )
-                    }
-                }
+                )}
             )
         )
 

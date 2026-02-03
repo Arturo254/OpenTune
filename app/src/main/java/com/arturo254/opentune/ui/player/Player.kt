@@ -6,7 +6,6 @@ import android.text.format.Formatter
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -84,15 +83,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -124,23 +126,19 @@ import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.size.Precision
 import com.arturo254.opentune.LocalDatabase
 import com.arturo254.opentune.LocalDownloadUtil
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.DarkModeKey
-import com.arturo254.opentune.constants.DefaultExtraButtonType
 import com.arturo254.opentune.constants.DefaultPlayPauseButtonShape
-import com.arturo254.opentune.constants.DefaultPlayerExtraButton
 import com.arturo254.opentune.constants.DefaultSmallButtonsShape
-import com.arturo254.opentune.constants.ExtraButtonType
 import com.arturo254.opentune.constants.PlayPauseButtonShapeKey
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerButtonsStyle
 import com.arturo254.opentune.constants.PlayerButtonsStyleKey
-import com.arturo254.opentune.constants.PlayerExtraButtonKey
-import com.arturo254.opentune.constants.PlayerExtraButtonTypeKey
 import com.arturo254.opentune.constants.PlayerHorizontalPadding
 import com.arturo254.opentune.constants.PlayerTextAlignmentKey
 import com.arturo254.opentune.constants.PureBlackKey
@@ -566,24 +564,6 @@ fun BottomSheetPlayer(
         label = "rotation"
     )
 
-    // Forma dinámica: cuando está reproduciendo usa la forma seleccionada
-    // Cuando está en pausa usa Square
-    val currentPlayPauseShape = remember(isPlaying, playPauseShape) {
-        if (isPlaying) {
-            playPauseShape
-        } else {
-            MaterialShapes.Square
-        }
-    }
-
-    // Function to create the modifier for small buttons
-    val smallButtonModifier = @Composable {
-        Modifier
-            .size(42.dp)
-            .clip(smallButtonShape.toShape())
-            .background(textButtonColor)
-    }
-
     LaunchedEffect(playbackState) {
         if (playbackState == STATE_READY) {
             while (isActive) {
@@ -759,68 +739,63 @@ fun BottomSheetPlayer(
                         }
                     }
 
-
                     PlayerBackgroundStyle.APPLE_MUSIC -> {
                         AnimatedContent(
-                            targetState = gradientColors,
+                            targetState = mediaMetadata?.thumbnailUrl,
                             transitionSpec = {
                                 fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
                             },
-                            label = "appleMusicBackground"
-                        ) { colors ->
-                            if (colors.isNotEmpty()) {
-                                Box(modifier = Modifier.alpha(backgroundAlpha)) {
-                                    val color1 = colors[0]
-                                    val color2 = colors.getOrElse(1) { colors[0].copy(alpha = 0.8f) }
-                                    val color3 = colors.getOrElse(2) { colors[0].copy(alpha = 0.6f) }
-
-                                    Canvas(modifier = Modifier.fillMaxSize().blur(100.dp)) {
-                                        // Main vertical gradient base
-                                        drawRect(
-                                            brush = Brush.verticalGradient(
-                                                listOf(color1, color2, color3)
+                            label = "appleMusicBackground",
+                            modifier = Modifier.graphicsLayer { alpha = state.progress.coerceIn(0f, 1f) }
+                        ) { thumbnailUrl ->
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(thumbnailUrl)
+                                        .precision(Precision.EXACT)
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                AsyncImage(
+                                    model = thumbnailUrl,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .blur(80.dp)
+                                        .graphicsLayer {
+                                            // Extend blur mask from roughly 40% height to bottom
+                                            alpha = 1f
+                                            clip = true
+                                        }
+                                        .drawWithContent {
+                                            drawContent()
+                                            drawRect(
+                                                brush = Brush.verticalGradient(
+                                                    0.4f to Color.Transparent,
+                                                    0.6f to Color.Black
+                                                ),
+                                                blendMode = BlendMode.DstIn
+                                            )
+                                        }
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.verticalGradient(
+                                                listOf(
+                                                    Color.Transparent,
+                                                    Color.Black.copy(alpha = 0.3f),
+                                                    Color.Black.copy(alpha = 0.7f)
+                                                ),
+                                                startY = 0.4f
                                             )
                                         )
-
-                                        // Multiple circular "color blobs" for a dynamic feel
-                                        drawCircle(
-                                            brush = Brush.radialGradient(
-                                                colors = listOf(color1, Color.Transparent),
-                                                center = Offset(size.width * 0.2f, size.height * 0.2f),
-                                                radius = size.width * 0.8f
-                                            ),
-                                            center = Offset(size.width * 0.2f, size.height * 0.2f),
-                                            radius = size.width * 0.8f
-                                        )
-
-                                        drawCircle(
-                                            brush = Brush.radialGradient(
-                                                colors = listOf(color2, Color.Transparent),
-                                                center = Offset(size.width * 0.8f, size.height * 0.5f),
-                                                radius = size.width * 0.7f
-                                            ),
-                                            center = Offset(size.width * 0.8f, size.height * 0.5f),
-                                            radius = size.width * 0.7f
-                                        )
-
-                                        drawCircle(
-                                            brush = Brush.radialGradient(
-                                                colors = listOf(color3, Color.Transparent),
-                                                center = Offset(size.width * 0.3f, size.height * 0.8f),
-                                                radius = size.width * 0.9f
-                                            ),
-                                            center = Offset(size.width * 0.3f, size.height * 0.8f),
-                                            radius = size.width * 0.9f
-                                        )
-                                    }
-
-                                    // Dark overlay for text readability
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color.Black.copy(alpha = 0.25f))
-                                    )
-                                }
+                                )
                             }
                         }
                     }
@@ -843,6 +818,7 @@ fun BottomSheetPlayer(
         },
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
+            // Título con marquesina y click largo para copiar
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
@@ -889,6 +865,7 @@ fun BottomSheetPlayer(
 
                     Spacer(Modifier.height(6.dp))
 
+                    // Artistas con navegación
                     if (mediaMetadata.artists.any { it.name.isNotBlank() }) {
                         Row(
                             modifier = Modifier
@@ -922,211 +899,19 @@ fun BottomSheetPlayer(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
+                // BOTONES DE ACCIÓN ALINEADOS A LA DERECHA
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val (showExtraButton, _) = rememberPreference(
-                        key = PlayerExtraButtonKey,
-                        defaultValue = DefaultPlayerExtraButton
-                    )
-                    val (extraButtonType, _) = rememberEnumPreference(
-                        key = PlayerExtraButtonTypeKey,
-                        defaultValue = DefaultExtraButtonType
-                    )
-
-                    if (showExtraButton && extraButtonType != ExtraButtonType.NONE) {
-                        Box(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(
-                                    RoundedCornerShape(
-                                        topStart = 50.dp, bottomStart = 50.dp,
-                                        topEnd = 5.dp, bottomEnd = 5.dp
-                                    )
-                                )
-                                .background(textButtonColor)
-                                .clickable {
-                                    when (extraButtonType) {
-                                        ExtraButtonType.REPEAT -> {
-                                            playerConnection.player.toggleRepeatMode()
-                                        }
-                                        ExtraButtonType.SHUFFLE -> {
-                                            playerConnection.player.shuffleModeEnabled =
-                                                !playerConnection.player.shuffleModeEnabled
-                                        }
-                                        ExtraButtonType.SLEEP_TIMER -> {
-                                            if (sleepTimerEnabled) {
-                                                playerConnection.service.sleepTimer.clear()
-                                            } else {
-                                                showSleepTimerDialog = true
-                                            }
-                                        }
-                                        else -> {}
-                                    }
-                                }
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                if (extraButtonType == ExtraButtonType.SLEEP_TIMER && sleepTimerEnabled) {
-                                    val progress = if (playerConnection.service.sleepTimer.pauseWhenSongEnd) {
-                                        val duration = playerConnection.player.duration
-                                        if (duration > 0) {
-                                            1f - (sleepTimerTimeLeft.toFloat() / duration.toFloat())
-                                        } else {
-                                            0f
-                                        }
-                                    } else {
-                                        val triggerTime = playerConnection.service.sleepTimer.triggerTime
-                                        val currentTime = System.currentTimeMillis()
-
-                                        if (triggerTime > currentTime) {
-                                            val elapsedTime = triggerTime - currentTime
-                                            val totalEstimated = elapsedTime + sleepTimerTimeLeft
-                                            if (totalEstimated > 0) {
-                                                1f - (sleepTimerTimeLeft.toFloat() / totalEstimated.toFloat())
-                                            } else {
-                                                1f
-                                            }
-                                        } else {
-                                            1f
-                                        }
-                                    }
-
-                                    val animatedProgress by animateFloatAsState(
-                                        targetValue = progress,
-                                        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
-                                        label = "sleepTimerProgress"
-                                    )
-
-                                    val pulseAnimation by animateFloatAsState(
-                                        targetValue = if (animatedProgress > 0.9f) 1.05f else 1f,
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioLowBouncy,
-                                            stiffness = Spring.StiffnessMediumLow
-                                        ),
-                                        label = "pulseAnimation"
-                                    )
-
-                                    val progressColor by animateColorAsState(
-                                        targetValue = when {
-                                            animatedProgress > 0.9f -> MaterialTheme.colorScheme.error
-                                            animatedProgress > 0.7f -> MaterialTheme.colorScheme.tertiary
-                                            animatedProgress > 0.4f -> MaterialTheme.colorScheme.secondary
-                                            else -> MaterialTheme.colorScheme.primary
-                                        },
-                                        animationSpec = tween(durationMillis = 300),
-                                        label = "progressColor"
-                                    )
-
-                                    val iconColor by animateColorAsState(
-                                        targetValue = when {
-                                            animatedProgress > 0.9f -> MaterialTheme.colorScheme.error
-                                            animatedProgress > 0 -> iconButtonColor
-                                            else -> iconButtonColor
-                                        },
-                                        animationSpec = tween(durationMillis = 300),
-                                        label = "iconColor"
-                                    )
-
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator(
-                                            progress = { 1f },
-                                            modifier = Modifier
-                                                .size(44.dp)
-                                                .scale(pulseAnimation),
-                                            color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f),
-                                            strokeWidth = 4.dp,
-                                            strokeCap = StrokeCap.Round
-                                        )
-
-                                        CircularProgressIndicator(
-                                            progress = { animatedProgress },
-                                            modifier = Modifier
-                                                .size(44.dp)
-                                                .scale(pulseAnimation),
-                                            color = progressColor,
-                                            strokeWidth = 4.dp,
-                                            strokeCap = StrokeCap.Round,
-                                            trackColor = Color.Transparent
-                                        )
-
-
-                                        if (animatedProgress > 0.1f && animatedProgress < 0.95f) {
-                                            Text(
-                                                text = "${(animatedProgress * 100).toInt()}%",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = iconColor,
-                                                fontSize = 7.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.offset(y = (10).dp)
-                                            )
-                                        }
-
-                                        else if (animatedProgress >= 0.95f) {
-                                            Text(
-                                                text = "¡Pronto!",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.error,
-                                                fontSize = 6.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.offset(y = (10).dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                Icon(
-                                    painter = painterResource(
-                                        when (extraButtonType) {
-                                            ExtraButtonType.REPEAT -> when (repeatMode) {
-                                                Player.REPEAT_MODE_OFF -> R.drawable.repeat
-                                                Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
-                                                Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
-                                                else -> R.drawable.repeat
-                                            }
-                                            ExtraButtonType.SHUFFLE -> R.drawable.shuffle
-                                            ExtraButtonType.SLEEP_TIMER -> R.drawable.bedtime
-                                            else -> R.drawable.more_vert
-                                        }
-                                    ),
-                                    contentDescription = null,
-                                    tint = when (extraButtonType) {
-                                        ExtraButtonType.REPEAT -> when (repeatMode) {
-                                            Player.REPEAT_MODE_OFF -> iconButtonColor
-                                            else -> MaterialTheme.colorScheme.primary
-                                        }
-                                        ExtraButtonType.SHUFFLE ->
-                                            if (playerConnection.player.shuffleModeEnabled)
-                                                MaterialTheme.colorScheme.primary
-                                            else iconButtonColor
-                                        ExtraButtonType.SLEEP_TIMER ->
-                                            if (sleepTimerEnabled)
-                                                MaterialTheme.colorScheme.primary
-                                            else iconButtonColor
-                                        else -> iconButtonColor
-                                    },
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    // Botón Like
+                    // Botón Like/Favorito
                     Box(
                         modifier = Modifier
                             .size(42.dp)
                             .clip(
                                 RoundedCornerShape(
-                                    topStart = if (showExtraButton && extraButtonType != ExtraButtonType.NONE) 5.dp else 50.dp,
-                                    bottomStart = if (showExtraButton && extraButtonType != ExtraButtonType.NONE) 5.dp else 50.dp,
-                                    topEnd = 5.dp,
-                                    bottomEnd = 5.dp
+                                    topStart = 50.dp, bottomStart = 50.dp,
+                                    topEnd = 5.dp, bottomEnd = 5.dp
                                 )
                             )
                             .background(textButtonColor)
