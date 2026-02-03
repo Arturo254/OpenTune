@@ -1,23 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-
-
-    <!-- Permite acceder a archivos en la carpeta de descargas externa -->
     <external-files-path
         name="downloads"
         path="Download/" />
-
-    <!-- Permite acceder a archivos en cualquier carpeta externa de la app -->
     <external-files-path
         name="external_files"
         path="." />
-
-    <!-- Si necesitas acceso a archivos temporales -->
     <cache-path
         name="cache"
         path="." />
-
-    <!-- Si necesitas acceso a archivos internos de la app -->
     <files-path
         name="files"
         path="." />
