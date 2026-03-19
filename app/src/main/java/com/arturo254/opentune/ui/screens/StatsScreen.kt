@@ -54,7 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.arturo254.innertube.models.WatchEndpoint
 import com.arturo254.opentune.LocalPlayerAwareWindowInsets
@@ -77,6 +77,10 @@ import com.arturo254.opentune.ui.component.NavigationTitle
 import com.arturo254.opentune.ui.menu.AlbumMenu
 import com.arturo254.opentune.ui.menu.ArtistMenu
 import com.arturo254.opentune.ui.menu.SongMenu
+import com.arturo254.opentune.db.entities.Album
+import com.arturo254.opentune.db.entities.AlbumEntity
+import com.arturo254.opentune.db.entities.Artist
+import com.arturo254.opentune.db.entities.ArtistEntity
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.utils.joinByBullet
 import com.arturo254.opentune.utils.makeTimeString
@@ -329,7 +333,7 @@ fun StatsScreen(
                         key = { _, artist -> artist.id },
                     ) { index, artist ->
                         LocalArtistsGrid(
-                            title = "${index + 1}. ${artist.artist.name}",
+                            title = "${index + 1}. ${artist.name}",
                             subtitle =
                                 joinByBullet(
                                     pluralStringResource(
@@ -337,9 +341,9 @@ fun StatsScreen(
                                         artist.songCount,
                                         artist.songCount
                                     ),
-                                    makeTimeString(artist.timeListened?.toLong()),
+                                    makeTimeString(artist.timeListened),
                                 ),
-                            thumbnailUrl = artist.artist.thumbnailUrl,
+                            thumbnailUrl = artist.thumbnailUrl,
                             modifier =
                                 Modifier
                                     .combinedClickable(
@@ -350,7 +354,14 @@ fun StatsScreen(
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             menuState.show {
                                                 ArtistMenu(
-                                                    originalArtist = artist,
+                                                    originalArtist = Artist(
+                                                        artist = ArtistEntity(
+                                                            id = artist.id,
+                                                            name = artist.name,
+                                                            thumbnailUrl = artist.thumbnailUrl,
+                                                            channelId = artist.channelId,
+                                                        )
+                                                    ),
                                                     coroutineScope = coroutineScope,
                                                     onDismiss = menuState::dismiss,
                                                 )
@@ -378,17 +389,17 @@ fun StatsScreen(
                             key = { _, album -> album.id },
                         ) { index, album ->
                             LocalAlbumsGrid(
-                                title = "${index + 1}. ${album.album.title}",
+                                title = "${index + 1}. ${album.title}",
                                 subtitle =
                                     joinByBullet(
                                         pluralStringResource(
                                             R.plurals.n_time,
-                                            album.songCountListened!!,
+                                            album.songCountListened,
                                             album.songCountListened
                                         ),
-                                        makeTimeString(album.timeListened?.toLong()),
+                                        makeTimeString(album.timeListened),
                                     ),
-                                thumbnailUrl = album.album.thumbnailUrl,
+                                thumbnailUrl = album.thumbnailUrl,
                                 isActive = album.id == mediaMetadata?.album?.id,
                                 isPlaying = isPlaying,
                                 modifier =
@@ -402,7 +413,16 @@ fun StatsScreen(
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 menuState.show {
                                                     AlbumMenu(
-                                                        originalAlbum = album,
+                                                        originalAlbum = Album(
+                                                            album = AlbumEntity(
+                                                                id = album.id,
+                                                                title = album.title,
+                                                                thumbnailUrl = album.thumbnailUrl,
+                                                                songCount = 0,
+                                                                duration = 0,
+                                                            ),
+                                                            artists = emptyList(),
+                                                        ),
                                                         navController = navController,
                                                         onDismiss = menuState::dismiss,
                                                     )

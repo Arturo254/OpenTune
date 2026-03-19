@@ -7,7 +7,6 @@ import androidx.room.Embedded
 data class Artist(
     @Embedded
     val artist: ArtistEntity,
-    val timeListened: Int? = 0,
 ) : LocalItem() {
     override val id: String
         get() = artist.id

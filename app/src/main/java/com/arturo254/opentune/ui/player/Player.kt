@@ -1,5 +1,6 @@
 package com.arturo254.opentune.ui.player
 
+import android.content.ClipData
 import android.content.res.Configuration
 import android.graphics.drawable.BitmapDrawable
 import android.text.format.Formatter
@@ -76,6 +77,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -99,13 +101,13 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -169,6 +171,7 @@ import com.arturo254.opentune.utils.makeTimeString
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -187,7 +190,8 @@ fun BottomSheetPlayer(
     val database = LocalDatabase.current
     val menuState = LocalMenuState.current
 
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val coroutineScope = rememberCoroutineScope()
 
     var showFullscreenLyrics by remember { mutableStateOf(false) }
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -637,7 +641,7 @@ fun BottomSheetPlayer(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = {
-                                        clipboardManager.setText(AnnotatedString(displayText))
+                                        coroutineScope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", displayText))) }
                                         Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT)
                                             .show()
                                     },
@@ -856,7 +860,7 @@ fun BottomSheetPlayer(
                                             }
                                         },
                                         onLongClick = {
-                                            clipboardManager.setText(AnnotatedString(title))
+                                            coroutineScope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", title))) }
                                             Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
                                         }
                                     ),

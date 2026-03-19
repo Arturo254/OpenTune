@@ -67,6 +67,8 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.arturo254.opentune.R
 import com.arturo254.opentune.models.MediaMetadata
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlin.math.min
 import androidx.compose.ui.res.stringResource
@@ -331,7 +333,8 @@ fun LyricsImageCard(
                 onSaveImage = {
                     isGenerating = true
                     onSaveImage()
-                    kotlinx.coroutines.GlobalScope.launch {
+                    @OptIn(DelicateCoroutinesApi::class)
+                    GlobalScope.launch {
                         kotlinx.coroutines.delay(1500)
                         isGenerating = false
                     }

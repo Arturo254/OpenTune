@@ -89,7 +89,7 @@ import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService

@@ -2,6 +2,7 @@ package com.arturo254.opentune.ui.player
 
 import android.annotation.SuppressLint
 import android.text.format.Formatter
+import android.content.ClipData
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -82,13 +83,13 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -139,7 +140,8 @@ fun Queue(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val coroutineScope = rememberCoroutineScope()
     val menuState = LocalMenuState.current
 
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -247,7 +249,7 @@ fun Queue(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = {
-                                        clipboardManager.setText(AnnotatedString(displayText))
+                                        coroutineScope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", displayText))) }
                                         Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT)
                                             .show()
                                     },
@@ -300,8 +302,6 @@ fun Queue(
             remember(queueWindows) {
                 queueWindows.sumOf { it.mediaItem.metadata!!.duration }
             }
-
-        val coroutineScope = rememberCoroutineScope()
 
         val headerItems = 1
         val lazyListState = rememberLazyListState()
@@ -389,6 +389,7 @@ fun Queue(
                         key = window.uid.hashCode(),
                     ) {
                         val currentItem by rememberUpdatedState(window)
+                        @Suppress("DEPRECATION")
                         val dismissBoxState =
                             rememberSwipeToDismissBoxState(
                                 positionalThreshold = { totalDistance ->

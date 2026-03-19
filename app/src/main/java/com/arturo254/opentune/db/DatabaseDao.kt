@@ -9,6 +9,7 @@ import androidx.room.RawQuery
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.sqlite.db.SupportSQLiteQuery
 import com.arturo254.innertube.models.PlaylistItem
 import com.arturo254.innertube.models.SongItem
@@ -23,8 +24,10 @@ import com.arturo254.opentune.db.entities.Album
 import com.arturo254.opentune.db.entities.AlbumArtistMap
 import com.arturo254.opentune.db.entities.AlbumEntity
 import com.arturo254.opentune.db.entities.AlbumWithSongs
+import com.arturo254.opentune.db.entities.AlbumWithStats
 import com.arturo254.opentune.db.entities.Artist
 import com.arturo254.opentune.db.entities.ArtistEntity
+import com.arturo254.opentune.db.entities.ArtistWithStats
 import com.arturo254.opentune.db.entities.Event
 import com.arturo254.opentune.db.entities.EventWithSong
 import com.arturo254.opentune.db.entities.FormatEntity
@@ -342,6 +345,7 @@ interface DatabaseDao {
         OFFSET :offset
     """,
     )
+    @RewriteQueriesToDropUnusedColumns
     fun mostPlayedSongs(
         fromTimeStamp: Long,
         limit: Int = 6,
@@ -379,12 +383,13 @@ interface DatabaseDao {
                      ON artist.id = artistId
     """,
     )
+    @RewriteQueriesToDropUnusedColumns
     fun mostPlayedArtists(
         fromTimeStamp: Long,
         limit: Int = 6,
         offset: Int = 0,
         toTimeStamp: Long? = LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
-    ): Flow<List<Artist>>
+    ): Flow<List<ArtistWithStats>>
 
     @Transaction
     @Query(
@@ -419,12 +424,13 @@ interface DatabaseDao {
     LIMIT :limit OFFSET :offset
     """
     )
+    @RewriteQueriesToDropUnusedColumns
     fun mostPlayedAlbums(
         fromTimeStamp: Long,
         limit: Int = 6,
         offset: Int = 0,
         toTimeStamp: Long? = LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
-    ): Flow<List<Album>>
+    ): Flow<List<AlbumWithStats>>
 
     @Query("SELECT sum(count) from playCount WHERE song = :songId")
     fun getLifetimePlayCount(songId: String?): Flow<Int>
@@ -831,6 +837,9 @@ interface DatabaseDao {
     @Transaction
     @Query("SELECT * FROM album WHERE id = :id")
     fun album(id: String): Flow<Album?>
+
+    @Query("SELECT * FROM album WHERE id = :id")
+    fun albumEntityById(id: String): AlbumEntity?
 
     @Transaction
     @Query("SELECT * FROM album WHERE id = :albumId")

@@ -1,5 +1,3 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-
 package com.arturo254.opentune.ui.component
 
 import androidx.annotation.DrawableRes

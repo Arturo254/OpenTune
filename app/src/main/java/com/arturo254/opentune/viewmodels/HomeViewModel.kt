@@ -16,6 +16,9 @@ import com.arturo254.innertube.utils.completedLibraryPage
 import com.arturo254.opentune.constants.InnerTubeCookieKey
 import com.arturo254.opentune.db.MusicDatabase
 import com.arturo254.opentune.db.entities.Album
+import com.arturo254.opentune.db.entities.AlbumEntity
+import com.arturo254.opentune.db.entities.Artist as LocalArtist
+import com.arturo254.opentune.db.entities.ArtistEntity
 import com.arturo254.opentune.db.entities.LocalItem
 import com.arturo254.opentune.db.entities.Playlist
 import com.arturo254.opentune.db.entities.Song
@@ -84,10 +87,35 @@ class HomeViewModel @Inject constructor(
         val keepListeningSongs = database.mostPlayedSongs(fromTimeStamp, limit = 15, offset = 5)
             .first().shuffled().take(10)
         val keepListeningAlbums = database.mostPlayedAlbums(fromTimeStamp, limit = 8, offset = 2)
-            .first().filter { it.album.thumbnailUrl != null }.shuffled().take(5)
+            .first().filter { it.thumbnailUrl != null }.shuffled().take(5)
+            .map { albumStats ->
+                Album(
+                    album = AlbumEntity(
+                        id = albumStats.id,
+                        title = albumStats.title,
+                        thumbnailUrl = albumStats.thumbnailUrl,
+                        songCount = 0,
+                        duration = 0,
+                    ),
+                    artists = emptyList(),
+                )
+            }
         val keepListeningArtists = database.mostPlayedArtists(fromTimeStamp)
-            .first().filter { it.artist.isYouTubeArtist && it.artist.thumbnailUrl != null }
+            .first().filter {
+                (it.id.startsWith("UC") || it.id.startsWith("FEmusic_library_privately_owned_artist")) &&
+                it.thumbnailUrl != null
+            }
             .shuffled().take(5)
+            .map { artistStats ->
+                LocalArtist(
+                    artist = ArtistEntity(
+                        id = artistStats.id,
+                        name = artistStats.name,
+                        thumbnailUrl = artistStats.thumbnailUrl,
+                        channelId = artistStats.channelId,
+                    )
+                )
+            }
         keepListening.value =
             (keepListeningSongs + keepListeningAlbums + keepListeningArtists).shuffled()
 
@@ -107,16 +135,26 @@ class HomeViewModel @Inject constructor(
         // Similar to artists
         val artistRecommendations =
             database.mostPlayedArtists(fromTimeStamp, limit = 10).first()
-                .filter { it.artist.isYouTubeArtist }
+                .filter {
+                    it.id.startsWith("UC") ||
+                    it.id.startsWith("FEmusic_library_privately_owned_artist")
+                }
                 .shuffled().take(3)
-                .mapNotNull {
+                .mapNotNull { artistStats ->
                     val items = mutableListOf<YTItem>()
-                    YouTube.artist(it.id).onSuccess { page ->
+                    YouTube.artist(artistStats.id).onSuccess { page ->
                         items += page.sections.getOrNull(page.sections.size - 2)?.items.orEmpty()
                         items += page.sections.lastOrNull()?.items.orEmpty()
                     }
                     SimilarRecommendation(
-                        title = it,
+                        title = LocalArtist(
+                            artist = ArtistEntity(
+                                id = artistStats.id,
+                                name = artistStats.name,
+                                thumbnailUrl = artistStats.thumbnailUrl,
+                                channelId = artistStats.channelId,
+                            )
+                        ),
                         items = items
                             .shuffled()
                             .ifEmpty { return@mapNotNull null }

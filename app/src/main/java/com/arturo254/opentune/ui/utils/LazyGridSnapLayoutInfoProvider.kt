@@ -1,5 +1,3 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-
 package com.arturo254.opentune.ui.utils
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -8,7 +6,6 @@ import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.lazy.grid.LazyGridItemInfo
 import androidx.compose.foundation.lazy.grid.LazyGridLayoutInfo
 import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.ui.util.fastForEach
 
 @ExperimentalFoundationApi
 fun SnapLayoutInfoProvider(
@@ -34,7 +31,7 @@ fun SnapLayoutInfoProvider(
         var lowerBoundOffset = Float.NEGATIVE_INFINITY
         var upperBoundOffset = Float.POSITIVE_INFINITY
 
-        layoutInfo.visibleItemsInfo.fastForEach { item ->
+        layoutInfo.visibleItemsInfo.forEach { item ->
             val offset = calculateDistanceToDesiredSnapPosition(layoutInfo, item, positionInLayout)
 
             // Find item that is closest to the center

@@ -49,6 +49,6 @@ data class ArtistEntity(
     }
 
     companion object {
-        fun generateArtistId() = "LA" + RandomStringUtils.random(8, true, false)
+        fun generateArtistId() = "LA" + RandomStringUtils.secure().next(8, true, false)
     }
 }
