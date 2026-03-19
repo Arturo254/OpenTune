@@ -4,7 +4,6 @@ plugins {
     id("com.android.application")
     kotlin("android")
     kotlin("plugin.serialization") version "2.1.0"
-    kotlin("kapt")
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
@@ -155,7 +154,7 @@ dependencies {
 
     implementation(libs.hilt)
     implementation("org.jsoup:jsoup:1.18.1")
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     implementation(projects.innertube)
     implementation(projects.kugou)
