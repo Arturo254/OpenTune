@@ -1,0 +1,68 @@
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -1,23 +1,12 @@
+-@file:Suppress("DEPRECATION")
+-
+ plugins {
+-    alias(libs.plugins.hilt) apply(false)
+-    alias(libs.plugins.kotlin.ksp) apply(false)
++    alias(libs.plugins.android.application) apply false
++    alias(libs.plugins.android.library) apply false
++    alias(libs.plugins.kotlin.android) apply false
++    alias(libs.plugins.hilt) apply false
++    alias(libs.plugins.kotlin.ksp) apply false
+     alias(libs.plugins.compose.compiler) apply false
+ }
+ 
+-    buildscript {
+-    repositories {
+-        google()
+-        mavenCentral()
+-        maven { setUrl("https://jitpack.io") }
+-    }
+-    dependencies {
+-        classpath(libs.gradle)
+-        classpath(kotlin("gradle-plugin", libs.versions.kotlin.get()))
+-    }
+-}
+-
+ tasks.register<Delete>("Clean") {
+     delete(rootProject.layout.buildDirectory)
+ }
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -1,10 +1,9 @@
+ @file:Suppress("UnstableApiUsage")
+ 
+ plugins {
+-    id("com.android.application")
+-    kotlin("android")
++    alias(libs.plugins.android.application)
++    alias(libs.plugins.kotlin.android)
+     kotlin("plugin.serialization") version "2.1.0"
+-    kotlin("kapt")
+     alias(libs.plugins.hilt)
+     alias(libs.plugins.kotlin.ksp)
+     alias(libs.plugins.compose.compiler)
+@@ -155,7 +154,7 @@
+ 
+     implementation(libs.hilt)
+     implementation("org.jsoup:jsoup:1.18.1")
+-    kapt(libs.hilt.compiler)
++    ksp(libs.hilt.compiler)
+ 
+     implementation(projects.innertube)
+     implementation(projects.kugou)
+--- a/gradle/libs.versions.toml
++++ b/gradle/libs.versions.toml
+@@ -115,4 +115,7 @@
+ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+-kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+\ No newline at end of file
++kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
++android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
++android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
++kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+\ No newline at end of file
