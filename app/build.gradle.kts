@@ -168,4 +168,6 @@ dependencies {
     coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.timber)
+
+    implementation("androidx.core:core-splashscreen:1.0.0")
 }
