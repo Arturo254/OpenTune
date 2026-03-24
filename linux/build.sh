@@ -5,7 +5,7 @@ set -e
 flutter build linux --release
 
 # Prepare AppDir structure
-APPDIR=metrolist.AppDir
+APPDIR=opentube.AppDir
 BUNDLE=build/linux/x64/release/bundle
 
 rm -rf "$APPDIR"
@@ -13,22 +13,22 @@ mkdir -p "$APPDIR/usr/bin"
 mkdir -p "$APPDIR/usr/lib"
 
 # Copy the executable
-cp "$BUNDLE/metrolist" "$APPDIR/usr/bin/metrolist"
+cp "$BUNDLE/opentube" "$APPDIR/usr/bin/opentube"
 
 # Copy shared libs and data next to the binary so relative paths resolve
 cp -r "$BUNDLE/lib/"* "$APPDIR/usr/lib/"
 cp -r "$BUNDLE/data" "$APPDIR/usr/bin/data"
 
 # Desktop file and icon
-cp metrolist.desktop "$APPDIR/metrolist.desktop"
-cp metrolist.png "$APPDIR/metrolist.png"
+cp opentube.desktop "$APPDIR/opentube.desktop"
+cp opentube.png "$APPDIR/opentube.png"
 
 # AppRun — required by appimagetool to know what to launch
 cat > "$APPDIR/AppRun" << 'EOF'
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "$0")")"
 export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
-exec "$HERE/usr/bin/metrolist" "$@"
+exec "$HERE/usr/bin/opentube" "$@"
 EOF
 chmod +x "$APPDIR/AppRun"
 
@@ -40,6 +40,6 @@ if [ ! -f ./appimagetool-x86_64.AppImage ]; then
 fi
 
 # Build AppImage
-./appimagetool-x86_64.AppImage "$APPDIR" metrolist-x86_64.AppImage
+./appimagetool-x86_64.AppImage "$APPDIR" opentube-x86_64.AppImage
 
-echo "Done: metrolist-x86_64.AppImage"
+echo "Done: opentube-x86_64.AppImage"
