@@ -12,6 +12,7 @@
 package com.my.kizzy.remote
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -21,7 +22,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 /**
- * Modified by Zion Huang
+ * Modified by Arturo254
  */
 class ApiService {
     private val client = HttpClient {
@@ -30,6 +31,11 @@ class ApiService {
                 ignoreUnknownKeys = true
                 encodeDefaults = true
             })
+        }
+        install(HttpTimeout) {
+            connectTimeoutMillis = 30_000
+            requestTimeoutMillis = 30_000
+            socketTimeoutMillis = 30_000
         }
         install(HttpCache)
     }

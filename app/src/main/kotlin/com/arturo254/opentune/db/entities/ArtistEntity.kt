@@ -1,0 +1,58 @@
+/*
+ * OpenTune Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+
+
+package com.arturo254.opentune.db.entities
+
+import androidx.compose.runtime.Immutable
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.arturo254.opentune.innertube.YouTube
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import org.apache.commons.lang3.RandomStringUtils
+import java.time.LocalDateTime
+
+@Immutable
+@Entity(tableName = "artist")
+data class ArtistEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val thumbnailUrl: String? = null,
+    val channelId: String? = null,
+    val lastUpdateTime: LocalDateTime = LocalDateTime.now(),
+    val bookmarkedAt: LocalDateTime? = null,
+    @ColumnInfo(name = "isLocal", defaultValue = "0")
+    val isLocal: Boolean = false
+) {
+    val isYouTubeArtist: Boolean
+        get() = id.startsWith("UC") || id.startsWith("FEmusic_library_privately_owned_artist")
+
+    val isPrivatelyOwnedArtist: Boolean
+        get() = id.startsWith("FEmusic_library_privately_owned_artist")
+
+    fun localToggleLike() = copy(
+        bookmarkedAt = if (bookmarkedAt != null) null else LocalDateTime.now(),
+    )
+
+    fun toggleLike() = localToggleLike().also {
+        CoroutineScope(Dispatchers.IO).launch {
+            if (channelId == null)
+                YouTube.subscribeChannel(YouTube.getChannelId(id), bookmarkedAt == null)
+            else
+                YouTube.subscribeChannel(channelId, bookmarkedAt == null)
+            this.cancel()
+        }
+    }
+
+    companion object {
+        fun generateArtistId() = "LA" + RandomStringUtils.insecure().next(8, true, false)
+    }
+}

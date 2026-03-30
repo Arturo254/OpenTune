@@ -1,5 +1,13 @@
 @file:Suppress("UnstableApiUsage")
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
@@ -10,22 +18,25 @@ dependencyResolutionManagement {
     }
 }
 
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version("0.10.0")
-}
-
+// F-Droid doesn't support foojay-resolver plugin
+// plugins {
+//     id("org.gradle.toolchains.foojay-resolver-convention") version("1.0.0")
+// }
 
 rootProject.name = "OpenTune"
 include(":app")
 include(":innertube")
 include(":kugou")
 include(":lrclib")
+include(":lastfm")
+include("simpmusic")
+include(":betterlyrics")
 include(":kizzy")
-include(":material-color-utilities")
-include(":jossredconnect")
+include(":canvas")
+include(":shazamkit")
 
 // Use a local copy of NewPipe Extractor by uncommenting the lines below.
-// We assume, that Metrolist and NewPipe Extractor have the same parent directory.
+// We assume, that OpenTune and NewPipe Extractor have the same parent directory.
 // If this is not the case, please change the path in includeBuild().
 //
 // For this to work you also need to change the implementation in innertube/build.gradle.kts

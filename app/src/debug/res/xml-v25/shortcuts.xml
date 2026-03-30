@@ -8,17 +8,7 @@
         <intent
             android:action="com.arturo254.opentune.action.SEARCH"
             android:targetClass="com.arturo254.opentune.MainActivity"
-            android:targetPackage="com.Arturo254.opentune.debug" />
-    </shortcut>
-    <shortcut
-        android:enabled="true"
-        android:icon="@drawable/shortcut_explore"
-        android:shortcutId="explore"
-        android:shortcutShortLabel="@string/explore">
-        <intent
-            android:action="com.arturo254.opentune.action.EXPLORE"
-            android:targetClass="com.arturo254.opentune.MainActivity"
-            android:targetPackage="com.Arturo254.opentune.debug" />
+            android:targetPackage="com.arturo254.opentune.debug" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -28,6 +18,6 @@
         <intent
             android:action="com.arturo254.opentune.action.LIBRARY"
             android:targetClass="com.arturo254.opentune.MainActivity"
-            android:targetPackage="com.Arturo254.opentune.debug" />
+            android:targetPackage="com.arturo254.opentune.debug" />
     </shortcut>
 </shortcuts>

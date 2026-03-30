@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "baseBranches": ["dev"],
+  "ignoreUnstable": true,
+  "respectLatest": true,
+  "separateMajorMinor": true,
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "*"
+      ],
+      "ignoreUnstable": true,
+      "respectLatest": true
+    },
+    {
+      "matchManagers": [
+        "gradle"
+      ],
+      "enabled": false,
+      "matchPackageNames": [
+        "/^com\\.github\\.libre\\-tube:NewPipeExtractor$/",
+        "/^com\\.android\\.tools\\.build:gradle$/",
+        "/^org\\.jetbrains\\.kotlin:kotlin\\-gradle\\-plugin$/"
+      ]
+    },
+    {
+      "description": "Ignore all pre-release versions (alpha, beta, rc, dev, snapshot)",
+      "matchPackageNames": ["*"],
+      "allowedVersions": "!/-(alpha|beta|rc|dev|snapshot|SNAPSHOT|Alpha|Beta|RC|Dev)/i"
+    }
+  ]
+}

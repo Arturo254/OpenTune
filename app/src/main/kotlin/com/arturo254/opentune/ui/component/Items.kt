@@ -1,0 +1,1670 @@
+/*
+ * OpenTune Project Original (2026)
+ * Arturo254 (github.com/Arturo254)
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+
+
+package com.arturo254.opentune.ui.component
+
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastForEachIndexed
+import androidx.compose.ui.zIndex
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.Download.STATE_COMPLETED
+import androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING
+import androidx.media3.exoplayer.offline.Download.STATE_QUEUED
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.ArtistItem
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.YTItem
+import com.arturo254.opentune.LocalDatabase
+import com.arturo254.opentune.LocalDownloadUtil
+import com.arturo254.opentune.LocalPlayerConnection
+import com.arturo254.opentune.R
+import com.arturo254.opentune.constants.DisableBlurKey
+import com.arturo254.opentune.constants.GridThumbnailCornerRadius
+import com.arturo254.opentune.constants.ListItemHeight
+import com.arturo254.opentune.constants.GridThumbnailHeight
+import com.arturo254.opentune.constants.ListThumbnailSize
+import com.arturo254.opentune.constants.ThumbnailCornerRadius
+import com.arturo254.opentune.constants.SwipeToSongKey
+import com.arturo254.opentune.db.entities.Song
+import com.arturo254.opentune.db.entities.Album
+import com.arturo254.opentune.db.entities.Artist
+import com.arturo254.opentune.db.entities.Playlist
+import com.arturo254.opentune.extensions.toMediaItem
+import com.arturo254.opentune.models.MediaMetadata
+import com.arturo254.opentune.playback.queues.LocalAlbumRadio
+import com.arturo254.opentune.utils.joinByBullet
+import com.arturo254.opentune.utils.makeTimeString
+import com.arturo254.opentune.utils.rememberPreference
+import com.arturo254.opentune.constants.CropThumbnailToSquareKey
+import com.arturo254.opentune.utils.reportException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
+
+const val ActiveBoxAlpha = 0.6f
+
+@Composable
+inline fun ListItem(
+    modifier: Modifier = Modifier,
+    title: String,
+    noinline subtitle: (@Composable RowScope.() -> Unit)? = null,
+    thumbnailContent: @Composable () -> Unit,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+    isActive: Boolean = false
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .height(ListItemHeight)
+            .padding(horizontal = 8.dp)
+            .then(if (isActive) Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.secondaryContainer) else Modifier)
+    ) {
+        Box(Modifier.padding(6.dp), contentAlignment = Alignment.Center) { thumbnailContent() }
+        Column(Modifier.weight(1f).padding(horizontal = 6.dp)) {
+            Text(
+                text = title, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                maxLines = 1, overflow = TextOverflow.Ellipsis
+            )
+            if (subtitle != null) Row(verticalAlignment = Alignment.CenterVertically) { subtitle() }
+        }
+        trailingContent()
+    }
+}
+
+@Composable
+fun ListItem(
+    modifier: Modifier = Modifier,
+    title: String,
+    subtitle: String?,
+    badges: @Composable RowScope.() -> Unit = {},
+    thumbnailContent: @Composable () -> Unit,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+    isActive: Boolean = false
+) = ListItem(
+    title = title,
+    modifier = modifier,
+    isActive = isActive,
+    subtitle = {
+        badges()
+        if (!subtitle.isNullOrEmpty()) {
+            Text(text = subtitle, color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    },
+    thumbnailContent = thumbnailContent,
+    trailingContent = trailingContent
+)
+
+@Composable
+fun GridItem(
+    modifier: Modifier = Modifier,
+    title: @Composable () -> Unit,
+    subtitle: @Composable () -> Unit,
+    badges: @Composable RowScope.() -> Unit = {},
+    thumbnailContent: @Composable BoxWithConstraintsScope.() -> Unit,
+    thumbnailRatio: Float = 1f,
+    fillMaxWidth: Boolean = false,
+) {
+    Column(
+        modifier = if (fillMaxWidth) {
+            modifier
+                .padding(12.dp)
+                .fillMaxWidth()
+        } else {
+            modifier
+                .padding(12.dp)
+                .width(GridThumbnailHeight * thumbnailRatio)
+        }
+    ) {
+        BoxWithConstraints(
+            contentAlignment = Alignment.Center,
+            modifier = if (fillMaxWidth) {
+                Modifier.fillMaxWidth()
+            } else {
+                Modifier.height(GridThumbnailHeight)
+            }
+                .aspectRatio(thumbnailRatio)
+        ) {
+            thumbnailContent()
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        title()
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            badges()
+
+            subtitle()
+        }
+    }
+}
+
+@Composable
+fun GridItem(
+    modifier: Modifier = Modifier,
+    title: String,
+    subtitle: String,
+    badges: @Composable RowScope.() -> Unit = {},
+    thumbnailContent: @Composable BoxWithConstraintsScope.() -> Unit,
+    thumbnailRatio: Float = 1f,
+    fillMaxWidth: Boolean = false,
+) = GridItem(
+    modifier = modifier,
+    title = {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.fillMaxWidth()
+        )
+    },
+    subtitle = {
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.secondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    },
+    thumbnailContent = thumbnailContent,
+    thumbnailRatio = thumbnailRatio,
+    fillMaxWidth = fillMaxWidth
+)
+
+@Composable
+fun SongListItem(
+    song: Song,
+    modifier: Modifier = Modifier,
+    albumIndex: Int? = null,
+    viewCountText: String? = null,
+    showLikedIcon: Boolean = true,
+    showInLibraryIcon: Boolean = false,
+    showDownloadIcon: Boolean = true,
+    badges: @Composable RowScope.() -> Unit = {
+        if (showLikedIcon && song.song.liked) {
+            Icon.Favorite()
+        }
+        if (song.song.explicit) {
+            Icon.Explicit()
+        }
+        if (showInLibraryIcon && song.song.inLibrary != null) {
+            Icon.Library()
+        }
+        if (showDownloadIcon) {
+            val download by LocalDownloadUtil.current.getDownload(song.id)
+                .collectAsState(initial = null)
+            Icon.Download(download?.state)
+        }
+    },
+    isSelected: Boolean = false,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    isSwipeable: Boolean = true,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+) {
+    val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = false)
+
+    val content: @Composable () -> Unit = {
+        ListItem(
+            title = song.song.title,
+            subtitle = joinByBullet(
+                song.artists.joinToString { it.name },
+                makeTimeString(song.song.duration * 1000L),
+                viewCountText
+            ),
+            badges = badges,
+            thumbnailContent = {
+                ItemThumbnail(
+                    thumbnailUrl = song.song.thumbnailUrl,
+                    albumIndex = albumIndex,
+                    isSelected = isSelected,
+                    isActive = isActive,
+                    isPlaying = isPlaying,
+                    shape = RoundedCornerShape(ThumbnailCornerRadius),
+                    modifier = Modifier.size(ListThumbnailSize)
+                )
+            },
+            trailingContent = trailingContent,
+            modifier = modifier,
+            isActive = isActive
+        )
+    }
+
+    if (isSwipeable && swipeEnabled) {
+        SwipeToSongBox(
+            mediaItem = song.toMediaItem(),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            content()
+        }
+    } else {
+        content()
+    }
+}
+
+@Composable
+fun SongGridItem(
+    song: Song,
+    modifier: Modifier = Modifier,
+    showLikedIcon: Boolean = true,
+    showInLibraryIcon: Boolean = false,
+    showDownloadIcon: Boolean = true,
+    badges: @Composable RowScope.() -> Unit = {
+        if (showLikedIcon && song.song.liked) {
+            Icon.Favorite()
+        }
+        if (showInLibraryIcon && song.song.inLibrary != null) {
+            Icon.Library()
+        }
+        if (showDownloadIcon) {
+            val download by LocalDownloadUtil.current.getDownload(song.id).collectAsState(initial = null)
+            Icon.Download(download?.state)
+        }
+    },
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    fillMaxWidth: Boolean = false,
+) = GridItem(
+    title = {
+        Text(
+            text = song.song.title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.basicMarquee().fillMaxWidth()
+        )
+    },
+    subtitle = {
+        Text(
+            text = joinByBullet(
+                song.artists.joinToString { it.name },
+                makeTimeString(song.song.duration * 1000L)
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.secondary,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    },
+    badges = badges,
+    thumbnailContent = {
+        ItemThumbnail(
+            thumbnailUrl = song.song.thumbnailUrl,
+            isActive = isActive,
+            isPlaying = isPlaying,
+            shape = RoundedCornerShape(GridThumbnailCornerRadius),
+            modifier = Modifier.size(GridThumbnailHeight)
+        )
+        if (!isActive) {
+            OverlayPlayButton(
+                visible = true
+            )
+        }
+    },
+    fillMaxWidth = fillMaxWidth,
+    modifier = modifier
+)
+
+@Composable
+fun ArtistListItem(
+    artist: Artist,
+    modifier: Modifier = Modifier,
+    badges: @Composable RowScope.() -> Unit = {
+        if (artist.artist.bookmarkedAt != null) {
+            Icon(
+                painter = painterResource(R.drawable.favorite),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .size(18.dp)
+                    .padding(end = 2.dp),
+            )
+        }
+    },
+    trailingContent: @Composable RowScope.() -> Unit = {},
+) = ListItem(
+    title = artist.artist.name,
+    subtitle = pluralStringResource(R.plurals.n_song, artist.songCount, artist.songCount),
+    badges = badges,
+    thumbnailContent = {
+        AsyncImage(
+            model = artist.artist.thumbnailUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .size(ListThumbnailSize)
+                .clip(CircleShape),
+        )
+    },
+    trailingContent = trailingContent,
+    modifier = modifier,
+)
+
+@Composable
+fun ArtistGridItem(
+    artist: Artist,
+    modifier: Modifier = Modifier,
+    badges: @Composable RowScope.() -> Unit = {
+        if (artist.artist.bookmarkedAt != null) {
+            Icon.Favorite()
+        }
+    },
+    fillMaxWidth: Boolean = false,
+) = GridItem(
+    title = artist.artist.name,
+    subtitle = pluralStringResource(R.plurals.n_song, artist.songCount, artist.songCount),
+    badges = badges,
+    thumbnailContent = {
+        AsyncImage(
+            model = artist.artist.thumbnailUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
+        )
+    },
+    fillMaxWidth = fillMaxWidth,
+    modifier = modifier
+)
+
+@Composable
+fun AlbumListItem(
+    album: Album,
+    modifier: Modifier = Modifier,
+    showLikedIcon: Boolean = true,
+    badges: @Composable RowScope.() -> Unit = {
+        val database = LocalDatabase.current
+        val downloadUtil = LocalDownloadUtil.current
+        var songs by remember {
+            mutableStateOf(emptyList<Song>())
+        }
+
+        LaunchedEffect(Unit) {
+            database.albumSongs(album.id).collect {
+                songs = it
+            }
+        }
+
+        var downloadState by remember {
+            mutableStateOf(Download.STATE_STOPPED)
+        }
+
+        LaunchedEffect(songs) {
+            if (songs.isEmpty()) return@LaunchedEffect
+            downloadUtil.downloads.collect { downloads ->
+                downloadState = when {
+                    songs.all { downloads[it.id]?.state == STATE_COMPLETED } -> STATE_COMPLETED
+                    songs.all { downloads[it.id]?.state in listOf(STATE_QUEUED, STATE_DOWNLOADING, STATE_COMPLETED) } -> STATE_DOWNLOADING
+                    else -> Download.STATE_STOPPED
+                }
+            }
+        }
+
+        if (showLikedIcon && album.album.bookmarkedAt != null) {
+            Icon.Favorite()
+        }
+        if (album.album.explicit) {
+            Icon.Explicit()
+        }
+        Icon.Download(downloadState)
+    },
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+) = ListItem(
+    title = album.album.title,
+    subtitle = joinByBullet(
+        album.artists.joinToString { it.name },
+        pluralStringResource(R.plurals.n_song, album.album.songCount, album.album.songCount),
+        album.album.year?.toString()
+    ),
+    badges = badges,
+    thumbnailContent = {
+        ItemThumbnail(
+            thumbnailUrl = album.album.thumbnailUrl,
+            isActive = isActive,
+            isPlaying = isPlaying,
+            shape = RoundedCornerShape(ThumbnailCornerRadius),
+            modifier = Modifier.size(ListThumbnailSize)
+        )
+    },
+    trailingContent = trailingContent,
+    modifier = modifier
+)
+
+@Composable
+fun AlbumGridItem(
+    album: Album,
+    modifier: Modifier = Modifier,
+    coroutineScope: CoroutineScope,
+    badges: @Composable RowScope.() -> Unit = {
+        val database = LocalDatabase.current
+        val downloadUtil = LocalDownloadUtil.current
+        var songs by remember { mutableStateOf(emptyList<Song>()) }
+
+        LaunchedEffect(Unit) {
+            database.albumSongs(album.id).collect { songs = it }
+        }
+
+        var downloadState by remember { mutableStateOf(Download.STATE_STOPPED) }
+
+        LaunchedEffect(songs) {
+            if (songs.isEmpty()) return@LaunchedEffect
+            downloadUtil.downloads.collect { downloads ->
+                downloadState = when {
+                    songs.all { downloads[it.id]?.state == STATE_COMPLETED } -> STATE_COMPLETED
+                    songs.all { downloads[it.id]?.state in listOf(STATE_QUEUED, STATE_DOWNLOADING, STATE_COMPLETED) } -> STATE_DOWNLOADING
+                    else -> Download.STATE_STOPPED
+                }
+            }
+        }
+
+        if (album.album.bookmarkedAt != null) {
+            Icon.Favorite()
+        }
+        if (album.album.explicit) {
+            Icon.Explicit()
+        }
+        Icon.Download(downloadState)
+    },
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    fillMaxWidth: Boolean = false,
+) = GridItem(
+    title = {
+        Text(
+            text = album.album.title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.basicMarquee().fillMaxWidth()
+        )
+    },
+    subtitle = {
+        Text(
+            text = album.artists.joinToString { it.name },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.secondary,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    },
+    badges = badges,
+    thumbnailContent = {
+        val database = LocalDatabase.current
+        val playerConnection = LocalPlayerConnection.current ?: return@GridItem
+
+        ItemThumbnail(
+            thumbnailUrl = album.album.thumbnailUrl,
+            isActive = isActive,
+            isPlaying = isPlaying,
+            shape = RoundedCornerShape(GridThumbnailCornerRadius),
+        )
+
+        AlbumPlayButton(
+            visible = !isActive,
+            onClick = {
+                coroutineScope.launch {
+                    database.albumWithSongs(album.id).firstOrNull()?.let { albumWithSongs ->
+                        playerConnection.playQueue(LocalAlbumRadio(albumWithSongs))
+                    }
+                }
+            }
+        )
+    },
+    fillMaxWidth = fillMaxWidth,
+    modifier = modifier
+)
+
+@Composable
+fun PlaylistListItem(
+    playlist: Playlist,
+    modifier: Modifier = Modifier,
+    autoPlaylist: Boolean = false,
+    badges: @Composable RowScope.() -> Unit = {},
+    trailingContent: @Composable RowScope.() -> Unit = {}
+) = ListItem(
+    title = playlist.playlist.name,
+    subtitle = if (autoPlaylist) {
+        ""
+    } else {
+        if (playlist.songCount == 0 && playlist.playlist.remoteSongCount != null) {
+            pluralStringResource(
+                R.plurals.n_song,
+                playlist.playlist.remoteSongCount,
+                playlist.playlist.remoteSongCount
+            )
+        } else {
+            pluralStringResource(
+                R.plurals.n_song,
+                playlist.songCount,
+                playlist.songCount
+            )
+        }
+    },
+    badges = badges,
+    thumbnailContent = {
+        PlaylistThumbnail(
+            thumbnails = playlist.thumbnails,
+            size = ListThumbnailSize,
+            placeHolder = {
+                val painter = when (playlist.playlist.name) {
+                    stringResource(R.string.liked) -> R.drawable.favorite_border
+                    stringResource(R.string.offline) -> R.drawable.offline
+                    stringResource(R.string.cached_playlist) -> R.drawable.cached
+                    else -> if (autoPlaylist) R.drawable.trending_up else R.drawable.queue_music
+                }
+                Icon(
+                    painter = painterResource(painter),
+                    contentDescription = null,
+                    tint = LocalContentColor.current.copy(alpha = 0.8f),
+                    modifier = Modifier.size(ListThumbnailSize / 2)
+                )
+            },
+            shape = RoundedCornerShape(ThumbnailCornerRadius)
+        )
+    },
+    trailingContent = trailingContent,
+    modifier = modifier
+)
+
+@Composable
+fun OverlayPlaylistListItem(
+    playlist: Playlist,
+    modifier: Modifier = Modifier,
+    autoPlaylist: Boolean = false,
+    badges: @Composable RowScope.() -> Unit = {},
+    trailingContent: @Composable RowScope.() -> Unit = {},
+    onClick: (() -> Unit)? = null,
+) {
+    var showPreview by remember { mutableStateOf(false) }
+    val backgroundUrl = playlist.thumbnails.getOrNull(0)
+    val (disableBlur) = rememberPreference(DisableBlurKey, false)
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick?.invoke() }
+    ) {
+        Box(modifier = Modifier.height(120.dp)) {
+            if (!backgroundUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = backgroundUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize().let { 
+                        if (disableBlur) it else it.blur(8.dp)
+                    }
+                )
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)),
+                            startY = 40f
+                        )
+                    )
+                )
+            } else {
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PlaylistThumbnail(
+                    thumbnails = playlist.thumbnails,
+                    size = 72.dp,
+                    placeHolder = {
+                        val painter = when (playlist.playlist.name) {
+                            stringResource(R.string.liked) -> R.drawable.favorite_border
+                            stringResource(R.string.offline) -> R.drawable.offline
+                            stringResource(R.string.cached_playlist) -> R.drawable.cached
+                            else -> if (autoPlaylist) R.drawable.trending_up else R.drawable.queue_music
+                        }
+                        Icon(
+                            painter = painterResource(painter),
+                            contentDescription = null,
+                            tint = LocalContentColor.current.copy(alpha = 0.9f),
+                            modifier = Modifier.size(36.dp)
+                        )
+                    },
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = playlist.playlist.name,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    val subtitle = if (autoPlaylist) "" else {
+                        if (playlist.songCount == 0 && playlist.playlist.remoteSongCount != null) {
+                            pluralStringResource(R.plurals.n_song, playlist.playlist.remoteSongCount, playlist.playlist.remoteSongCount)
+                        } else {
+                            pluralStringResource(R.plurals.n_song, playlist.songCount, playlist.songCount)
+                        }
+                    }
+                    Text(
+                        text = subtitle,
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Row(modifier = Modifier.padding(start = 8.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.End) {
+                    trailingContent()
+                }
+            }
+        }
+    }
+
+    if (showPreview) {
+        AlertDialog(
+            onDismissRequest = { showPreview = false },
+            confirmButton = { TextButton(onClick = { showPreview = false }) { Text(stringResource(R.string.close_dialog)) } },
+            text = {
+                Box(modifier = Modifier.fillMaxWidth().height(360.dp)) {
+                    AsyncImage(model = backgroundUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun PlaylistGridItem(
+    playlist: Playlist,
+    modifier: Modifier = Modifier,
+    autoPlaylist: Boolean = false,
+    badges: @Composable RowScope.() -> Unit = {},
+    fillMaxWidth: Boolean = false,
+) = GridItem(
+    title = {
+        Text(
+            text = playlist.playlist.name,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.basicMarquee().fillMaxWidth()
+        )
+    },
+    subtitle = {
+        val subtitle = if (autoPlaylist) {
+            ""
+        } else {
+            if (playlist.songCount == 0 && playlist.playlist.remoteSongCount != null) {
+                pluralStringResource(
+                    R.plurals.n_song,
+                    playlist.playlist.remoteSongCount,
+                    playlist.playlist.remoteSongCount
+                )
+            } else {
+                pluralStringResource(
+                    R.plurals.n_song,
+                    playlist.songCount,
+                    playlist.songCount
+                )
+            }
+        }
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.secondary,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    },
+    badges = badges,
+    thumbnailContent = {
+        val width = maxWidth
+        PlaylistThumbnail(
+            thumbnails = playlist.thumbnails,
+            size = width,
+            placeHolder = {
+                val painter = when (playlist.playlist.name) {
+                    stringResource(R.string.liked) -> R.drawable.favorite_border
+                    stringResource(R.string.offline) -> R.drawable.offline
+                    stringResource(R.string.cached_playlist) -> R.drawable.cached
+                    else -> if (autoPlaylist) R.drawable.trending_up else R.drawable.queue_music
+                }
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        painter = painterResource(painter),
+                        contentDescription = null,
+                        tint = LocalContentColor.current.copy(alpha = 0.8f),
+                        modifier = Modifier.size(width / 2)
+                    )
+                }
+            },
+            shape = RoundedCornerShape(GridThumbnailCornerRadius)
+        )
+    },
+    fillMaxWidth = fillMaxWidth,
+    modifier = modifier
+)
+
+@Composable
+fun MediaMetadataListItem(
+    mediaMetadata: MediaMetadata,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    shouldLoadImage: Boolean = true,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+) {
+    ListItem(
+        title = mediaMetadata.title,
+        subtitle = joinByBullet(
+            mediaMetadata.artists.joinToString { it.name },
+            makeTimeString(mediaMetadata.duration * 1000L)
+        ),
+        thumbnailContent = {
+            ItemThumbnail(
+                thumbnailUrl = mediaMetadata.thumbnailUrl,
+                albumIndex = null,
+                isSelected = isSelected,
+                isActive = isActive,
+                isPlaying = isPlaying,
+                shouldLoadImage = shouldLoadImage,
+                shape = RoundedCornerShape(ThumbnailCornerRadius),
+                modifier = Modifier.size(ListThumbnailSize)
+            )
+        },
+        trailingContent = trailingContent,
+        modifier = modifier,
+        isActive = isActive
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun YouTubeListItem(
+    item: YTItem,
+    modifier: Modifier = Modifier,
+    albumIndex: Int? = null,
+    viewCountText: String? = null,
+    isSelected: Boolean = false,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    isSwipeable: Boolean = true,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+    badges: @Composable RowScope.() -> Unit = {
+        val database = LocalDatabase.current
+        val song by database.song(item.id).collectAsState(initial = null)
+        val album by database.album(item.id).collectAsState(initial = null)
+
+        if ((item is SongItem && song?.song?.liked == true) ||
+            (item is AlbumItem && album?.album?.bookmarkedAt != null)
+        ) {
+            Icon.Favorite()
+        }
+        if (item.explicit) Icon.Explicit()
+        if (item is SongItem && song?.song?.inLibrary != null) {
+            Icon.Library()
+        }
+        if (item is SongItem) {
+            val downloads by LocalDownloadUtil.current.downloads.collectAsState()
+            Icon.Download(downloads[item.id]?.state)
+        }
+    },
+) {
+    val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = false)
+
+    val content: @Composable () -> Unit = {
+        ListItem(
+            title = item.title,
+            subtitle = when (item) {
+                is SongItem -> joinByBullet(
+                    item.artists.joinToString { it.name },
+                    makeTimeString(item.duration?.times(1000L)),
+                    viewCountText
+                )
+                is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
+                is ArtistItem -> null
+                is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
+            },
+            badges = badges,
+            thumbnailContent = {
+                ItemThumbnail(
+                    thumbnailUrl = item.thumbnail,
+                    albumIndex = albumIndex,
+                    isSelected = isSelected,
+                    isActive = isActive,
+                    isPlaying = isPlaying,
+                    shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
+                    modifier = Modifier.size(ListThumbnailSize)
+                )
+            },
+            trailingContent = trailingContent,
+            modifier = modifier,
+            isActive = isActive
+        )
+    }
+
+    if (item is SongItem && isSwipeable && swipeEnabled) {
+        SwipeToSongBox(
+            mediaItem = item.toMediaItem(),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            content()
+        }
+    } else {
+        content()
+    }
+}
+
+@Composable
+fun YouTubeGridItem(
+    item: YTItem,
+    modifier: Modifier = Modifier,
+    coroutineScope: CoroutineScope? = null,
+    badges: @Composable RowScope.() -> Unit = {
+        val database = LocalDatabase.current
+        val song by database.song(item.id).collectAsState(initial = null)
+        val album by database.album(item.id).collectAsState(initial = null)
+
+        if (item is SongItem && song?.song?.liked == true ||
+            item is AlbumItem && album?.album?.bookmarkedAt != null
+        ) {
+            Icon.Favorite()
+        }
+        if (item.explicit) Icon.Explicit()
+        if (item is SongItem && song?.song?.inLibrary != null) Icon.Library()
+        if (item is SongItem) {
+            val downloads by LocalDownloadUtil.current.downloads.collectAsState()
+            Icon.Download(downloads[item.id]?.state)
+        }
+    },
+    thumbnailRatio: Float = if (item is SongItem) 16f / 9 else 1f,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    fillMaxWidth: Boolean = false,
+) = GridItem(
+    title = {
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = if (item is ArtistItem) TextAlign.Center else TextAlign.Start,
+            modifier = Modifier.basicMarquee().fillMaxWidth()
+        )
+    },
+    subtitle = {
+        val subtitle = when (item) {
+            is SongItem -> joinByBullet(item.artists.joinToString { it.name }, makeTimeString(item.duration?.times(1000L)))
+            is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
+            is ArtistItem -> null
+            is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
+        }
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    },
+    badges = badges,
+    thumbnailContent = {
+        val database = LocalDatabase.current
+        val playerConnection = LocalPlayerConnection.current ?: return@GridItem
+        val shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(GridThumbnailCornerRadius)
+
+        ItemThumbnail(
+            thumbnailUrl = item.thumbnail,
+            isActive = isActive,
+            isPlaying = isPlaying,
+            shape = shape,
+            thumbnailRatio = thumbnailRatio
+        )
+
+        if (item is SongItem && !isActive) {
+            OverlayPlayButton(
+                visible = true
+            )
+        }
+
+        AlbumPlayButton(
+            visible = item is AlbumItem && !isActive,
+            onClick = {
+                coroutineScope?.launch(Dispatchers.IO) {
+                    var albumWithSongs = database.albumWithSongs(item.id).first()
+                    if (albumWithSongs?.songs.isNullOrEmpty()) {
+                        YouTube.album(item.id).onSuccess { albumPage ->
+                            database.transaction { insert(albumPage) }
+                            albumWithSongs = database.albumWithSongs(item.id).first()
+                        }.onFailure { reportException(it) }
+                    }
+                    albumWithSongs?.let {
+                        withContext(Dispatchers.Main) {
+                            playerConnection.playQueue(LocalAlbumRadio(it))
+                        }
+                    }
+                }
+            }
+        )
+    },
+    thumbnailRatio = thumbnailRatio,
+    fillMaxWidth = fillMaxWidth,
+    modifier = modifier
+)
+
+@Composable
+fun LocalSongsGrid(
+    title: String,
+    subtitle: String,
+    badges: @Composable RowScope.() -> Unit = {},
+    thumbnailUrl: String?,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    fillMaxWidth: Boolean = false,
+    modifier: Modifier = Modifier
+) = GridItem(
+    title = title,
+    subtitle = subtitle,
+    badges = badges,
+    thumbnailContent = {
+        LocalThumbnail(
+            thumbnailUrl = thumbnailUrl,
+            isActive = isActive,
+            isPlaying = isPlaying,
+            shape = RoundedCornerShape(GridThumbnailCornerRadius),
+            modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
+            showCenterPlay = true,
+            playButtonVisible = false
+        )
+    },
+    fillMaxWidth = fillMaxWidth,
+    modifier = modifier
+)
+
+@Composable
+fun LocalArtistsGrid(
+    title: String,
+    subtitle: String,
+    badges: @Composable RowScope.() -> Unit = {},
+    thumbnailUrl: String?,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    fillMaxWidth: Boolean = false,
+    modifier: Modifier = Modifier
+) = GridItem(
+    title = title,
+    subtitle = subtitle,
+    badges = badges,
+    thumbnailContent = {
+        LocalThumbnail(
+            thumbnailUrl = thumbnailUrl,
+            isActive = false,
+            isPlaying = false,
+            shape = CircleShape,
+            modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
+            showCenterPlay = false,
+            playButtonVisible = false
+        )
+    },
+    fillMaxWidth = fillMaxWidth,
+    modifier = modifier
+)
+
+@Composable
+fun LocalAlbumsGrid(
+    title: String,
+    subtitle: String,
+    badges: @Composable RowScope.() -> Unit = {},
+    thumbnailUrl: String?,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    fillMaxWidth: Boolean = false,
+    modifier: Modifier = Modifier
+) = GridItem(
+    title = title,
+    subtitle = subtitle,
+    badges = badges,
+    thumbnailContent = {
+        LocalThumbnail(
+            thumbnailUrl = thumbnailUrl,
+            isActive = isActive,
+            isPlaying = isPlaying,
+            shape = RoundedCornerShape(GridThumbnailCornerRadius),
+            modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
+            showCenterPlay = false,
+            playButtonVisible = true
+        )
+    },
+    fillMaxWidth = fillMaxWidth,
+    modifier = modifier
+)
+
+@Composable
+fun ItemThumbnail(
+    thumbnailUrl: String?,
+    isActive: Boolean,
+    isPlaying: Boolean,
+    shape: Shape,
+    modifier: Modifier = Modifier,
+    albumIndex: Int? = null,
+    isSelected: Boolean = false,
+    shouldLoadImage: Boolean = true,
+    thumbnailRatio: Float = 1f
+) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    BoxWithConstraints(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .fillMaxSize()
+            .aspectRatio(thumbnailRatio)
+            .clip(shape)
+    ) {
+        val (cropThumbnailToSquare, _) = rememberPreference(CropThumbnailToSquareKey, false)
+        val isYouTubeThumb = thumbnailUrl?.contains("ytimg.com", ignoreCase = true) == true
+        val shouldApplySquareCrop = cropThumbnailToSquare && isYouTubeThumb && kotlin.math.abs(thumbnailRatio - 1f) < 0.001f
+        val widthPx = if (maxWidth == Dp.Infinity) null else with(density) { maxWidth.roundToPx().coerceAtLeast(1) }
+        val heightPx = if (maxHeight == Dp.Infinity) null else with(density) { maxHeight.roundToPx().coerceAtLeast(1) }
+
+        if (albumIndex == null) {
+            if (shouldLoadImage) {
+                val request = remember(thumbnailUrl, widthPx, heightPx) {
+                    ImageRequest.Builder(context)
+                        .data(thumbnailUrl)
+                        .allowHardware(true)
+                        .apply {
+                            if (widthPx != null && heightPx != null) {
+                                size(widthPx, heightPx)
+                            }
+                        }
+                        .build()
+                }
+                AsyncImage(
+                    model = request,
+                    contentDescription = null,
+                    contentScale = if (shouldApplySquareCrop) ContentScale.Crop else ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .let { if (shouldApplySquareCrop) it.aspectRatio(1f) else it }
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+            }
+        }
+
+        if (albumIndex != null) {
+            AnimatedVisibility(
+                visible = !isActive,
+                enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
+                exit = shrinkOut(shrinkTowards = Alignment.Center) + fadeOut()
+            ) {
+                Text(
+                    text = albumIndex.toString(),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+
+        if (isSelected) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1f)
+                    .clip(shape)
+                    .background(Color.Black.copy(alpha = 0.5f))
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.done),
+                    contentDescription = null
+                )
+            }
+        }
+
+        PlayingIndicatorBox(
+            isActive = isActive,
+            playWhenReady = isPlaying,
+            color = if (albumIndex != null) MaterialTheme.colorScheme.onBackground else Color.White,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    color = if (albumIndex != null)
+                        Color.Transparent
+                    else
+                        Color.Black.copy(alpha = ActiveBoxAlpha),
+                    shape = shape
+                )
+        )
+    }
+}
+
+@Composable
+fun LocalThumbnail(
+    thumbnailUrl: String?,
+    isActive: Boolean,
+    isPlaying: Boolean,
+    shape: Shape,
+    modifier: Modifier = Modifier,
+    showCenterPlay: Boolean = false,
+    playButtonVisible: Boolean = false,
+    thumbnailRatio: Float = 1f
+) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    BoxWithConstraints(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .aspectRatio(thumbnailRatio)
+            .clip(shape)
+    ) {
+        val (cropThumbnailToSquare, _) = rememberPreference(CropThumbnailToSquareKey, false)
+        val isYouTubeThumb = thumbnailUrl?.contains("ytimg.com", ignoreCase = true) == true
+        val shouldApplySquareCrop = cropThumbnailToSquare && isYouTubeThumb && kotlin.math.abs(thumbnailRatio - 1f) < 0.001f
+        val widthPx = if (maxWidth == Dp.Infinity) null else with(density) { maxWidth.roundToPx().coerceAtLeast(1) }
+        val heightPx = if (maxHeight == Dp.Infinity) null else with(density) { maxHeight.roundToPx().coerceAtLeast(1) }
+        val request = remember(thumbnailUrl, widthPx, heightPx) {
+            ImageRequest.Builder(context)
+                .data(thumbnailUrl)
+                .allowHardware(true)
+                .apply {
+                    if (widthPx != null && heightPx != null) {
+                        size(widthPx, heightPx)
+                    }
+                }
+                .build()
+        }
+        AsyncImage(
+            model = request,
+            contentDescription = null,
+            contentScale = if (shouldApplySquareCrop) ContentScale.Crop else ContentScale.Fit,
+            modifier = Modifier.fillMaxSize().let { if (shouldApplySquareCrop) it.aspectRatio(1f) else it }
+        )
+
+        AnimatedVisibility(
+            visible = isActive,
+            enter = fadeIn(tween(500)),
+            exit = fadeOut(tween(500))
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f), shape)
+            ) {
+                if (isPlaying) {
+                    PlayingIndicator(
+                        color = Color.White,
+                        modifier = Modifier.height(24.dp)
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.play),
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+
+        if (showCenterPlay) {
+            AnimatedVisibility(
+                visible = !(isActive && isPlaying),
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(8.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.6f))
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.play),
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+
+        if (playButtonVisible) {
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = ActiveBoxAlpha))
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.play),
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PlaylistThumbnail(
+    thumbnails: List<String>,
+    size: Dp,
+    placeHolder: @Composable () -> Unit,
+    shape: Shape
+) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    val sizePx = with(density) { size.roundToPx().coerceAtLeast(1) }
+
+    when (thumbnails.size) {
+        0 -> Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(size)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+        ) {
+            placeHolder()
+        }
+        1 -> {
+            val request = remember(thumbnails, sizePx) {
+                ImageRequest.Builder(context)
+                    .data(thumbnails[0])
+                    .size(sizePx, sizePx)
+                    .allowHardware(true)
+                    .build()
+            }
+            AsyncImage(
+                model = request,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(size)
+                    .clip(shape)
+            )
+        }
+        else -> Box(
+            modifier = Modifier
+                .size(size)
+                .clip(shape)
+        ) {
+            listOf(
+                Alignment.TopStart,
+                Alignment.TopEnd,
+                Alignment.BottomStart,
+                Alignment.BottomEnd
+            ).fastForEachIndexed { index, alignment ->
+                val halfPx = (sizePx / 2).coerceAtLeast(1)
+                val url = thumbnails.getOrNull(index)
+                val request = remember(url, halfPx) {
+                    ImageRequest.Builder(context)
+                        .data(url)
+                        .size(halfPx, halfPx)
+                        .allowHardware(true)
+                        .build()
+                }
+                AsyncImage(
+                    model = request,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .align(alignment)
+                        .size(size / 2)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun BoxScope.OverlayPlayButton(
+    visible: Boolean
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = Modifier
+            .align(Alignment.Center)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = ActiveBoxAlpha))
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.play),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun BoxScope.AlbumPlayButton(
+    visible: Boolean,
+    onClick: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(8.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = ActiveBoxAlpha))
+                .clickable(onClick = onClick)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.play),
+                contentDescription = null,
+                tint = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+fun SwipeToSongBox(
+    modifier: Modifier = Modifier,
+    mediaItem: MediaItem,
+    content: @Composable BoxScope.() -> Unit
+) {
+    val ctx = LocalContext.current
+    val player = LocalPlayerConnection.current
+    val scope = rememberCoroutineScope()
+    val offset = remember { mutableStateOf(0f) }
+    val threshold = 300f
+
+    val dragState = rememberDraggableState { delta ->
+        offset.value = (offset.value + delta).coerceIn(-threshold, threshold)
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .draggable(
+                orientation = Orientation.Horizontal,
+                state = dragState,
+                onDragStopped = {
+                    when {
+                        offset.value >= threshold -> {
+                            player?.playNext(listOf(mediaItem))
+                            Toast.makeText(ctx, R.string.play_next, Toast.LENGTH_SHORT).show()
+                            reset(offset, scope)
+                        }
+
+                        offset.value <= -threshold -> {
+                            player?.addToQueue(listOf(mediaItem))
+                            Toast.makeText(ctx, R.string.add_to_queue, Toast.LENGTH_SHORT).show()
+                            reset(offset, scope)
+                        }
+
+                        else -> reset(offset, scope)
+                    }
+                }
+            )
+    ) {
+        if (offset.value != 0f) {
+            val (iconRes, bg, tint, align) = if (offset.value > 0)
+                Quadruple(
+                    R.drawable.playlist_play,
+                    MaterialTheme.colorScheme.secondary,
+                    MaterialTheme.colorScheme.onSecondary,
+                    Alignment.CenterStart
+                ) else
+                Quadruple(
+                    R.drawable.queue_music,
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.onPrimary,
+                    Alignment.CenterEnd
+                )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .align(Alignment.Center)
+                    .background(bg),
+                contentAlignment = align
+            ) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .size(30.dp)
+                        .alpha(0.9f),
+                    tint = tint
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .offset { IntOffset(offset.value.roundToInt(), 0) }
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface),
+            content = content
+        )
+    }
+}
+
+// Helper to animate reset of swipe offset
+private fun reset(offset: MutableState<Float>, scope: CoroutineScope) {
+    scope.launch {
+        animate(
+            initialValue = offset.value,
+            targetValue = 0f,
+            animationSpec = tween(durationMillis = 300)
+        ) { value, _ -> offset.value = value }
+    }
+}
+
+// Data holder for swipe visuals
+data class Quadruple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)
+
+private object Icon {
+    @Composable
+    fun Favorite() {
+        Icon(
+            painter = painterResource(R.drawable.favorite),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier
+                .size(18.dp)
+                .padding(end = 2.dp)
+        )
+    }
+
+    @Composable
+    fun Library() {
+        Icon(
+            painter = painterResource(R.drawable.library_add_check),
+            contentDescription = null,
+            modifier = Modifier
+                .size(18.dp)
+                .padding(end = 2.dp)
+        )
+    }
+
+    @Composable
+    fun Download(state: Int?) {
+        when (state) {
+            STATE_COMPLETED -> Icon(
+                painter = painterResource(R.drawable.offline),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(18.dp)
+                    .padding(end = 2.dp)
+            )
+            STATE_QUEUED, STATE_DOWNLOADING -> CircularProgressIndicator(
+                strokeWidth = 2.dp,
+                modifier = Modifier
+                    .size(16.dp)
+                    .padding(end = 2.dp)
+            )
+            else -> { /* no icon */ }
+        }
+    }
+
+    @Composable
+    fun Explicit() {
+        Icon(
+            painter = painterResource(R.drawable.explicit),
+            contentDescription = null,
+            modifier = Modifier
+                .size(18.dp)
+                .padding(end = 2.dp)
+        )
+    }
+}

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 19,
-    "identityHash": "f1de4c2b6f867f85b0aee618efbb2213",
+    "identityHash": "c8f37a94d4c749f6a6c07a53f7b2e1fc",
     "entities": [
       {
         "tableName": "song",
@@ -43,6 +43,19 @@
             "columnName": "albumName",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "artistName",
+            "columnName": "artistName",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "explicit",
+            "columnName": "explicit",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
           },
           {
             "fieldPath": "year",
@@ -114,7 +127,7 @@
       },
       {
         "tableName": "artist",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `thumbnailUrl` TEXT, `channelId` TEXT, `songCount` INTEGER NOT NULL DEFAULT 0, `lastUpdateTime` INTEGER NOT NULL, `bookmarkedAt` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `thumbnailUrl` TEXT, `channelId` TEXT, `lastUpdateTime` INTEGER NOT NULL, `bookmarkedAt` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -139,13 +152,6 @@
             "columnName": "channelId",
             "affinity": "TEXT",
             "notNull": false
-          },
-          {
-            "fieldPath": "songCount",
-            "columnName": "songCount",
-            "affinity": "INTEGER",
-            "notNull": true,
-            "defaultValue": "0"
           },
           {
             "fieldPath": "lastUpdateTime",
@@ -778,6 +784,46 @@
         "foreignKeys": []
       },
       {
+        "tableName": "playCount",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`song` TEXT NOT NULL, `year` INTEGER NOT NULL, `month` INTEGER NOT NULL, `count` INTEGER NOT NULL, PRIMARY KEY(`song`, `year`, `month`))",
+        "fields": [
+          {
+            "fieldPath": "song",
+            "columnName": "song",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "month",
+            "columnName": "month",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "song",
+            "year",
+            "month"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
         "tableName": "event",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `songId` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `playTime` INTEGER NOT NULL, FOREIGN KEY(`songId`) REFERENCES `song`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
@@ -936,46 +982,6 @@
         },
         "indices": [],
         "foreignKeys": []
-      },
-      {
-        "tableName": "playCount",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`song` TEXT NOT NULL, `year` INTEGER NOT NULL, `month` INTEGER NOT NULL, `count` INTEGER NOT NULL, PRIMARY KEY(`song`, `year`, `month`))",
-        "fields": [
-          {
-            "fieldPath": "song",
-            "columnName": "song",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "year",
-            "columnName": "year",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "month",
-            "columnName": "month",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "count",
-            "columnName": "count",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "song",
-            "year",
-            "month"
-          ]
-        },
-        "indices": [],
-        "foreignKeys": []
       }
     ],
     "views": [
@@ -994,7 +1000,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f1de4c2b6f867f85b0aee618efbb2213')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c8f37a94d4c749f6a6c07a53f7b2e1fc')"
     ]
   }
 }

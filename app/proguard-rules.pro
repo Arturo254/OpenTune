@@ -61,6 +61,7 @@
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 
 ## Rules for NewPipeExtractor
+-keep class org.schabi.newpipe.extractor.services.youtube.protos.** { *; }
 -keep class org.schabi.newpipe.extractor.timeago.patterns.** { *; }
 -keep class org.mozilla.javascript.** { *; }
 -keep class org.mozilla.javascript.engine.** { *; }
@@ -88,27 +89,39 @@
 -dontwarn java.beans.IntrospectionException
 -dontwarn java.beans.Introspector
 -dontwarn java.beans.PropertyDescriptor
--dontwarn okhttp3.internal.Util
+-dontwarn java.lang.management.**
 
+# Keep all classes within the kuromoji package
+-keep class com.atilika.kuromoji.** { *; }
 
-## Rules for PipePipeExtractor
--keep class project.pipepipe.extractor.** { *; }
--keep class project.pipepipe.shared.** { *; }
+## Queue Persistence Rules
+# Keep queue-related classes to prevent serialization issues in release builds
+-keep class com.arturo254.opentune.models.PersistQueue { *; }
+-keep class com.arturo254.opentune.models.PersistPlayerState { *; }
+-keep class com.arturo254.opentune.models.QueueData { *; }
+-keep class com.arturo254.opentune.models.QueueType { *; }
+-keep class com.arturo254.opentune.playback.queues.** { *; }
 
-## Netty rules (used by PipePipeExtractor dependencies)
--dontwarn io.netty.**
--dontwarn org.apache.log4j.**
--dontwarn org.apache.logging.log4j.**
--dontwarn reactor.blockhound.**
--dontwarn io.micrometer.context.**
--dontwarn javax.enterprise.inject.**
+# Keep serialization methods for queue persistence
+-keepclassmembers class * implements java.io.Serializable {
+    private void writeObject(java.io.ObjectOutputStream);
+    private void readObject(java.io.ObjectInputStream);
+}
 
-## Lettuce (Redis client used by PipePipeExtractor)
--dontwarn io.lettuce.core.**
+## Media3 Protection Rules
+# Protect Guava from conflicts with system versions
+-keep class com.google.common.** { *; }
+-keep class com.google.common.util.concurrent.** { *; }
+-keep class com.google.common.collect.** { *; }
+-dontwarn com.google.common.**
 
-## Reactor
--dontwarn reactor.util.context.**
+# Protect Media3 from obfuscation
+-keep class androidx.media3.** { *; }
+-keep interface androidx.media3.** { *; }
+-dontwarn androidx.media3.**
 
-## Keep Wire protobuf classes
--keep class com.squareup.wire.** { *; }
-
+## JAudioTagger - suppress missing AWT/ImageIO classes (not available on Android)
+-dontwarn java.awt.**
+-dontwarn javax.imageio.**
+-dontwarn javax.swing.**
+-keep class org.jaudiotagger.** { *; }

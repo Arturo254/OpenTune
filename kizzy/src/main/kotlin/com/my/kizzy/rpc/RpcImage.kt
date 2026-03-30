@@ -15,19 +15,22 @@ package com.my.kizzy.rpc
 import com.my.kizzy.repository.KizzyRepository
 
 /**
- * Modified by Zion Huang
+ * Modified by Arturo254
  */
 sealed class RpcImage {
     abstract suspend fun resolveImage(repository: KizzyRepository): String?
 
     class DiscordImage(val image: String) : RpcImage() {
         override suspend fun resolveImage(repository: KizzyRepository): String {
-            return "mp:${image}"
+            return if (image.startsWith("mp:")) image else "mp:$image"
         }
     }
 
     class ExternalImage(val image: String) : RpcImage() {
         override suspend fun resolveImage(repository: KizzyRepository): String? {
+            if (image.startsWith("mp:") || image.startsWith("external/") || image.startsWith("attachments/")) {
+                return if (image.startsWith("mp:")) image else "mp:$image"
+            }
             return repository.getImage(image)
         }
     }
