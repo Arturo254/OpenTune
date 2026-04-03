@@ -1,1 +1,1 @@
-https://OpenTune-api.koiiverse.cloud
+https://archivetune-api.koiiverse.cloud
