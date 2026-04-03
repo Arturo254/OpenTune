@@ -3,7 +3,7 @@
  * Arturo254 (github.com/Arturo254)
  * Licensed Under GPL-3.0 | see git history for contributors
  */
- 
+
 package com.arturo254.opentune.together
 
 import androidx.datastore.core.DataStore
@@ -21,7 +21,7 @@ import com.arturo254.opentune.utils.getAsync
 
 object TogetherOnlineEndpoint {
     private const val EndpointSourceUrl =
-        "https://raw.githubusercontent.com/Arturo254/OpenTune/refs/heads/dev/OpenTuneServer.txt"
+        "https://raw.githubusercontent.com/Arturo254/OpenTune/refs/heads/master/OpenTuneServer.txt"
 
     private const val CacheTtlMs: Long = 6 * 60 * 60 * 1000L
 
