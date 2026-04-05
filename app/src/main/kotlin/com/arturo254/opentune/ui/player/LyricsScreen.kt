@@ -80,6 +80,7 @@ import com.arturo254.opentune.constants.UseLyricsV2Key
 import com.arturo254.opentune.ui.component.LocalMenuState
 import com.arturo254.opentune.ui.component.BigSeekBar
 import androidx.navigation.NavController
+import com.arturo254.opentune.constants.BlurRadiusKey
 import com.arturo254.opentune.ui.menu.LyricsMenu
 import com.arturo254.opentune.ui.theme.PlayerColorExtractor
 import com.arturo254.opentune.utils.rememberEnumPreference
@@ -162,6 +163,7 @@ fun LyricsScreen(
 
     val playerBackground by rememberEnumPreference(PlayerBackgroundStyleKey, PlayerBackgroundStyle.DEFAULT)
     val (disableBlur) = rememberPreference(DisableBlurKey, true)
+    val (blurRadius) = rememberPreference(BlurRadiusKey, 36f)
 
     val (playerCustomImageUri) = rememberPreference(PlayerCustomImageUriKey, "")
     val (playerCustomBlur) = rememberPreference(PlayerCustomBlurKey, 0f)
@@ -265,6 +267,7 @@ fun LyricsScreen(
                 mediaMetadata = mediaMetadata,
                 gradientColors = gradientColors,
                 disableBlur = disableBlur,
+                blurRadius = blurRadius,
                 playerCustomImageUri = playerCustomImageUri,
                 playerCustomBlur = playerCustomBlur,
                 playerCustomContrast = playerCustomContrast,

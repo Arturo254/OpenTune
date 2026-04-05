@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 /*
  * OpenTune Project Original (2026)
  * Arturo254 (github.com/Arturo254)
@@ -14,6 +16,7 @@ import android.content.res.Configuration
 import android.os.SystemClock
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -76,8 +79,14 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.foundation.focusable
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isShiftPressed
@@ -97,6 +106,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.media3.common.C
 import androidx.media3.common.Player.STATE_BUFFERING
 import androidx.media3.common.Player.STATE_READY
@@ -141,6 +151,9 @@ import com.arturo254.opentune.utils.makeTimeString
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import coil3.compose.AsyncImage
+import com.arturo254.opentune.constants.BlurRadiusKey
+import com.skydoves.cloudy.cloudy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -151,6 +164,7 @@ import kotlin.math.roundToLong
 
 
 private const val SeekbarSettleToleranceMs = 1_500L
+private const val V7BackdropBlurHeightFraction = 0.54f // The height of the blur layout in PlayerDesignStyle V7
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -172,11 +186,6 @@ fun BottomSheetPlayer(
         key = PlayerDesignStyleKey,
         defaultValue = PlayerDesignStyle.V4
     )
-    
-    val (useNewMiniPlayerDesign) = rememberPreference(
-        UseNewMiniPlayerDesignKey,
-        defaultValue = true
-    )
 
     val playerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
@@ -188,8 +197,9 @@ fun BottomSheetPlayer(
     val (playerCustomBlur) = rememberPreference(PlayerCustomBlurKey, 0f)
     val (playerCustomContrast) = rememberPreference(PlayerCustomContrastKey, 1f)
     val (playerCustomBrightness) = rememberPreference(PlayerCustomBrightnessKey, 1f)
-    
-    val (disableBlur) = rememberPreference(DisableBlurKey, true)
+
+    val (disableBlur) = rememberPreference(DisableBlurKey, false)
+    val (blurRadius) = rememberPreference(BlurRadiusKey, 36f)
     val (showCodecOnPlayer) = rememberPreference(booleanPreferencesKey("show_codec_on_player"), false)
     val (incrementalSeekSkipEnabled) = rememberPreference(com.arturo254.opentune.constants.SeekExtraSeconds, defaultValue = false)
     var keyboardSkipMultiplier by remember { mutableStateOf(1) }
@@ -219,24 +229,14 @@ fun BottomSheetPlayer(
                 if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
             useDarkTheme && pureBlack
         }
-    val backgroundColor = if (useNewMiniPlayerDesign) {
-        if (useBlackBackground && state.value > state.collapsedBound) {
-            // Make background transparent when collapsed, gradually show when pulled up (same as normal mode)
-            val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
-                .coerceIn(0f, 1f)
-            Color.Black.copy(alpha = progress)
-        } else {
-            // Make background transparent when collapsed, gradually show when pulled up
-            val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
-                .coerceIn(0f, 1f)
-            MaterialTheme.colorScheme.surfaceContainer.copy(alpha = progress)
-        }
+    val backgroundColor = if (useBlackBackground && state.value > state.collapsedBound) {
+        val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
+            .coerceIn(0f, 1f)
+        Color.Black.copy(alpha = progress)
     } else {
-        if (useBlackBackground) {
-            lerp(MaterialTheme.colorScheme.surfaceContainer, Color.Black, state.progress)
-        } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        }
+        val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
+            .coerceIn(0f, 1f)
+        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = progress)
     }
 
     val playbackState by playerConnection.playbackState.collectAsState()
@@ -249,7 +249,6 @@ fun BottomSheetPlayer(
     val currentWindowIndex by playerConnection.currentWindowIndex.collectAsState()
     val playerVolume = playerConnection.service.playerVolume.collectAsState()
 
-    val automix by playerConnection.service.automixItems.collectAsState()
     val repeatMode by playerConnection.repeatMode.collectAsState()
 
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
@@ -284,9 +283,7 @@ fun BottomSheetPlayer(
     // Cache for gradient colors to prevent re-extraction for same songs
     val gradientColorsCache = remember { mutableMapOf<String, List<Color>>() }
 
-    if (!canSkipNext && automix.isNotEmpty()) {
-        playerConnection.service.addToQueueAutomix(automix[0], 0)
-    }
+
 
     // Default gradient colors for fallback
     val defaultGradientColors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
@@ -357,7 +354,8 @@ fun BottomSheetPlayer(
     val changeBound = state.expandedBound / 3
 
     val TextBackgroundColor =
-        when (playerBackground) {
+        if (playerDesignStyle == PlayerDesignStyle.V7) Color.White
+        else when (playerBackground) {
             PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.onBackground
             PlayerBackgroundStyle.BLUR -> Color.White
             PlayerBackgroundStyle.GRADIENT -> Color.White
@@ -369,7 +367,8 @@ fun BottomSheetPlayer(
         }
 
     val icBackgroundColor =
-        when (playerBackground) {
+        if (playerDesignStyle == PlayerDesignStyle.V7) Color.Black
+        else when (playerBackground) {
             PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.surface
             PlayerBackgroundStyle.BLUR -> Color.Black
             PlayerBackgroundStyle.GRADIENT -> Color.Black
@@ -386,6 +385,8 @@ fun BottomSheetPlayer(
             MaterialTheme.colorScheme.secondary,
             MaterialTheme.colorScheme.onSecondary
         )
+    }.let { (tb, ib) ->
+        if (playerDesignStyle == PlayerDesignStyle.V7) Pair(Color.White, Color.Black) else Pair(tb, ib)
     }
 
     val download by LocalDownloadUtil.current.getDownload(mediaMetadata?.id ?: "")
@@ -441,6 +442,7 @@ fun BottomSheetPlayer(
                         showSleepTimerDialog = false
                         playerConnection.service.sleepTimer.start(sleepTimerValue.roundToInt())
                     },
+                    shapes = ButtonDefaults.shapes(),
                 ) {
                     Text(stringResource(android.R.string.ok))
                 }
@@ -448,6 +450,7 @@ fun BottomSheetPlayer(
             dismissButton = {
                 TextButton(
                     onClick = { showSleepTimerDialog = false },
+                    shapes = ButtonDefaults.shapes(),
                 ) {
                     Text(stringResource(android.R.string.cancel))
                 }
@@ -547,8 +550,8 @@ fun BottomSheetPlayer(
     val queueSheetState = rememberBottomSheetState(
         dismissedBound = dismissedBound,
         expandedBound = state.expandedBound,
-        collapsedBound = dismissedBound + 1.dp,
-        initialAnchor = 1
+        collapsedBound = dismissedBound,
+        initialAnchor = 0
     )
 
     val lyricsSheetState = rememberBottomSheetState(
@@ -560,9 +563,9 @@ fun BottomSheetPlayer(
 
     BackHandler(
         enabled =
-        (!lyricsSheetState.isCollapsed && !lyricsSheetState.isDismissed) ||
-            (!queueSheetState.isCollapsed && !queueSheetState.isDismissed) ||
-            (!state.isCollapsed && !state.isDismissed)
+            (!lyricsSheetState.isCollapsed && !lyricsSheetState.isDismissed) ||
+                    (!queueSheetState.isCollapsed && !queueSheetState.isDismissed) ||
+                    (!state.isCollapsed && !state.isDismissed)
     ) {
         when {
             !lyricsSheetState.isCollapsed && !lyricsSheetState.isDismissed -> lyricsSheetState.collapseSoft()
@@ -585,65 +588,74 @@ fun BottomSheetPlayer(
             .focusRequester(focusRequester)
             .focusable()
             .onKeyEvent { keyEvent ->
-            if (keyEvent.type != KeyEventType.KeyDown || state.isCollapsed) return@onKeyEvent false
+                if (keyEvent.type != KeyEventType.KeyDown || state.isCollapsed) return@onKeyEvent false
 
-            when (keyEvent.key) {
-                Key.DirectionLeft -> {
-                    val now = SystemClock.uptimeMillis()
-                    if (incrementalSeekSkipEnabled && now - lastKeyboardTapTime < 1000) {
-                        keyboardSkipMultiplier++
-                    } else {
-                        keyboardSkipMultiplier = 1
-                    }
-                    lastKeyboardTapTime = now
-                    val skipAmount = 5000L * keyboardSkipMultiplier
-                    playerConnection.player.seekTo((playerConnection.player.currentPosition - skipAmount).coerceAtLeast(0))
-                    true
-                }
-                Key.DirectionRight -> {
-                    val now = SystemClock.uptimeMillis()
-                    if (incrementalSeekSkipEnabled && now - lastKeyboardTapTime < 1000) {
-                        keyboardSkipMultiplier++
-                    } else {
-                        keyboardSkipMultiplier = 1
-                    }
-                    lastKeyboardTapTime = now
-                    val skipAmount = 5000L * keyboardSkipMultiplier
-                    playerConnection.player.seekTo((playerConnection.player.currentPosition + skipAmount).coerceAtMost(playerConnection.player.duration))
-                    true
-                }
-                Key.DirectionUp -> {
-                    playerConnection.service.playerVolume.value = (playerConnection.service.playerVolume.value + 0.05f).coerceAtMost(1f)
-                    true
-                }
-                Key.DirectionDown -> {
-                    playerConnection.service.playerVolume.value = (playerConnection.service.playerVolume.value - 0.05f).coerceAtLeast(0f)
-                    true
-                }
-                Key.Spacebar -> {
-                    playerConnection.player.togglePlayPause()
-                    true
-                }
-                Key.N -> {
-                    if (keyEvent.isShiftPressed) {
-                        playerConnection.seekToNext()
+                when (keyEvent.key) {
+                    Key.DirectionLeft -> {
+                        val now = SystemClock.uptimeMillis()
+                        if (incrementalSeekSkipEnabled && now - lastKeyboardTapTime < 1000) {
+                            keyboardSkipMultiplier++
+                        } else {
+                            keyboardSkipMultiplier = 1
+                        }
+                        lastKeyboardTapTime = now
+                        val skipAmount = 5000L * keyboardSkipMultiplier
+                        playerConnection.player.seekTo((playerConnection.player.currentPosition - skipAmount).coerceAtLeast(0))
                         true
-                    } else false
-                }
-                Key.P -> {
-                    if (keyEvent.isShiftPressed) {
-                        playerConnection.seekToPrevious()
+                    }
+                    Key.DirectionRight -> {
+                        val now = SystemClock.uptimeMillis()
+                        if (incrementalSeekSkipEnabled && now - lastKeyboardTapTime < 1000) {
+                            keyboardSkipMultiplier++
+                        } else {
+                            keyboardSkipMultiplier = 1
+                        }
+                        lastKeyboardTapTime = now
+                        val skipAmount = 5000L * keyboardSkipMultiplier
+                        playerConnection.player.seekTo((playerConnection.player.currentPosition + skipAmount).coerceAtMost(playerConnection.player.duration))
                         true
-                    } else false
+                    }
+                    Key.DirectionUp -> {
+                        playerConnection.service.playerVolume.value = (playerConnection.service.playerVolume.value + 0.05f).coerceAtMost(1f)
+                        true
+                    }
+                    Key.DirectionDown -> {
+                        playerConnection.service.playerVolume.value = (playerConnection.service.playerVolume.value - 0.05f).coerceAtLeast(0f)
+                        true
+                    }
+                    Key.Spacebar -> {
+                        playerConnection.player.togglePlayPause()
+                        true
+                    }
+                    Key.N -> {
+                        if (keyEvent.isShiftPressed) {
+                            playerConnection.seekToNext()
+                            true
+                        } else false
+                    }
+                    Key.P -> {
+                        if (keyEvent.isShiftPressed) {
+                            playerConnection.seekToPrevious()
+                            true
+                        } else false
+                    }
+                    Key.L -> {
+                        playerConnection.toggleLike()
+                        true
+                    }
+                    else -> false
                 }
-                Key.L -> {
-                    playerConnection.toggleLike()
-                    true
-                }
-                else -> false
+            },
+        backgroundColor = if (playerDesignStyle == PlayerDesignStyle.V7) {
+            val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
+                .coerceIn(0f, 1f)
+            val fadeProgress = if (progress < 0.2f) {
+                ((0.2f - progress) / 0.2f).coerceIn(0f, 1f)
+            } else {
+                0f
             }
-        },
-        backgroundColor = when (playerBackground) {
+            Color.Black.copy(alpha = 1f - fadeProgress)
+        } else when (playerBackground) {
             PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
                 // Apply same enhanced fade logic to blur/gradient backgrounds
                 val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
@@ -765,15 +777,17 @@ fun BottomSheetPlayer(
                 context = context,
                 onSliderValueChange = onSliderValueChange,
                 onSliderValueChangeFinished = onSliderValueChangeFinished,
+                currentFormat = if (playerDesignStyle == PlayerDesignStyle.V7) currentFormat else null,
             )
         }
 
-        if (!state.isCollapsed && playerDesignStyle != PlayerDesignStyle.V5) {
+        if (!state.isCollapsed && playerDesignStyle != PlayerDesignStyle.V5 && playerDesignStyle != PlayerDesignStyle.V7) {
             PlayerBackground(
                 playerBackground = playerBackground,
                 mediaMetadata = mediaMetadata,
                 gradientColors = gradientColors,
                 disableBlur = disableBlur,
+                blurRadius = blurRadius,
                 playerCustomImageUri = playerCustomImageUri,
                 playerCustomBlur = playerCustomBlur,
                 playerCustomContrast = playerCustomContrast,
@@ -798,38 +812,38 @@ fun BottomSheetPlayer(
 
                     Box(
                         modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .background(littleBackground),
+                            Modifier
+                                .fillMaxSize()
+                                .background(littleBackground),
                     ) {
                         Box(
                             modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight(progressFraction)
-                                .align(Alignment.TopStart)
-                                .background(progressOverlayColor),
+                                Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(progressFraction)
+                                    .align(Alignment.TopStart)
+                                    .background(progressOverlayColor),
                         )
                         Box(
                             modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .littlePlayerOverlayGestures(
-                                    seekEnabled = seekEnabled,
-                                    durationMs = duration,
-                                    progressFraction = progressFraction,
-                                    canSkipPrevious = canSkipPrevious,
-                                    canSkipNext = canSkipNext,
-                                    onSeekToPositionMs = updatedOnSliderValueChange,
-                                    onSeekFinished = updatedOnSliderValueChangeFinished,
-                                    onSkipPrevious = playerConnection::seekToPrevious,
-                                    onSkipNext = playerConnection::seekToNext,
-                                )
-                                .windowInsetsPadding(
-                                    WindowInsets.systemBars.only(
-                                        WindowInsetsSides.Horizontal + WindowInsetsSides.Top + WindowInsetsSides.Bottom
+                                Modifier
+                                    .fillMaxSize()
+                                    .littlePlayerOverlayGestures(
+                                        seekEnabled = seekEnabled,
+                                        durationMs = duration,
+                                        progressFraction = progressFraction,
+                                        canSkipPrevious = canSkipPrevious,
+                                        canSkipNext = canSkipNext,
+                                        onSeekToPositionMs = updatedOnSliderValueChange,
+                                        onSeekFinished = updatedOnSliderValueChangeFinished,
+                                        onSkipPrevious = playerConnection::seekToPrevious,
+                                        onSkipNext = playerConnection::seekToNext,
                                     )
-                                ),
+                                    .windowInsetsPadding(
+                                        WindowInsets.systemBars.only(
+                                            WindowInsetsSides.Horizontal + WindowInsetsSides.Top + WindowInsetsSides.Bottom
+                                        )
+                                    ),
                         ) {
                             enrichedMetadata?.let { metadata ->
                                 LittlePlayerContent(
@@ -861,12 +875,38 @@ fun BottomSheetPlayer(
                             }
                         }
                     }
+                } else if (playerDesignStyle == PlayerDesignStyle.V7) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                    ) {
+                        V7PlayerBackdrop(
+                            thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                            disableBlur = disableBlur,
+                            label = "v7BackdropLandscape",
+                        )
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = queueSheetState.collapsedBound)
+                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                                .nestedScroll(state.preUpPostDownNestedScrollConnection),
+                        ) {
+                            enrichedMetadata?.let {
+                                controlsContent(it)
+                            }
+
+                            Spacer(Modifier.height(16.dp))
+                        }
+                    }
                 } else {
                     Row(
                         modifier =
-                        Modifier
-                            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-                            .padding(bottom = queueSheetState.collapsedBound + 48.dp),
+                            Modifier
+                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
+                                .padding(bottom = queueSheetState.collapsedBound + 48.dp),
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
@@ -883,9 +923,9 @@ fun BottomSheetPlayer(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier =
-                            Modifier
-                                .weight(1f)
-                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
+                                Modifier
+                                    .weight(1f)
+                                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
                         ) {
                             Spacer(Modifier.weight(1f))
 
@@ -914,38 +954,38 @@ fun BottomSheetPlayer(
 
                     Box(
                         modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .background(littleBackground),
+                            Modifier
+                                .fillMaxSize()
+                                .background(littleBackground),
                     ) {
                         Box(
                             modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight(progressFraction)
-                                .align(Alignment.TopStart)
-                                .background(progressOverlayColor),
+                                Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(progressFraction)
+                                    .align(Alignment.TopStart)
+                                    .background(progressOverlayColor),
                         )
                         Box(
                             modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .littlePlayerOverlayGestures(
-                                    seekEnabled = seekEnabled,
-                                    durationMs = duration,
-                                    progressFraction = progressFraction,
-                                    canSkipPrevious = canSkipPrevious,
-                                    canSkipNext = canSkipNext,
-                                    onSeekToPositionMs = updatedOnSliderValueChange,
-                                    onSeekFinished = updatedOnSliderValueChangeFinished,
-                                    onSkipPrevious = playerConnection::seekToPrevious,
-                                    onSkipNext = playerConnection::seekToNext,
-                                )
-                                .windowInsetsPadding(
-                                    WindowInsets.systemBars.only(
-                                        WindowInsetsSides.Horizontal + WindowInsetsSides.Top + WindowInsetsSides.Bottom
+                                Modifier
+                                    .fillMaxSize()
+                                    .littlePlayerOverlayGestures(
+                                        seekEnabled = seekEnabled,
+                                        durationMs = duration,
+                                        progressFraction = progressFraction,
+                                        canSkipPrevious = canSkipPrevious,
+                                        canSkipNext = canSkipNext,
+                                        onSeekToPositionMs = updatedOnSliderValueChange,
+                                        onSeekFinished = updatedOnSliderValueChangeFinished,
+                                        onSkipPrevious = playerConnection::seekToPrevious,
+                                        onSkipNext = playerConnection::seekToNext,
                                     )
-                                ),
+                                    .windowInsetsPadding(
+                                        WindowInsets.systemBars.only(
+                                            WindowInsetsSides.Horizontal + WindowInsetsSides.Top + WindowInsetsSides.Bottom
+                                        )
+                                    ),
                         ) {
                             enrichedMetadata?.let { metadata ->
                                 LandscapeLikeBox(modifier = Modifier.fillMaxSize()) {
@@ -979,13 +1019,43 @@ fun BottomSheetPlayer(
                             }
                         }
                     }
+                } else if (playerDesignStyle == PlayerDesignStyle.V7) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                    ) {
+                        V7PlayerBackdrop(
+                            thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                            disableBlur = disableBlur,
+                            label = "v7BackdropPortrait",
+                        )
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = queueSheetState.collapsedBound)
+                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
+                                .nestedScroll(state.preUpPostDownNestedScrollConnection),
+                        ) {
+                            enrichedMetadata?.let {
+                                controlsContent(it)
+                            }
+
+                            Spacer(Modifier.height(24.dp))
+                        }
+                    }
                 } else {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier =
-                        Modifier
-                            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-                            .padding(bottom = queueSheetState.collapsedBound),
+                            Modifier
+                                .windowInsetsPadding(
+                                    WindowInsets.systemBars.only(
+                                        WindowInsetsSides.Horizontal
+                                    )
+                                )
+                                .padding(bottom = queueSheetState.collapsedBound),
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
@@ -1024,11 +1094,11 @@ fun BottomSheetPlayer(
             playerBottomSheetState = state,
             navController = navController,
             backgroundColor =
-            if (useBlackBackground) {
-                Color.Black
-            } else {
-                MaterialTheme.colorScheme.surfaceContainer
-            },
+                if (useBlackBackground) {
+                    Color.Black
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainer
+                },
             onBackgroundColor = queueOnBackgroundColor,
             TextBackgroundColor = TextBackgroundColor,
             textButtonColor = textButtonColor,
@@ -1064,6 +1134,126 @@ fun BottomSheetPlayer(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun V7PlayerBackdrop(
+    thumbnailUrl: String?,
+    disableBlur: Boolean,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    val cloudyRadius = 100
+    val blurMaskStart = (1f - V7BackdropBlurHeightFraction).coerceIn(0f, 0.85f)
+    val blurMaskMid = (blurMaskStart + 0.12f).coerceIn(blurMaskStart, 0.95f)
+    val blurMaskSolid = (blurMaskStart + 0.22f).coerceIn(blurMaskMid, 1f)
+    val baseArtworkScale = if (disableBlur) 1.03f else 1.06f
+    val baseArtworkAlpha = if (disableBlur) 0.72f else 0.82f
+    val surfaceTint = MaterialTheme.colorScheme.surface
+
+    Box(
+        modifier = modifier.fillMaxSize(),
+    ) {
+        AnimatedContent(
+            targetState = thumbnailUrl,
+            transitionSpec = {
+                fadeIn(tween(900)) togetherWith fadeOut(tween(900))
+            },
+            label = label,
+        ) { artworkUrl ->
+            if (artworkUrl != null) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    AsyncImage(
+                        model = artworkUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = baseArtworkScale
+                                scaleY = baseArtworkScale
+                                alpha = baseArtworkAlpha
+                            }
+                    )
+
+                    if (!disableBlur) {
+                        AsyncImage(
+                            model = artworkUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .cloudy(radius = cloudyRadius)
+                                .graphicsLayer {
+                                    compositingStrategy = CompositingStrategy.Offscreen
+                                }
+                                .drawWithCache {
+                                    val blurMask = Brush.verticalGradient(
+                                        colorStops = arrayOf(
+                                            0f to Color.Transparent,
+                                            blurMaskStart to Color.Transparent,
+                                            blurMaskMid to Color.Black.copy(alpha = 0.6f),
+                                            blurMaskSolid to Color.Black,
+                                            1f to Color.Black,
+                                        )
+                                    )
+
+                                    onDrawWithContent {
+                                        drawContent()
+                                        drawRect(
+                                            brush = blurMask,
+                                            blendMode = BlendMode.DstIn,
+                                        )
+                                    }
+                                }
+                        )
+                    }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.08f))
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color.Black.copy(alpha = 0.18f),
+                            0.34f to Color.Transparent,
+                            0.64f to Color.Black.copy(alpha = 0.22f),
+                            1f to Color.Black.copy(alpha = 0.82f),
+                        )
+                    )
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color.Transparent,
+                            0.56f to Color.Transparent,
+                            0.8f to surfaceTint.copy(alpha = 0.16f),
+                            1f to surfaceTint.copy(alpha = 0.3f),
+                        )
+                    )
+                )
+        )
     }
 }
 
@@ -1111,9 +1301,9 @@ private fun LittlePlayerContent(
 
         Column(
             modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = horizontalPadding, vertical = verticalPadding),
         ) {
             Spacer(Modifier.weight(1f))
 
@@ -1202,13 +1392,13 @@ private fun LittlePlayerContent(
                     contentDescription = null,
                     tint = textColor.copy(alpha = 0.8f),
                     modifier =
-                    Modifier
-                        .size(collapseIconSize)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onCollapse,
-                        ),
+                        Modifier
+                            .size(collapseIconSize)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onCollapse,
+                            ),
                 )
 
                 Spacer(Modifier.weight(1f))
@@ -1217,16 +1407,16 @@ private fun LittlePlayerContent(
                     painter = painterResource(if (liked) R.drawable.favorite else R.drawable.favorite_border),
                     contentDescription = null,
                     tint =
-                    if (liked) MaterialTheme.colorScheme.error.copy(alpha = 0.9f)
-                    else textColor.copy(alpha = 0.78f),
+                        if (liked) MaterialTheme.colorScheme.error.copy(alpha = 0.9f)
+                        else textColor.copy(alpha = 0.78f),
                     modifier =
-                    Modifier
-                        .size(iconSize)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onToggleLike,
-                        ),
+                        Modifier
+                            .size(iconSize)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onToggleLike,
+                            ),
                 )
 
                 Spacer(Modifier.width((18f * scale).dp))
@@ -1236,13 +1426,13 @@ private fun LittlePlayerContent(
                     contentDescription = null,
                     tint = textColor.copy(alpha = 0.78f),
                     modifier =
-                    Modifier
-                        .size(iconSize)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onExpandQueue,
-                        ),
+                        Modifier
+                            .size(iconSize)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onExpandQueue,
+                            ),
                 )
 
                 Spacer(Modifier.width((18f * scale).dp))
@@ -1252,13 +1442,13 @@ private fun LittlePlayerContent(
                     contentDescription = null,
                     tint = textColor.copy(alpha = 0.78f),
                     modifier =
-                    Modifier
-                        .size(iconSize)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onMenuClick,
-                        ),
+                        Modifier
+                            .size(iconSize)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onMenuClick,
+                            ),
                 )
             }
         }
@@ -1333,9 +1523,9 @@ private fun Modifier.littlePlayerOverlayGestures(
                 (progressFraction * size.height).coerceAtLeast(minOverlayHeightPx)
             val seekAllowedFromDown =
                 seekEnabled &&
-                    durationMs > 0L &&
-                    durationMs != C.TIME_UNSET &&
-                    down.position.y <= overlayHeightPx
+                        durationMs > 0L &&
+                        durationMs != C.TIME_UNSET &&
+                        down.position.y <= overlayHeightPx
 
             var isSeeking = false
 

@@ -1458,7 +1458,6 @@ class MainActivity : ComponentActivity() {
                         ) {
                                             FloatingNavigationToolbar(
                                                 items = navigationItems,
-                                                slim = slimNav,
                                                 pureBlack = pureBlack,
                                                 modifier = Modifier
                                                     .align(Alignment.BottomCenter)
