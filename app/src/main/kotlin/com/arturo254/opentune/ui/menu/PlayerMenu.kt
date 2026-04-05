@@ -8,6 +8,7 @@
 
 package com.arturo254.opentune.ui.menu
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
 import android.media.audiofx.AudioEffect
@@ -775,6 +776,25 @@ private fun PlayerVolumeCard(
     modifier: Modifier = Modifier,
 ) {
     val safeVolume = volume.coerceIn(0f, 1f)
+    var previousVolume by remember { mutableFloatStateOf(0.5f) }
+
+    // Mute state derived from actual volume
+    val isMuted = safeVolume == 0f
+
+    // Handle mute/unmute toggle
+    val onMuteToggle = {
+        if (isMuted) {
+            // Unmute: restore previous volume
+            val targetVolume = if (previousVolume > 0f) previousVolume else 0.5f
+            onVolumeChange(targetVolume)
+        } else {
+            // Mute: store current volume and set to 0
+            if (safeVolume > 0f) {
+                previousVolume = safeVolume
+            }
+            onVolumeChange(0f)
+        }
+    }
 
     Surface(
         shape = RoundedCornerShape(28.dp),
@@ -814,24 +834,30 @@ private fun PlayerVolumeCard(
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.volume_off),
-                        contentDescription = stringResource(R.string.minimum_volume),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp),
-                    )
+                    IconButton(
+                        onClick = onMuteToggle,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                if (isMuted) R.drawable.volume_off else R.drawable.volume_up
+                            ),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
 
                     VolumeSliderL(
                         value = safeVolume,
-                        onValueChange = onVolumeChange,
+                        onValueChange = { newVolume ->
+                            // Manual volume change exits mute and updates previousVolume
+                            if (newVolume > 0f) {
+                                previousVolume = newVolume
+                            }
+                            onVolumeChange(newVolume)
+                        },
                         modifier = Modifier.weight(1f),
-                    )
-
-                    Icon(
-                        painter = painterResource(R.drawable.volume_up),
-                        contentDescription = stringResource(R.string.maximum_volume),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
@@ -1270,6 +1296,7 @@ private fun multiplierToSlider(multiplier: Float): Float {
     return (0.5f + y / 2f).coerceIn(0f, 1f)
 }
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EqualizerDialog(
