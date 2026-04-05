@@ -799,4 +799,17 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="no_visitor_data">No visitor data available. Tokens cannot be generated.</string>
     <string name="extracting_from_url">Extracting tokens from URL…</string>
     <string name="contributors">Contributors</string>
+
+
+    <!-- Troubleshooter -->
+    <string name="troubleshooter">Troubleshooter</string>
+    <string name="troubleshooter_desc">Clears the song cache and resets expired Visitor Data to resolve playback errors.</string>
+    <string name="troubleshooter_confirm_desc">Temporary song cache will be cleared and Visitor Data reset. Downloads and library will not be affected.</string>
+    <string name="troubleshooter_run">Run troubleshooter</string>
+    <string name="troubleshooter_running">Applying fixes…</string>
+    <string name="troubleshooter_done">Fixes successfully applied. Restart the app if the problem persists.</string>
+    <string name="confirm">Confirm</string>
+    <string name="social_links">Social Networks</string>
+    <string name="view_license">View full license on GitHub</string>
+    <string name="paste">Paste</string>
 </resources>
