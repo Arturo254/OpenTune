@@ -205,10 +205,10 @@ fun AboutScreen(
                 SocialCard(
                     links = listOf(
                         SocialLink(R.drawable.github,    "https://github.com/Arturo254/OpenTune",        "GitHub"),
-                        SocialLink(R.drawable.instagram, "https://www.instagram.com/arturocg.dev/",       "Instagram"),
+                        SocialLink(R.drawable.telegram,    "https://t.me/opentune_updates",               "Telegram"),
                         SocialLink(R.drawable.facebook,  "https://www.facebook.com/Arturo254",            "Facebook"),
                         SocialLink(R.drawable.paypal,    "https://www.paypal.me/OpenTune",                "PayPal"),
-                        SocialLink(R.drawable.google,    "https://g.dev/Arturo254",                       "Google Dev"),
+                        SocialLink(R.drawable.instagram, "https://www.instagram.com/arturocg.dev/",       "Instagram"),
                         SocialLink(R.drawable.resource_public, "https://opentune.netlify.app/",           "Web"),
                     ),
                     onLinkClick = { uriHandler.openUri(it) },

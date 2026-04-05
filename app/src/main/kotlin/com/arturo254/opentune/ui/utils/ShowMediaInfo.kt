@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.ui.utils
 
 import android.text.format.Formatter
@@ -55,295 +53,326 @@ import com.arturo254.opentune.ui.component.shimmer.ShimmerHost
 import com.arturo254.opentune.ui.component.shimmer.TextPlaceholder
 import android.content.ClipData
 import android.content.ClipboardManager
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ElevatedCard
 
 @Composable
 fun ShowMediaInfo(videoId: String) {
-    if (videoId.isBlank() || videoId.isEmpty()) return
+
+    if (videoId.isBlank()) return
 
     val windowInsets = WindowInsets.systemBars
-
-    var info by remember {
-        mutableStateOf<MediaInfo?>(null)
-    }
-
     val database = LocalDatabase.current
-    var song by remember { mutableStateOf<Song?>(null) }
-
-    var currentFormat by remember { mutableStateOf<FormatEntity?>(null) }
-
     val playerConnection = LocalPlayerConnection.current
     val context = LocalContext.current
-    val clipboardManager = LocalClipboard.current
 
-    LaunchedEffect(Unit, videoId) {
+    var info by remember { mutableStateOf<MediaInfo?>(null) }
+    var song by remember { mutableStateOf<Song?>(null) }
+    var currentFormat by remember { mutableStateOf<FormatEntity?>(null) }
+
+    LaunchedEffect(videoId) {
         info = YouTube.getMediaInfo(videoId).getOrNull()
     }
-    LaunchedEffect(Unit, videoId) {
-        database.song(videoId).collect {
-            song = it
-        }
+
+    LaunchedEffect(videoId) {
+        database.song(videoId).collect { song = it }
     }
-    LaunchedEffect(Unit, videoId) {
-        database.format(videoId).collect {
-            currentFormat = it
-        }
+
+    LaunchedEffect(videoId) {
+        database.format(videoId).collect { currentFormat = it }
+    }
+
+    fun copy(text: String) {
+        val cm =
+            context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+        cm.setPrimaryClip(ClipData.newPlainText("text", text))
+        Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
     LazyColumn(
         state = rememberLazyListState(),
         modifier = Modifier
-            .padding(
-                windowInsets
-                    .asPaddingValues()
-            )
+            .padding(windowInsets.asPaddingValues())
             .padding(horizontal = 16.dp)
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+
+        /* ============================================================
+         * DETAILS SECTION
+         * ============================================================ */
+
         if (song != null) {
-            item(contentType = "TitleDetails") {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
+
+            item {
+                SectionTitle(
+                    icon = R.drawable.info,
+                    title = stringResource(R.string.details)
+                )
+            }
+
+            item {
+
+                ElevatedCard(
+                    shape = MaterialTheme.shapes.extraLarge,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.info),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.details),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
 
-            item(contentType = "MediaDetails") {
-                Column {
-                    val baseList = listOf(
-                        stringResource(R.string.song_title) to song?.title,
-                        stringResource(R.string.song_artists) to song?.artists?.joinToString { it.name },
-                        stringResource(R.string.media_id) to song?.id
-                    )
-                    val extendedList = baseList + if (currentFormat != null) {
-                        listOf(
-                            "Itag" to currentFormat?.itag?.toString(),
-                            stringResource(R.string.mime_type) to currentFormat?.mimeType,
-                            stringResource(R.string.codecs) to currentFormat?.codecs,
-                            stringResource(R.string.bitrate) to currentFormat?.bitrate?.let { "${it / 1000} Kbps" },
-                            stringResource(R.string.sample_rate) to currentFormat?.sampleRate?.let { "$it Hz" },
-                            stringResource(R.string.loudness) to currentFormat?.loudnessDb?.let { "$it dB" },
-                            stringResource(R.string.volume) to if (playerConnection != null)
-                                "${(playerConnection.player.volume * 100).toInt()}%" else null,
-                            stringResource(R.string.file_size) to
+                    Column(Modifier.padding(20.dp)) {
+
+                        val baseList = listOf(
+                            Triple(R.drawable.music_note, stringResource(R.string.song_title), song?.title),
+                            Triple(R.drawable.person, stringResource(R.string.song_artists),
+                                song?.artists?.joinToString { it.name }),
+                            Triple(R.drawable.tag, stringResource(R.string.media_id), song?.id)
+                        )
+
+                        val extendedList = baseList + if (currentFormat != null) {
+                            listOf(
+                                Triple(R.drawable.code, "Itag", currentFormat?.itag?.toString()),
+                                Triple(R.drawable.memory, stringResource(R.string.mime_type), currentFormat?.mimeType),
+                                Triple(R.drawable.tune, stringResource(R.string.codecs), currentFormat?.codecs),
+                                Triple(R.drawable.graphic_eq, stringResource(R.string.bitrate),
+                                    currentFormat?.bitrate?.let { "${it / 1000} Kbps" }),
+                                Triple(R.drawable.equalizer, stringResource(R.string.sample_rate),
+                                    currentFormat?.sampleRate?.let { "$it Hz" }),
+                                Triple(R.drawable.volume_up, stringResource(R.string.volume),
+                                    "${(playerConnection?.player?.volume?.times(100))?.toInt()}%"),
+                                Triple(
+                                    R.drawable.folder,
+                                    stringResource(R.string.file_size),
                                     currentFormat?.contentLength?.let {
-                                        Formatter.formatShortFileSize(
-                                            context,
-                                            it
-                                        )
+                                        Formatter.formatShortFileSize(context, it)
                                     }
-                        )
-                    } else {
-                        emptyList()
-                    }
-
-                    extendedList.forEach { (label, text) ->
-                        val displayText = text ?: stringResource(R.string.unknown)
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = displayText,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier =
-                            Modifier
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                    onClick = {
-                                        // LocalClipboard API may not expose direct setText; use Android ClipboardManager
-                                        val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                        cm.setPrimaryClip(ClipData.newPlainText("text", displayText))
-                                        Toast.makeText(
-                                            context,
-                                            R.string.copied,
-                                            Toast.LENGTH_SHORT
-                                        )
-                                            .show()
-                                    },
                                 )
-                                .padding(horizontal = 16.dp),
-                        )
-                        Spacer(Modifier.height(8.dp))
+                            )
+                        } else emptyList()
+
+                        extendedList.forEach { (icon, label, value) ->
+
+                            val text = value ?: stringResource(R.string.unknown)
+
+                            MediaRow(
+                                icon = icon,
+                                label = label,
+                                value = text,
+                                onClick = { copy(text) }
+                            )
+                        }
                     }
                 }
             }
         }
 
-        item(contentType = "TitleMediaInfo") {
-            Text(
-                text = stringResource(R.string.information),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+        /* ============================================================
+         * MEDIA INFO
+         * ============================================================ */
+
+        item {
+            Spacer(Modifier.height(24.dp))
+            SectionTitle(
+                icon = R.drawable.description,
+                title = stringResource(R.string.information)
             )
         }
+
         if (info != null) {
-            if (song == null)
-                item(contentType = "MediaTitle") {
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Top,
+
+            if (song == null) {
+                item {
+                    InfoBlock(
+                        icon = R.drawable.music_note,
+                        label = "",
+                        text = info?.title ?: ""
+                    )
+                }
+            }
+
+            item {
+                InfoBlock(
+                    icon = R.drawable.person,
+                    label = stringResource(R.string.artists),
+                    text = info?.author ?: ""
+                )
+            }
+
+            item {
+                InfoBlock(
+                    icon = R.drawable.description,
+                    label = stringResource(R.string.description),
+                    text = info?.description ?: ""
+                )
+            }
+
+            item {
+                ElevatedCard(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                ) {
+
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp)
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "" + info?.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            textAlign = TextAlign.Start
+
+                        StatColumn(
+                            R.drawable.group,
+                            stringResource(R.string.subscribers),
+                            info?.subscribers ?: ""
+                        )
+
+                        StatColumn(
+                            R.drawable.visibility,
+                            stringResource(R.string.views),
+                            info?.viewCount?.toInt()?.let { numberFormatter(it) } ?: ""
+                        )
+
+                        StatColumn(
+                            R.drawable.thumbup,
+                            stringResource(R.string.likes),
+                            info?.like?.toInt()?.let { numberFormatter(it) } ?: ""
+                        )
+
+                        StatColumn(
+                            R.drawable.thumbdown,
+                            stringResource(R.string.dislikes),
+                            info?.dislike?.toInt()?.let { numberFormatter(it) } ?: ""
                         )
                     }
                 }
+            }
 
-            item(contentType = "MediaAuthor") {
-                Column(
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Top,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.artists),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = TextAlign.Start
-                    )
-                    BasicText(
-                        text = "" + info?.author,
-                        style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onBackground),
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .padding(bottom = 16.dp)
-                    )
-                }
-            }
-            item(contentType = "MediaDescription") {
-                Column(
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Top,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(R.string.description),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = TextAlign.Start
-                    )
-                    BasicText(
-                        text = info?.description ?: "",
-                        style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onBackground),
-                        modifier = Modifier
-                            .padding(all = 16.dp)
-                    )
-                }
-            }
-            item(contentType = "MediaNumbers") {
-                Column(
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Top,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(R.string.numbers),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = TextAlign.Start
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(all = 16.dp)
-                    ) {
-                        Column {
-                            BasicText(
-                                text = stringResource(R.string.subscribers),
-                                style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onBackground),
-                            )
-                            BasicText(
-                                text = info?.subscribers ?: "",
-                                style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onBackground),
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                        }
-                        Column {
-                            BasicText(
-                                text = stringResource(R.string.views),
-                                style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onBackground),
-                                modifier = Modifier
-                            )
-                            BasicText(
-                                text = "" + info?.viewCount?.toInt()
-                                    ?.let { numberFormatter(it) },
-                                style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onBackground),
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                        }
-                        Column {
-                            BasicText(
-                                text = stringResource(R.string.likes),
-                                style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onBackground),
-                                modifier = Modifier
-                            )
-                            BasicText(
-                                text = "" + info?.like?.toInt()?.let { numberFormatter(it) },
-                                style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onBackground),
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                        }
-                        Column {
-                            BasicText(
-                                text = stringResource(R.string.dislikes),
-                                style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onBackground),
-                                modifier = Modifier
-                            )
-                            BasicText(
-                                text = "" + info?.dislike?.toInt()?.let { numberFormatter(it) },
-                                style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.onBackground),
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                        }
-                    }
-                }
-            }
         } else {
-            item(contentType = "MediaInfoLoader") {
+
+            item {
                 ShimmerHost {
                     Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(all = 16.dp)
+                            .padding(24.dp),
+                        horizontalArrangement = Arrangement.Center
                     ) {
                         TextPlaceholder()
                     }
                 }
             }
         }
+    }
+}
+
+/* ============================================================
+ * COMPONENTS (EXPRESSIVE STYLE)
+ * ============================================================ */
+
+@Composable
+private fun SectionTitle(icon: Int, title: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(title, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun MediaRow(
+    icon: Int,
+    label: String,
+    value: String,
+    onClick: () -> Unit
+) {
+    Column(Modifier.padding(vertical = 6.dp)) {
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(label, style = MaterialTheme.typography.labelMedium)
+        }
+
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick
+                )
+                .padding(start = 24.dp, top = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun InfoBlock(icon: Int, label: String, text: String) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+    ) {
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(Modifier.width(8.dp))
+
+            if (label.isNotEmpty()) {
+                Text(label, style = MaterialTheme.typography.labelMedium)
+            }
+        }
+
+        BasicText(
+            text = text,
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = MaterialTheme.colorScheme.onBackground
+            ),
+            modifier = Modifier.padding(start = 28.dp, top = 6.dp)
+        )
+    }
+}
+
+@Composable
+private fun StatColumn(icon: Int, label: String, value: String) {
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        Text(label, style = MaterialTheme.typography.labelMedium)
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(value, style = MaterialTheme.typography.titleSmall)
     }
 }
