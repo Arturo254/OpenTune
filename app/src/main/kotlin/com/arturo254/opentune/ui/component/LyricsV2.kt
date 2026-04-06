@@ -6,7 +6,9 @@
 
 package com.arturo254.opentune.ui.component
 
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -91,20 +93,14 @@ import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import com.arturo254.opentune.utils.ComposeToImage
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.LyricsClickKey
-import com.arturo254.opentune.constants.LyricsScrollKey
-import com.arturo254.opentune.constants.LyricsTextSizeKey
 import com.arturo254.opentune.constants.LyricsLineSpacingKey
 import com.arturo254.opentune.constants.LyricsRomanizeJapaneseKey
 import com.arturo254.opentune.constants.LyricsRomanizeKoreanKey
+import com.arturo254.opentune.constants.LyricsScrollKey
+import com.arturo254.opentune.constants.LyricsTextSizeKey
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.UseSystemFontKey
@@ -123,8 +119,14 @@ import com.arturo254.opentune.lyrics.WordTimestamp
 import com.arturo254.opentune.ui.component.shimmer.ShimmerHost
 import com.arturo254.opentune.ui.component.shimmer.TextPlaceholder
 import com.arturo254.opentune.ui.utils.smoothFadingEdge
+import com.arturo254.opentune.utils.ComposeToImage
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 
@@ -156,6 +158,9 @@ private val HEAD_LYRICS_ENTRY = LyricsEntry(time = 0L, text = "")
 // ──────────────────────────────────────────────────────────────────────
 
 
+@SuppressLint("UnusedBoxWithConstraintsScope", "LocalContextGetResourceValueCall",
+    "StringFormatInvalid"
+)
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LyricsV2(
@@ -197,12 +202,16 @@ fun LyricsV2(
     var showMaxSelectionToast by remember { mutableStateOf(false) }
     val maxSelectionLimit = 5
     var showProgressDialog by remember { mutableStateOf(false) }
-    var showShareDialog by remember { mutableStateOf(false) }
-    var shareDialogData by remember { mutableStateOf<Triple<String, String, String>?>(null) }
+    var showShareCarouselSheet by remember { mutableStateOf(false) }
+    var shareDialogData by remember {
+        mutableStateOf<Triple<String, String, String>?>(null)
+    }
     var showColorPickerDialog by remember { mutableStateOf(false) }
     var selectedGlassStyle by remember { mutableStateOf(LyricsGlassStyle.FrostedDark) }
     var paletteGlassStyle by remember { mutableStateOf<LyricsGlassStyle?>(null) }
 
+
+    var showShareDialog by remember { mutableStateOf(false) }
     // ── Lyrics data ──
     val currentLyrics by playerConnection.currentLyrics.collectAsState(initial = null)
     val lyrics = currentLyrics?.lyrics
@@ -341,11 +350,11 @@ fun LyricsV2(
         while (isActive) {
             val sliderPos = sliderPositionProvider()
             val pos = sliderPos ?: player.currentPosition
-            
+
             // Add a visual tuning offset so animations feel instantly responsive and perfectly land on beat
-            val visualTuningOffsetMs = 150L 
+            val visualTuningOffsetMs = 150L
             currentPositionMs = pos + leadMs + visualTuningOffsetMs
-            
+
             currentLineIndex = findCurrentLineIndex(entriesWithWords, currentPositionMs, 0L)
             delay(16L) // ~60fps polling
         }
@@ -715,7 +724,7 @@ fun LyricsV2(
                                                 metadata.title ?: "",
                                                 metadata.artists.joinToString { it.name }
                                             )
-                                            showShareDialog = true
+                                            showShareCarouselSheet = true
                                         }
                                         isSelectionModeActive = false
                                         selectedIndices.clear()
@@ -739,6 +748,91 @@ fun LyricsV2(
                             )
                         }
                     }
+                }
+            }
+        }
+
+
+        // ── Carrusel de estilos para compartir letras ──────────────────────────────
+        if (showShareCarouselSheet) {
+            shareDialogData?.let { (lyricText, title, artist) ->
+
+                mediaMetadata?.let { metadata ->
+
+                    LyricsShareCarouselSheet(
+                        lyricText = lyricText,
+                        mediaMetadata = metadata,
+                        initialConfig = LyricsCardConfig(),
+                        onDismiss = {
+                            showShareCarouselSheet = false
+                            shareDialogData = null
+                        },
+                        onShare = { config ->
+
+                            showShareCarouselSheet = false
+                            shareDialogData = null
+
+                            scope.launch {
+                                runCatching {
+
+                                    val bitmap =
+                                        ComposeToImage.createLyricsImageWithConfig(
+                                            context = context,
+                                            coverArtUrl = metadata.thumbnailUrl,
+                                            songTitle = title,
+                                            artistName = artist,
+                                            lyrics = lyricText,
+                                            config = config,
+                                            outputSize = 1080,
+                                        )
+
+                                    val uri = ComposeToImage.saveBitmapAsFile(
+                                        context = context,
+                                        bitmap = bitmap,
+                                        fileName = "lyrics_${System.currentTimeMillis()}",
+                                    )
+
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "image/png"
+                                        putExtra(Intent.EXTRA_STREAM, uri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+
+                                    context.startActivity(
+                                        Intent.createChooser(shareIntent, null)
+                                    )
+                                }
+                            }
+                        },
+                        onSave = { config ->
+
+                            scope.launch {
+                                runCatching {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                        val bitmap =
+                                            ComposeToImage.createLyricsImageWithConfig(
+                                                context = context,
+                                                coverArtUrl = metadata.thumbnailUrl,
+                                                songTitle = title,
+                                                artistName = artist,
+                                                lyrics = lyricText,
+                                                config = config,
+                                                outputSize = 1080,
+                                            )
+
+                                        ComposeToImage.saveBitmapAsFile(
+                                            context = context,
+                                            bitmap = bitmap,
+                                            fileName = "lyrics_saved_${System.currentTimeMillis()}",
+                                        )
+                                    }
+                                }
+                            }
+
+                            showShareCarouselSheet = false
+                            shareDialogData = null
+                        },
+                    )
                 }
             }
         }
@@ -1101,7 +1195,7 @@ private fun LyricsLineV2(
     if (bgWords.isNotEmpty()) {
         val spacerHeight = if (mainWords.isNotEmpty()) 4.dp else 0.dp
         if (mainWords.isNotEmpty()) Spacer(modifier = Modifier.height(spacerHeight))
-        
+
         FlowRow(
             modifier = Modifier.fillMaxWidth().alpha(0.85f), // Slightly dimmer overall
             horizontalArrangement = arrangement,
@@ -1118,7 +1212,7 @@ private fun LyricsLineV2(
                     )
                     return@forEachIndexed
                 }
-                
+
                 AnimatedWordV2(
                     word = word,
                     wordIndex = wordIndex + mainWords.size,
@@ -1172,7 +1266,7 @@ private fun AnimatedWordV2(
     // Subtle scale up peaking halfway through the word. Exact timing sync!
     val sinProgress = kotlin.math.sin(progress * kotlin.math.PI).toFloat()
     val wordScale = 1f + (0.015f * sinProgress)
-    
+
     // Float is only applied when the word is actively sung, making it pop from the line.
     // We use animateFloatAsState so that when it finishes (and drops to 0f), 
     // it smoothly decays back into place rather than a harsh mathematical snap.
@@ -1255,7 +1349,7 @@ private fun AnimatedWordV2(
                             )
                         }
                 } else {
-                    Modifier 
+                    Modifier
                 }
             )
         }
