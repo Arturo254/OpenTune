@@ -291,4 +291,15 @@
     <string name="restore_step_restoring_settings">Restoring settings</string>
     <string name="restore_step_restoring_file">Restoring %1$s</string>
     <string name="restore_step_restarting">Restarting app</string>
+
+
+    <!-- Cloud Backup -->
+    <string name="cloud_backup">Cloud Backup</string>
+    <string name="cloud_backup_desc">Automatically upload your backups to Filebin</string>
+    <string name="cloud_upload_success">File uploaded: %s</string>
+    <string name="cloud_upload_failed">Upload error: %s</string>
+    <string name="cloud_upload_error">Upload error</string>
+    <string name="cloud_uploading">Uploading to the cloud: %d%%</string>
+    <string name="last_cloud_url">Last link</string>
+    <string name="cloud_upload_error_detail">Error: %s</string>
 </resources>

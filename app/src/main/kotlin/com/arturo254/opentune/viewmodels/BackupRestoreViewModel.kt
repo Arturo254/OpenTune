@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.viewmodels
 
 import android.content.Context
@@ -41,14 +39,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.asRequestBody
+import org.json.JSONObject
+import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.io.PushbackReader
 import java.io.Reader
 import java.io.StringReader
+import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -61,6 +68,10 @@ data class BackupRestoreProgressUi(
     val percent: Int,
     val indeterminate: Boolean,
 )
+
+
+// Clave para DataStore
+private val CLOUD_BACKUP_ENABLED_KEY = booleanPreferencesKey("cloud_backup_enabled")
 
 internal fun readCsvRecords(reader: Reader): Sequence<List<String>> =
     sequence {
@@ -145,6 +156,9 @@ class BackupRestoreViewModel @Inject constructor(
 ) : ViewModel() {
     private val _backupRestoreProgress = MutableStateFlow<BackupRestoreProgressUi?>(null)
     val backupRestoreProgress: StateFlow<BackupRestoreProgressUi?> = _backupRestoreProgress.asStateFlow()
+
+    private val _cloudUploadState = MutableStateFlow(CloudUploadState())
+    val cloudUploadState: StateFlow<CloudUploadState> = _cloudUploadState.asStateFlow()
 
     private fun emitProgress(
         title: String,
@@ -242,6 +256,13 @@ class BackupRestoreViewModel @Inject constructor(
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, R.string.backup_create_success, Toast.LENGTH_SHORT).show()
                 }
+
+                // Subir a la nube automáticamente si está habilitado
+                val isCloudEnabled = context.dataStore.data.first()[CLOUD_BACKUP_ENABLED_KEY] ?: false
+                if (isCloudEnabled) {
+                    uploadBackupToCloudAfterCreation(context, uri)
+                }
+
             } catch (exception: Exception) {
                 reportException(exception)
                 withContext(Dispatchers.Main) {
@@ -282,11 +303,11 @@ class BackupRestoreViewModel @Inject constructor(
                 val restoreEntries =
                     entryNames.filter { name ->
                         name == SETTINGS_XML_FILENAME ||
-                            name == SETTINGS_FILENAME ||
-                            name == InternalDatabase.DB_NAME ||
-                            name == "${InternalDatabase.DB_NAME}-wal" ||
-                            name == "${InternalDatabase.DB_NAME}-shm" ||
-                            name == "${InternalDatabase.DB_NAME}-journal"
+                                name == SETTINGS_FILENAME ||
+                                name == InternalDatabase.DB_NAME ||
+                                name == "${InternalDatabase.DB_NAME}-wal" ||
+                                name == "${InternalDatabase.DB_NAME}-shm" ||
+                                name == "${InternalDatabase.DB_NAME}-journal"
                     }
 
                 val totalUnits = 1 + 1 + restoreEntries.size
@@ -510,6 +531,7 @@ class BackupRestoreViewModel @Inject constructor(
             stringSets.forEach { (k, v) -> prefs[stringSetPreferencesKey(k)] = v }
         }
     }
+
     private fun normalizeCsvHeaderCell(value: String): String =
         value
             .trim()
@@ -644,8 +666,225 @@ class BackupRestoreViewModel @Inject constructor(
         return songs
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Cloud Backup Functions
+    // ──────────────────────────────────────────────────────────────────────────
+
+    fun setCloudBackupEnabled(context: Context, enabled: Boolean) {
+        viewModelScope.launch {
+            context.dataStore.edit { prefs ->
+                prefs[CLOUD_BACKUP_ENABLED_KEY] = enabled
+            }
+            _cloudUploadState.update { it.copy(isEnabled = enabled) }
+        }
+    }
+
+    suspend fun loadCloudBackupEnabled(context: Context): Boolean {
+        return context.dataStore.data.first()[CLOUD_BACKUP_ENABLED_KEY] ?: false
+    }
+
+    fun uploadExistingBackupToCloud(context: Context, backupUri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _cloudUploadState.update { it.copy(isUploading = true, lastError = null, uploadProgress = 0) }
+
+            try {
+                // Crear archivo temporal desde el URI
+                val tempFile = File(context.cacheDir, "temp_backup_for_upload_${System.currentTimeMillis()}.backup")
+                context.contentResolver.openInputStream(backupUri)?.use { input ->
+                    FileOutputStream(tempFile).use { output ->
+                        input.copyTo(output)
+                    }
+                } ?: throw IllegalStateException("Failed to open backup file")
+
+                // Subir a Filebin
+                val result = uploadBackupToCloud(context, tempFile) { progress ->
+                    _cloudUploadState.update { it.copy(uploadProgress = progress) }
+                }
+
+                result.onSuccess { url ->
+                    _cloudUploadState.update {
+                        it.copy(
+                            isUploading = false,
+                            lastUploadUrl = url,
+                            lastError = null,
+                            uploadProgress = 100
+                        )
+                    }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.cloud_upload_success, url),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }.onFailure { error ->
+                    _cloudUploadState.update {
+                        it.copy(
+                            isUploading = false,
+                            lastError = error.message,
+                            uploadProgress = 0
+                        )
+                    }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.cloud_upload_failed, error.message),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+
+                // Limpiar archivo temporal
+                tempFile.delete()
+
+            } catch (e: Exception) {
+                reportException(e)
+                _cloudUploadState.update {
+                    it.copy(
+                        isUploading = false,
+                        lastError = e.message,
+                        uploadProgress = 0
+                    )
+                }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, R.string.cloud_upload_error, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private suspend fun uploadBackupToCloudAfterCreation(context: Context, backupUri: Uri) {
+        try {
+            // Pequeña pausa para asegurar que el archivo esté completamente escrito
+            kotlinx.coroutines.delay(500)
+
+            // Crear archivo temporal
+            val tempFile = File(context.cacheDir, "temp_backup_upload_${System.currentTimeMillis()}.backup")
+            context.contentResolver.openInputStream(backupUri)?.use { input ->
+                FileOutputStream(tempFile).use { output ->
+                    input.copyTo(output)
+                }
+            } ?: return
+
+            val result = uploadBackupToCloud(context, tempFile) { progress ->
+                _cloudUploadState.update { it.copy(uploadProgress = progress) }
+            }
+
+            result.onSuccess { url ->
+                _cloudUploadState.update {
+                    it.copy(
+                        lastUploadUrl = url,
+                        lastError = null
+                    )
+                }
+            }.onFailure { error ->
+                _cloudUploadState.update {
+                    it.copy(
+                        lastError = error.message
+                    )
+                }
+            }
+
+            tempFile.delete()
+        } catch (e: Exception) {
+            reportException(e)
+            _cloudUploadState.update {
+                it.copy(
+                    lastError = e.message
+                )
+            }
+        }
+    }
+
+    private suspend fun uploadBackupToCloud(
+        context: Context,
+        file: File,
+        onProgress: (Int) -> Unit = {}
+    ): Result<String> = withContext(Dispatchers.IO) {
+        val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build()
+
+        try {
+            // Crear un bin name único basado en timestamp
+            val binName = "opentune_backup_${System.currentTimeMillis()}"
+            val fileName = file.name
+
+            // Crear el request body con progreso personalizado
+            val mediaType = "application/octet-stream".toMediaType()
+            val requestBody = object : okhttp3.RequestBody() {
+                override fun contentType(): okhttp3.MediaType? = mediaType
+
+                override fun contentLength(): Long = file.length()
+
+                override fun writeTo(sink: okio.BufferedSink) {
+                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                    file.inputStream().use { input ->
+                        var bytesRead: Int
+                        var totalBytesRead = 0L
+                        val fileSize = file.length()
+
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            sink.write(buffer, 0, bytesRead)
+                            totalBytesRead += bytesRead
+                            if (fileSize > 0) {
+                                val progress = (totalBytesRead * 100 / fileSize).toInt()
+                                onProgress(progress)
+                            }
+                        }
+                    }
+                }
+            }
+
+            val multipartBody = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("file", fileName, requestBody)
+                .build()
+
+            val request = Request.Builder()
+                .url("https://filebin.net/$binName/$fileName")
+                .post(multipartBody)
+                .addHeader("Accept", "application/json")
+                .build()
+
+            val response = client.newCall(request).execute()
+
+            if (!response.isSuccessful) {
+                return@withContext Result.failure(
+                    Exception("Filebin error: ${response.code} - ${response.message}")
+                )
+            }
+
+            response.body?.string()?.let { responseBody ->
+                // Intentar parsear la respuesta JSON
+                try {
+                    val json = JSONObject(responseBody)
+                    val url = json.optString("url")
+                    if (url.isNotEmpty()) {
+                        Result.success(url)
+                    } else {
+                        Result.success("https://filebin.net/$binName/$fileName")
+                    }
+                } catch (e: Exception) {
+                    // Si no es JSON, construir URL manualmente
+                    Result.success("https://filebin.net/$binName/$fileName")
+                }
+            } ?: Result.failure(Exception("Empty response from Filebin"))
+
+        } catch (e: Exception) {
+            reportException(e)
+            Result.failure(e)
+        } finally {
+            client.dispatcher.executorService.shutdown()
+            client.connectionPool.evictAll()
+        }
+    }
+
     companion object {
         const val SETTINGS_FILENAME = "settings.preferences_pb"
         const val SETTINGS_XML_FILENAME = "settings.xml"
+        private const val DEFAULT_BUFFER_SIZE = 8192
     }
 }
