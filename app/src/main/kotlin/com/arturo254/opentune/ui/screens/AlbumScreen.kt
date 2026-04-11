@@ -31,15 +31,19 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -69,6 +73,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -77,6 +82,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
@@ -93,7 +99,16 @@ import coil3.request.allowHardware
 import coil3.size.Size
 import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.content.ContentValues
+import android.os.Build
+import android.provider.MediaStore
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import com.arturo254.opentune.LocalDatabase
 import com.arturo254.opentune.LocalDownloadUtil
 import com.arturo254.opentune.LocalPlayerAwareWindowInsets
@@ -128,6 +143,212 @@ import com.arturo254.opentune.viewmodels.AlbumUiState
 import com.arturo254.opentune.viewmodels.AlbumViewModel
 import com.valentinilk.shimmer.shimmer
 
+// ============================================================================
+// FUNCIONES DE DESCARGA
+// ============================================================================
+
+/**
+ * Descarga la carátula del álbum en la calidad especificada
+ * @param quality Calidad: 512 (baja), 768 (media), 1024 (alta)
+ */
+suspend fun downloadAlbumCover(
+    context: android.content.Context,
+    imageUrl: String?,
+    albumTitle: String,
+    quality: Int = 1024,
+): Boolean {
+    if (imageUrl.isNullOrEmpty()) return false
+
+    return try {
+        val request = ImageRequest.Builder(context)
+            .data(imageUrl)
+            .size(Size(quality, quality))
+            .allowHardware(false)
+            .build()
+
+        val result = context.imageLoader.execute(request)
+        val bitmap = result.image?.toBitmap() ?: return false
+
+        val qualityLabel = when (quality) {
+            512 -> "baja"
+            768 -> "media"
+            1024 -> "alta"
+            else -> "custom"
+        }
+
+        val filename = "${albumTitle.replace("/", "_")}_${qualityLabel}_${System.currentTimeMillis()}.jpg"
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/OpenTune")
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+        }
+
+        val imageUri = context.contentResolver.insert(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            contentValues
+        ) ?: return false
+
+        context.contentResolver.openOutputStream(imageUri)?.use { outputStream ->
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, outputStream)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            contentValues.clear()
+            contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+            context.contentResolver.update(imageUri, contentValues, null, null)
+        }
+
+        true
+    } catch (e: Exception) {
+        e.printStackTrace()
+        false
+    }
+}
+
+// ============================================================================
+// COMPOSABLE DIALOG DE CALIDAD
+// ============================================================================
+
+@Composable
+private fun QualitySelectionDialog(
+    onDismiss: () -> Unit,
+    onQualitySelected: (Int) -> Unit,
+) {
+    var selectedQuality by remember { mutableStateOf(1024) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Selecciona la calidad",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectableGroup(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Opción Baja Calidad
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .selectable(
+                            selected = selectedQuality == 512,
+                            onClick = { selectedQuality = 512 },
+                            role = Role.RadioButton
+                        )
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    RadioButton(
+                        selected = selectedQuality == 512,
+                        onClick = { selectedQuality = 512 }
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Baja (512x512)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "~50 KB",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Opción Media Calidad
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .selectable(
+                            selected = selectedQuality == 768,
+                            onClick = { selectedQuality = 768 },
+                            role = Role.RadioButton
+                        )
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    RadioButton(
+                        selected = selectedQuality == 768,
+                        onClick = { selectedQuality = 768 }
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Media (768x768)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "~100 KB",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Opción Alta Calidad
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .selectable(
+                            selected = selectedQuality == 1024,
+                            onClick = { selectedQuality = 1024 },
+                            role = Role.RadioButton
+                        )
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    RadioButton(
+                        selected = selectedQuality == 1024,
+                        onClick = { selectedQuality = 1024 }
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Alta (1024x1024)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "~200 KB",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onQualitySelected(selectedQuality)
+                    onDismiss()
+                }
+            ) {
+                Text("Descargar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumScreen(
@@ -160,6 +381,10 @@ fun AlbumScreen(
     var gradientColors by remember { mutableStateOf<List<Color>>(emptyList()) }
     val fallbackColor = MaterialTheme.colorScheme.surface.toArgb()
     val surfaceColor = MaterialTheme.colorScheme.surface
+
+    // Estados para descarga de carátula
+    var downloadingCover by remember { mutableStateOf(false) }
+    var showQualityDialog by remember { mutableStateOf(false) }
 
     // Extract gradient colors from album cover
     LaunchedEffect(albumWithSongs?.album?.thumbnailUrl) {
@@ -417,6 +642,53 @@ fun AlbumScreen(
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
                                 )
+                            }
+
+                            // Download Cover Button - Inside image, bottom-right
+                            Surface(
+                                onClick = { showQualityDialog = true },
+                                shape = CircleShape,
+                                color = Color.Transparent,
+                                modifier = Modifier
+                                    .size(48.dp) // Tamaño ligeramente reducido
+                                    .align(Alignment.BottomEnd)
+                                    .offset(x = (-12).dp, y = (-12).dp)
+                                    .shadow(
+                                        elevation = 4.dp, // Sombra más sutil
+                                        shape = CircleShape,
+                                        ambientColor = Color.Black.copy(alpha = 0.15f),
+                                        spotColor = Color.Black.copy(alpha = 0.15f)
+                                    )
+                                    .clip(CircleShape)
+                                    .background(
+                                        color = Color.Black.copy(alpha = 0.2f), // Más transparente
+                                        shape = CircleShape
+                                    )
+                                    .border(
+                                        width = 0.5.dp, // Borde más fino
+                                        color = Color.White.copy(alpha = 0.15f),
+                                        shape = CircleShape
+                                    )
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (downloadingCover) {
+                                        CircularProgressIndicator(
+                                            strokeWidth = 2.dp,
+                                            modifier = Modifier.size(24.dp), // Ícono más pequeño
+                                            color = Color.White.copy(alpha = 0.9f)
+                                        )
+                                    } else {
+                                        Icon(
+                                            painter = painterResource(R.drawable.download),
+                                            contentDescription = "Descargar carátula",
+                                            tint = Color.White.copy(alpha = 0.8f), // Ícono semi-transparente
+                                            modifier = Modifier.size(24.dp) // Ícono más pequeño
+                                        )
+                                    }
+                                }
                             }
                         }
 
@@ -1052,6 +1324,39 @@ fun AlbumScreen(
                 }
             }
         )
+
+        // Dialog para seleccionar calidad
+        if (showQualityDialog) {
+            QualitySelectionDialog(
+                onDismiss = { showQualityDialog = false },
+                onQualitySelected = { quality ->
+                    downloadingCover = true
+                    scope.launch {
+                        try {
+                            val success = downloadAlbumCover(
+                                context = context,
+                                imageUrl = albumWithSongs?.album?.thumbnailUrl,
+                                albumTitle = albumWithSongs?.album?.title ?: "album",
+                                quality = quality
+                            )
+
+                            val qualityLabel = when (quality) {
+                                512 -> "Baja (512x512)"
+                                768 -> "Media (768x768)"
+                                1024 -> "Alta (1024x1024)"
+                                else -> "Custom"
+                            }
+
+                            if (success) {
+                                // Aquí puedes agregar un SnackBar si lo deseas
+                            }
+                        } finally {
+                            downloadingCover = false
+                        }
+                    }
+                }
+            )
+        }
     }
 }
 
