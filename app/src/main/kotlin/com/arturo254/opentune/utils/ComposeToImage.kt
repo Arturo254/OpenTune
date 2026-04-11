@@ -44,6 +44,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.coroutines.resume
+import kotlin.math.max
 
 object ComposeToImage {
 
@@ -169,19 +170,54 @@ object ComposeToImage {
         val path = Path().apply { addRoundRect(rect, cornerRadius, cornerRadius, Path.Direction.CW) }
 
         if (coverArt != null) {
-            val scaled  = ensureSoftwareBitmap(Bitmap.createScaledBitmap(coverArt, cardSize, cardSize, true))
-            val blurred = scaleBlur(scaled, 18)
+            // Usa la imagen original sin escalar primero
+            val scaled = ensureSoftwareBitmap(
+                Bitmap.createScaledBitmap(
+                    coverArt,
+                    cardSize,
+                    cardSize,
+                    false  // Cambia a false para mejor calidad
+                )
+            )
+            // Reduce la intensidad del blur o usa un blur más suave
+            val blurred = if (coverArt.width > cardSize * 2) {
+                // Si la imagen original es grande, no la reduzcas tanto
+                scaleBlurQuality(scaled, 12) // Reduce la intensidad del blur
+            } else {
+                scaleBlurQuality(scaled, 18)
+            }
             canvas.withClip(path) { drawBitmap(blurred, 0f, 0f, null) }
         } else {
             canvas.drawRoundRect(rect, cornerRadius, cornerRadius, Paint().apply {
                 color = 0xFF0F0F0F.toInt(); isAntiAlias = true
             })
         }
+
         // Scrim
         canvas.drawRoundRect(rect, cornerRadius, cornerRadius, Paint().apply {
-            color        = android.graphics.Color.argb((dimAlpha * 255).toInt(), 0, 0, 0)
-            isAntiAlias  = true
+            color = android.graphics.Color.argb((dimAlpha * 255).toInt(), 0, 0, 0)
+            isAntiAlias = true
         })
+    }
+
+    private fun scaleBlurQuality(source: Bitmap, strength: Int): Bitmap {
+        val safe = ensureSoftwareBitmap(source)
+
+        // Si la imagen ya es pequeña, no la reduzcas
+        if (safe.width <= 400 || safe.height <= 400) {
+            return safe
+        }
+
+        // Reducción más suave para mantener calidad
+        val targetSize = max(safe.width / 4, 200) // Máximo reducción a 1/4
+        val smallW = targetSize
+        val smallH = (safe.height * targetSize / safe.width).coerceAtLeast(100)
+
+        val small = Bitmap.createScaledBitmap(safe, smallW, smallH, true)
+        val result = Bitmap.createScaledBitmap(small, safe.width, safe.height, true)
+
+        small.recycle() // Limpia memoria
+        return result
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -985,11 +1021,13 @@ object ComposeToImage {
     // ─────────────────────────────────────────────────────────────────────────
 
     private fun scaleBlur(source: Bitmap, strength: Int): Bitmap {
-        val safe    = ensureSoftwareBitmap(source)
-        val factor  = (1f / strength.coerceAtLeast(1)).coerceAtLeast(0.02f)
-        val smallW  = (safe.width  * factor).toInt().coerceAtLeast(1)
-        val smallH  = (safe.height * factor).toInt().coerceAtLeast(1)
-        val small   = Bitmap.createScaledBitmap(safe, smallW, smallH, true)
+        val safe = ensureSoftwareBitmap(source)
+
+        // Reduce menos agresivamente para mejor calidad
+        val factor = (1f / (strength / 2f).coerceAtLeast(1F)).coerceIn(0.3f, 1f)
+        val smallW = (safe.width * factor).toInt().coerceAtLeast(100)
+        val smallH = (safe.height * factor).toInt().coerceAtLeast(100)
+        val small = Bitmap.createScaledBitmap(safe, smallW, smallH, true)
         return Bitmap.createScaledBitmap(small, safe.width, safe.height, true)
     }
 
