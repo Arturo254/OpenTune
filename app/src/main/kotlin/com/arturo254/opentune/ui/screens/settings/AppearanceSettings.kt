@@ -89,6 +89,7 @@ import com.arturo254.opentune.constants.OpenTuneCanvasKey
 import com.arturo254.opentune.constants.ThumbnailCornerRadiusKey
 import com.arturo254.opentune.constants.CropThumbnailToSquareKey
 import com.arturo254.opentune.constants.DisableBlurKey
+import com.arturo254.opentune.constants.LiquidGlassNavBarKey
 import com.arturo254.opentune.constants.UseLyricsV2Key
 import com.arturo254.opentune.ui.component.DefaultDialog
 import com.arturo254.opentune.ui.component.EnumListPreference
@@ -236,6 +237,11 @@ fun AppearanceSettings(
     val availableBackgroundStyles = PlayerBackgroundStyle.entries.filter {
         it != PlayerBackgroundStyle.BLUR || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     }
+
+    val (liquidGlassNavBar, onLiquidGlassNavBarChange) = rememberPreference(
+        LiquidGlassNavBarKey,
+        defaultValue = false
+    )
 
     val isSystemInDarkTheme = isSystemInDarkTheme()
     val useDarkTheme =
@@ -846,6 +852,13 @@ fun AppearanceSettings(
             icon = { Icon(painterResource(R.drawable.nav_bar), null) },
             checked = slimNav,
             onCheckedChange = onSlimNavChange
+        )
+
+        SwitchPreference(
+            title = { Text(stringResource(R.string.liquid_glass_navbar)) },
+            icon = { Icon(painterResource(R.drawable.blur_on), null) },
+            checked = liquidGlassNavBar,
+            onCheckedChange = onLiquidGlassNavBarChange,
         )
 
 

@@ -165,6 +165,7 @@ import com.arturo254.opentune.constants.FloatingToolbarHeight
 import com.arturo254.opentune.constants.FloatingToolbarHorizontalPadding
 import com.arturo254.opentune.constants.HasPressedStarKey
 import com.arturo254.opentune.constants.LaunchCountKey
+import com.arturo254.opentune.constants.LiquidGlassNavBarKey
 import com.arturo254.opentune.constants.MiniPlayerBottomSpacing
 import com.arturo254.opentune.constants.MiniPlayerHeight
 import com.arturo254.opentune.constants.MiniPlayerLastAnchorKey
@@ -378,6 +379,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+
+
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -387,6 +392,7 @@ class MainActivity : ComponentActivity() {
             pendingIntent = intent
         }
     }
+
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class)
@@ -469,6 +475,7 @@ class MainActivity : ComponentActivity() {
                     // instances in different composition scopes which caused the update
                     // bottom sheet to not appear and overlay interactions to be blocked).
                     val bottomSheetPageState = remember { BottomSheetPageState() }
+            val (liquidGlassNavBar) = rememberPreference(LiquidGlassNavBarKey, defaultValue = false)
                     val menuState = remember { MenuState() }
                     val uriHandler = LocalUriHandler.current
                     val releaseNotesState = remember { mutableStateOf<String?>(null) }
@@ -709,6 +716,8 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
+
+
                     var searchSource by rememberEnumPreference(SearchSourceKey, SearchSource.ONLINE)
 
                     val searchBarFocusRequester = remember { FocusRequester() }
@@ -842,6 +851,8 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+
+
 
                     val playerAwareWindowInsets =
                         remember(
@@ -1044,6 +1055,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
+
                     val currentTitleRes = remember(navBackStackEntry) {
                         when (navBackStackEntry?.destination?.route) {
                             Screens.Home.route -> R.string.home
@@ -1054,6 +1066,8 @@ class MainActivity : ComponentActivity() {
                     }
 
                     var showAccountDialog by remember { mutableStateOf(false) }
+
+
 
                     CompositionLocalProvider(
                         LocalDatabase provides database,
@@ -1456,109 +1470,110 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                         ) {
-                                            FloatingNavigationToolbar(
-                                                items = navigationItems,
-                                                pureBlack = pureBlack,
-                                                modifier = Modifier
-                                                    .align(Alignment.BottomCenter)
-                                                    .padding(
-                                                        start = FloatingToolbarHorizontalPadding,
-                                                        end = FloatingToolbarHorizontalPadding,
-                                                        bottom = bottomInset + floatingBarsBottomPadding,
-                                                    )
-                                                    .height(navVisibleHeight),
-                                                onShuffleClick = if (shouldShowHomeShuffleButton) {
-                                                    {
-                                                        val useLocalSource = when {
-                                                            allLocalItems.isNotEmpty() && allYtItems.isNotEmpty() -> Random.nextFloat() < 0.5f
-                                                            allLocalItems.isNotEmpty() -> true
-                                                            else -> false
-                                                        }
+                            FloatingNavigationToolbar(
+                                items = navigationItems,
+                                pureBlack = pureBlack,
+                                liquidGlass = liquidGlassNavBar,
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(
+                                        start = FloatingToolbarHorizontalPadding,
+                                        end = FloatingToolbarHorizontalPadding,
+                                        bottom = bottomInset + floatingBarsBottomPadding,
+                                    )
+                                    .height(navVisibleHeight),
+                                onShuffleClick = if (shouldShowHomeShuffleButton) {
+                                    {
+                                        val useLocalSource = when {
+                                            allLocalItems.isNotEmpty() && allYtItems.isNotEmpty() -> Random.nextFloat() < 0.5f
+                                            allLocalItems.isNotEmpty() -> true
+                                            else -> false
+                                        }
 
-                                                        coroutineScope.launch(Dispatchers.Main) {
-                                                            if (useLocalSource) {
-                                                                when (val luckyItem = allLocalItems.random()) {
-                                                                    is Song -> {
-                                                                        playerConnection?.playQueue(
-                                                                            YouTubeQueue.radio(luckyItem.toMediaMetadata())
-                                                                        )
-                                                                    }
-
-                                                                    is Album -> {
-                                                                        val albumWithSongs = withContext(Dispatchers.IO) {
-                                                                            database.albumWithSongs(luckyItem.id).first()
-                                                                        }
-
-                                                                        albumWithSongs?.let {
-                                                                            playerConnection?.playQueue(LocalAlbumRadio(it))
-                                                                        }
-                                                                    }
-
-                                                                    is Artist -> Unit
-                                                                    is Playlist -> Unit
-                                                                }
-                                                            } else {
-                                                                when (val luckyItem = allYtItems.random()) {
-                                                                    is SongItem -> {
-                                                                        playerConnection?.playQueue(
-                                                                            YouTubeQueue.radio(luckyItem.toMediaMetadata())
-                                                                        )
-                                                                    }
-
-                                                                    is AlbumItem -> {
-                                                                        playerConnection?.playQueue(
-                                                                            YouTubeAlbumRadio(luckyItem.playlistId)
-                                                                        )
-                                                                    }
-
-                                                                    is ArtistItem -> {
-                                                                        luckyItem.radioEndpoint?.let {
-                                                                            playerConnection?.playQueue(YouTubeQueue(it))
-                                                                        }
-                                                                    }
-
-                                                                    is PlaylistItem -> {
-                                                                        luckyItem.playEndpoint?.let {
-                                                                            playerConnection?.playQueue(YouTubeQueue(it))
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                } else null,
-                                                shuffleIconRes = if (shouldShowHomeShuffleButton) R.drawable.shuffle else null,
-                                                shuffleContentDescription = if (shouldShowHomeShuffleButton) stringResource(R.string.shuffle) else "",
-                                                onMusicRecognitionClick = if (shouldShowHomeShuffleButton) {
-                                                    { navController.navigate(MusicRecognitionRoute) }
-                                                } else null,
-                                                musicRecognitionContentDescription = if (shouldShowHomeShuffleButton) stringResource(R.string.music_recognition) else "",
-                                                isSelected = { screen ->
-                                                    navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } ==
-                                                        true
-                                                },
-                                                onItemClick = { screen, isSelected ->
-                                                    if (screen.route == Screens.Search.route) {
-                                                        onActiveChange(true)
-                                                    } else if (isSelected) {
-                                                        navController.currentBackStackEntry?.savedStateHandle?.set(
-                                                            "scrollToTop",
-                                                            true
+                                        coroutineScope.launch(Dispatchers.Main) {
+                                            if (useLocalSource) {
+                                                when (val luckyItem = allLocalItems.random()) {
+                                                    is Song -> {
+                                                        playerConnection?.playQueue(
+                                                            YouTubeQueue.radio(luckyItem.toMediaMetadata())
                                                         )
-                                                        coroutineScope.launch {
-                                                            searchBarScrollBehavior.state.resetHeightOffset()
+                                                    }
+
+                                                    is Album -> {
+                                                        val albumWithSongs = withContext(Dispatchers.IO) {
+                                                            database.albumWithSongs(luckyItem.id).first()
                                                         }
-                                                    } else {
-                                                        navController.navigate(screen.route) {
-                                                            popUpTo(navController.graph.startDestinationId) {
-                                                                saveState = true
-                                                            }
-                                                            launchSingleTop = true
-                                                            restoreState = true
+
+                                                        albumWithSongs?.let {
+                                                            playerConnection?.playQueue(LocalAlbumRadio(it))
                                                         }
                                                     }
-                                                },
-                                            )
+
+                                                    is Artist -> Unit
+                                                    is Playlist -> Unit
+                                                }
+                                            } else {
+                                                when (val luckyItem = allYtItems.random()) {
+                                                    is SongItem -> {
+                                                        playerConnection?.playQueue(
+                                                            YouTubeQueue.radio(luckyItem.toMediaMetadata())
+                                                        )
+                                                    }
+
+                                                    is AlbumItem -> {
+                                                        playerConnection?.playQueue(
+                                                            YouTubeAlbumRadio(luckyItem.playlistId)
+                                                        )
+                                                    }
+
+                                                    is ArtistItem -> {
+                                                        luckyItem.radioEndpoint?.let {
+                                                            playerConnection?.playQueue(YouTubeQueue(it))
+                                                        }
+                                                    }
+
+                                                    is PlaylistItem -> {
+                                                        luckyItem.playEndpoint?.let {
+                                                            playerConnection?.playQueue(YouTubeQueue(it))
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else null,
+                                shuffleIconRes = if (shouldShowHomeShuffleButton) R.drawable.shuffle else null,
+                                shuffleContentDescription = if (shouldShowHomeShuffleButton) stringResource(R.string.shuffle) else "",
+                                onMusicRecognitionClick = if (shouldShowHomeShuffleButton) {
+                                    { navController.navigate(MusicRecognitionRoute) }
+                                } else null,
+                                musicRecognitionContentDescription = if (shouldShowHomeShuffleButton) stringResource(R.string.music_recognition) else "",
+                                isSelected = { screen ->
+                                    navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } ==
+                                            true
+                                },
+                                onItemClick = { screen, isSelected ->
+                                    if (screen.route == Screens.Search.route) {
+                                        onActiveChange(true)
+                                    } else if (isSelected) {
+                                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                                            "scrollToTop",
+                                            true
+                                        )
+                                        coroutineScope.launch {
+                                            searchBarScrollBehavior.state.resetHeightOffset()
+                                        }
+                                    } else {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    }
+                                },
+                            )
                                         }
                                     }
                                 },
