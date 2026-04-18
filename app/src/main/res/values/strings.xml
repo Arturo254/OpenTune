@@ -813,5 +813,6 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="view_license">View full license on GitHub</string>
     <string name="paste">Paste</string>
     <string name="player_design_v7">Immersive</string>
+    <string name="liquid_glass_navbar">Liquid Glass Navbar</string>
 
 </resources>
