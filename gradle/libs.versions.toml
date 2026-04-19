@@ -1,11 +1,11 @@
 [versions]
-androidGradlePlugin = "9.1.0"
+androidGradlePlugin = "9.1.1"
 annotation = "1.9.1"
 json = "20250517"
 kotlin = "2.3.20"
 compose = "1.10.5"
 lifecycle = "2.10.0"
-material3 = "1.5.0-alpha09"
+material3 = "1.5.0-alpha17"
 media3 = "1.9.3"
 room = "2.8.4"
 hilt = "2.59.2"
