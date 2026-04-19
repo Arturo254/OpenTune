@@ -54,8 +54,9 @@ fun ThumbnailCornerRadiusSelectorButton(
             .fillMaxWidth()
             .heightIn(min = 56.dp)
             .clip(RoundedCornerShape(26.dp)),
-        shadowElevation = 10.dp,
-        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp,
+        shadowElevation = 0.dp,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         onClick = { showDialog = true }
     ) {
         Row(
