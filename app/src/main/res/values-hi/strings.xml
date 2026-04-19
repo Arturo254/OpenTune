@@ -1,1 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hindi (हिन्दी) translation for OpenTune -->
+<!-- Locale: values-hi -->
+<!-- Contributor: gorupa (https://github.com/gorupa) -->
+<resources>
+    <!-- Bottom navigation -->
+    <string name="home">होम</string>
+    <string name="songs">गाने</string>
+    <string name="artists">कलाकार</string>
+    <string name="albums">एल्बम</string>
+    <string name="playlists">प्लेलिस्ट</string>
 
+    <!-- Common actions -->
+    <string name="search">खोजें</string>
+    <string name="play">चलाएं</string>
+    <string name="shuffle">शफ़ल</string>
+    <string name="history">इतिहास</string>
+    <string name="settings">सेटिंग</string>
+    <string name="about">के बारे में</string>
+    <string name="lyrics">गीत के बोल</string>
+    <string name="download">डाउनलोड</string>
+    <string name="share">साझा करें</string>
+    <string name="edit">संपादित करें</string>
+    <string name="delete">हटाएं</string>
+    <string name="save">सहेजें</string>
+    <string name="retry">पुन: प्रयास करें</string>
+    <string name="radio">रेडियो</string>
+    <string name="next">अगला</string>
+    <string name="account">खाता</string>
+    <string name="queue">कतार</string>
+    <string name="stats">आँकड़े</string>
+    <string name="mood_and_genres">मूड और शैलियाँ</string>
+
+    <!-- Library -->
+    <string name="library_song_empty">आपके गाने यहाँ दिखेंगे</string>
+    <string name="library_artist_empty">आपके कलाकार यहाँ दिखेंगे</string>
+    <string name="library_album_empty">आपके एल्बम यहाँ दिखेंगे</string>
+    <string name="library_playlist_empty">आपकी प्लेलिस्ट यहाँ दिखेंगी</string>
+
+    <!-- Playlist -->
+    <string name="liked_songs">पसंदीदा गाने</string>
+    <string name="downloaded_songs">डाउनलोड किए गए गाने</string>
+    <string name="playlist_is_empty">प्लेलिस्ट खाली है</string>
+    <string name="add_to_playlist">प्लेलिस्ट में जोड़ें</string>
+    <string name="add_to_queue">कतार में जोड़ें</string>
+    <string name="play_next">अगला चलाएं</string>
+    <string name="start_radio">रेडियो शुरू करें</string>
+    <string name="import_playlist">प्लेलिस्ट आयात करें</string>
+
+    <!-- Search -->
+    <string name="no_results_found">कोई परिणाम नहीं मिला</string>
+    <string name="search_yt_music">YouTube Music खोजें…</string>
+    <string name="search_library">लाइब्रेरी खोजें…</string>
+    <string name="filter_songs">गाने</string>
+    <string name="filter_artists">कलाकार</string>
+    <string name="filter_albums">एल्बम</string>
+    <string name="filter_playlists">प्लेलिस्ट</string>
+    <string name="filter_liked">पसंदीदा</string>
+    <string name="filter_downloaded">डाउनलोड किए गए</string>
+
+    <!-- History -->
+    <string name="today">आज</string>
+    <string name="yesterday">कल</string>
+    <string name="this_week">इस सप्ताह</string>
+    <string name="last_week">पिछले सप्ताह</string>
+
+    <!-- Menu actions -->
+    <string name="add_to_library">लाइब्रेरी में जोड़ें</string>
+    <string name="remove_from_library">लाइब्रेरी से हटाएं</string>
+    <string name="action_download">डाउनलोड</string>
+    <string name="remove_download">डाउनलोड हटाएं</string>
+    <string name="downloading">डाउनलोड हो रहा है</string>
+    <string name="details">विवरण</string>
+
+    <!-- About screen -->
+    <string name="contributors">योगदानकर्ता</string>
+    <string name="social_links">सामाजिक नेटवर्क</string>
+    <string name="view_license">GitHub पर पूर्ण लाइसेंस देखें</string>
+
+    <!-- Lyrics -->
+    <string name="lyrics_not_found">गीत के बोल नहीं मिले</string>
+
+    <!-- Player -->
+    <string name="quick_picks">त्वरित पसंद</string>
+    <string name="keep_listening">सुनते रहें</string>
+    <string name="new_release_albums">नए एल्बम</string>
+</resources>
