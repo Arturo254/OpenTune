@@ -117,7 +117,7 @@ fun UpdateScreen(
     val uriHandler = LocalUriHandler.current
     val coroutineScope = rememberCoroutineScope()
     val nightlyInstallUrl =
-        "https://github.com/Arturo254/OpenTune/releases/download/latest/app-universal-release.apk"
+        "https://github.com/Arturo254/OpenTune/releases/download/latest/app-release.apk"
 
     val (enableUpdateNotification, onEnableUpdateNotificationChange) = rememberPreference(
         EnableUpdateNotificationKey, defaultValue = false
