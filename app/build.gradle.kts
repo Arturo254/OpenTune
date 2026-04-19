@@ -23,8 +23,8 @@ android {
         applicationId = "com.Arturo254.opentune"
         minSdk = 26
         targetSdk = 36
-        versionCode = 127
-        versionName = "3.0.0"
+        versionCode = 128
+        versionName = "3.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
