@@ -33,6 +33,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -138,6 +140,12 @@ private val contributors = listOf(
         name = "「★」 RightSideUpCak3",
         role = "Language selector",
         profileUrl = "https://github.com/RightSideUpCak3",
+    ),
+    Contributor(
+        avatarUrl = "https://avatars.githubusercontent.com/gorupa?v=4",
+        name = "⟡ gorupa",
+        role = "Hindi Translator · Bug Fixes",
+        profileUrl = "https://github.com/gorupa",
     ),
 )
 
@@ -630,31 +638,23 @@ private fun SocialPill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
+    FilledTonalButton(
+        onClick = onClick,
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-        modifier = modifier
-            .height(48.dp)
-            .clickable(onClick = onClick),
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+        modifier = modifier.height(48.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        ) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = label,
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = label,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
