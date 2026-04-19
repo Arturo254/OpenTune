@@ -80,7 +80,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.zIndex
 import androidx.media3.common.MediaItem
@@ -149,7 +148,9 @@ inline fun ListItem(
         Box(Modifier.padding(6.dp), contentAlignment = Alignment.Center) { thumbnailContent() }
         Column(Modifier.weight(1f).padding(horizontal = 6.dp)) {
             Text(
-                text = title, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1, overflow = TextOverflow.Ellipsis
             )
             if (subtitle != null) Row(verticalAlignment = Alignment.CenterVertically) { subtitle() }
@@ -174,7 +175,7 @@ fun ListItem(
     subtitle = {
         badges()
         if (!subtitle.isNullOrEmpty()) {
-            Text(text = subtitle, color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = subtitle, color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     },
     thumbnailContent = thumbnailContent,
