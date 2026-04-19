@@ -46,7 +46,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -109,7 +108,7 @@ import com.arturo254.opentune.ui.component.PlayerSliderTrack
 import com.arturo254.opentune.ui.component.ResizableIconButton
 import com.arturo254.opentune.ui.menu.PlayerMenu
 import com.arturo254.opentune.ui.theme.PlayerBackgroundColorUtils
-import com.arturo254.opentune.ui.theme.PlayerSliderColors
+import com.arturo254.opentune.ui.component.PlayerSliderColors
 import com.arturo254.opentune.ui.utils.ShowMediaInfo
 import com.arturo254.opentune.utils.makeTimeString
 

@@ -36,23 +36,14 @@ fun BigSeekBar(
         onValueChange = onProgressChange,
         valueRange = 0f..1f,
         steps = steps,
-        colors = SliderDefaults.colors(
-            activeTrackColor = color,
-            activeTickColor = color,
-            thumbColor = color,
-            inactiveTrackColor = background
-        ),
-        thumb = { 
-            Spacer(modifier = Modifier.size(0.dp)) 
+        colors = PlayerSliderColors.standardSliderColors(color),
+        thumb = {
+            Spacer(modifier = Modifier.size(0.dp))
         },
         track = { sliderState ->
             PlayerSliderTrack(
                 sliderState = sliderState,
-                colors = SliderDefaults.colors(
-                    activeTrackColor = color,
-                    activeTickColor = color,
-                    inactiveTrackColor = background
-                ),
+                colors = PlayerSliderColors.standardSliderColors(color),
                 trackHeight = 10.dp
             )
         },
