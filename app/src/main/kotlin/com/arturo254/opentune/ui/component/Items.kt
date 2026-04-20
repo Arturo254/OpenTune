@@ -269,44 +269,13 @@ fun LibraryPlaylistFeatureCard(
     autoPlaylist: Boolean = false,
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
-    val subtitleText = playlistCountText(playlist, autoPlaylist)
-
-    var pressed by remember { mutableStateOf(false) }
-    val interactionSource = remember { MutableInteractionSource() }
-
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.97f else 1f,
-        animationSpec = spring()
-    )
-
+    val subtitleText = playlistCountText(playlist = playlist, autoPlaylist = autoPlaylist)
+    val thumbnailSize = 86.dp
+    val thumbnailShape = RoundedCornerShape(22.dp)
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        shape = RoundedCornerShape(28.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        modifier = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val down = awaitFirstDown()
-                        pressed = true
-                        waitForUpOrCancellation()
-                        pressed = false
-                    }
-                }
-            }
-            // 👇 Click + ripple (Material correcto)
-            .combinedClickable(
-                interactionSource = interactionSource,
-                indication = LocalIndication.current,
-                onClick = {},
-                onLongClick = {}
-            ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = RoundedCornerShape(26.dp),
+        modifier = modifier,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -316,45 +285,42 @@ fun LibraryPlaylistFeatureCard(
         ) {
             PlaylistThumbnail(
                 thumbnails = playlist.thumbnails,
-                size = 86.dp,
+                size = thumbnailSize,
                 placeHolder = {
                     Icon(
-                        painter = painterResource(
-                            playlistPlaceholderIcon(playlist, autoPlaylist)
-                        ),
+                        painter = painterResource(playlistPlaceholderIcon(playlist, autoPlaylist)),
                         contentDescription = null,
-                        tint = LocalContentColor.current,
-                        modifier = Modifier.size(40.dp),
+                        tint = LocalContentColor.current.copy(alpha = 0.8f),
+                        modifier = Modifier.size(thumbnailSize / 2),
                     )
                 },
-                shape = RoundedCornerShape(24.dp),
+                shape = thumbnailShape,
             )
-
             Spacer(Modifier.width(16.dp))
-
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier.weight(1f),
             ) {
                 Text(
                     text = playlist.playlist.name,
                     style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-
-                if (subtitleText.isNotEmpty()) {
-                    Text(
-                        text = subtitleText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+                Text(
+                    text = subtitleText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
-
-            Row {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.padding(start = 12.dp),
+            ) {
                 trailingContent()
             }
         }
@@ -1007,7 +973,7 @@ fun OverlayPlaylistListItem(
                     model = backgroundUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize().let { 
+                    modifier = Modifier.fillMaxSize().let {
                         if (disableBlur) it else it.blur(8.dp)
                     }
                 )
