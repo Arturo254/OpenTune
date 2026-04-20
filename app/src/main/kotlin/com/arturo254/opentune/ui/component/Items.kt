@@ -9,55 +9,50 @@
 package com.arturo254.opentune.ui.component
 
 import android.widget.Toast
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.BoxWithConstraintsScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.AlertDialog
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -65,10 +60,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -90,34 +89,34 @@ import androidx.media3.exoplayer.offline.Download.STATE_QUEUED
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
-import com.arturo254.opentune.innertube.YouTube
-import com.arturo254.opentune.innertube.models.SongItem
-import com.arturo254.opentune.innertube.models.AlbumItem
-import com.arturo254.opentune.innertube.models.ArtistItem
-import com.arturo254.opentune.innertube.models.PlaylistItem
-import com.arturo254.opentune.innertube.models.YTItem
 import com.arturo254.opentune.LocalDatabase
 import com.arturo254.opentune.LocalDownloadUtil
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
+import com.arturo254.opentune.constants.CropThumbnailToSquareKey
 import com.arturo254.opentune.constants.DisableBlurKey
 import com.arturo254.opentune.constants.GridThumbnailCornerRadius
-import com.arturo254.opentune.constants.ListItemHeight
 import com.arturo254.opentune.constants.GridThumbnailHeight
+import com.arturo254.opentune.constants.ListItemHeight
 import com.arturo254.opentune.constants.ListThumbnailSize
-import com.arturo254.opentune.constants.ThumbnailCornerRadius
 import com.arturo254.opentune.constants.SwipeToSongKey
-import com.arturo254.opentune.db.entities.Song
+import com.arturo254.opentune.constants.ThumbnailCornerRadius
 import com.arturo254.opentune.db.entities.Album
 import com.arturo254.opentune.db.entities.Artist
 import com.arturo254.opentune.db.entities.Playlist
+import com.arturo254.opentune.db.entities.Song
 import com.arturo254.opentune.extensions.toMediaItem
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.ArtistItem
+import com.arturo254.opentune.innertube.models.PlaylistItem
+import com.arturo254.opentune.innertube.models.SongItem
+import com.arturo254.opentune.innertube.models.YTItem
 import com.arturo254.opentune.models.MediaMetadata
 import com.arturo254.opentune.playback.queues.LocalAlbumRadio
 import com.arturo254.opentune.utils.joinByBullet
 import com.arturo254.opentune.utils.makeTimeString
 import com.arturo254.opentune.utils.rememberPreference
-import com.arturo254.opentune.constants.CropThumbnailToSquareKey
 import com.arturo254.opentune.utils.reportException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -223,6 +222,326 @@ fun GridItem(
             badges()
 
             subtitle()
+        }
+    }
+}
+
+@Composable
+private fun playlistCountText(
+    playlist: Playlist,
+    autoPlaylist: Boolean,
+): String =
+    if (autoPlaylist) {
+        ""
+    } else if (playlist.songCount == 0 && playlist.playlist.remoteSongCount != null) {
+        pluralStringResource(
+            R.plurals.n_song,
+            playlist.playlist.remoteSongCount,
+            playlist.playlist.remoteSongCount,
+        )
+    } else {
+        pluralStringResource(
+            R.plurals.n_song,
+            playlist.songCount,
+            playlist.songCount,
+        )
+    }
+
+@Composable
+private fun playlistPlaceholderIcon(
+    playlist: Playlist,
+    autoPlaylist: Boolean,
+): Int =
+    when (playlist.playlist.name) {
+        stringResource(R.string.liked) -> R.drawable.favorite_border
+        stringResource(R.string.offline) -> R.drawable.offline
+        stringResource(R.string.cached_playlist) -> R.drawable.cached
+        else -> if (autoPlaylist) R.drawable.trending_up else R.drawable.queue_music
+    }
+
+
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+fun LibraryPlaylistFeatureCard(
+    playlist: Playlist,
+    modifier: Modifier = Modifier,
+    autoPlaylist: Boolean = false,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+) {
+    val subtitleText = playlistCountText(playlist, autoPlaylist)
+
+    var pressed by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = spring()
+    )
+
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        shape = RoundedCornerShape(28.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val down = awaitFirstDown()
+                        pressed = true
+                        waitForUpOrCancellation()
+                        pressed = false
+                    }
+                }
+            }
+            // 👇 Click + ripple (Material correcto)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                onClick = {},
+                onLongClick = {}
+            ),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        ) {
+            PlaylistThumbnail(
+                thumbnails = playlist.thumbnails,
+                size = 86.dp,
+                placeHolder = {
+                    Icon(
+                        painter = painterResource(
+                            playlistPlaceholderIcon(playlist, autoPlaylist)
+                        ),
+                        contentDescription = null,
+                        tint = LocalContentColor.current,
+                        modifier = Modifier.size(40.dp),
+                    )
+                },
+                shape = RoundedCornerShape(24.dp),
+            )
+
+            Spacer(Modifier.width(16.dp))
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = playlist.playlist.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                if (subtitleText.isNotEmpty()) {
+                    Text(
+                        text = subtitleText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+
+            Row {
+                trailingContent()
+            }
+        }
+    }
+}
+
+
+@Composable
+fun LibraryAlbumSpotlightCard(
+    album: Album,
+    modifier: Modifier = Modifier,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
+    onPlay: (() -> Unit)? = null,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+) {
+    val subtitle = joinByBullet(
+        album.artists.joinToString { it.name },
+        pluralStringResource(R.plurals.n_song, album.album.songCount, album.album.songCount),
+    )
+
+    val containerColor by animateColorAsState(
+        if (isActive)
+            MaterialTheme.colorScheme.secondaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceContainerLow,
+        animationSpec = spring()
+    )
+
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        ) {
+            Box(modifier = Modifier.size(88.dp)) {
+                LocalThumbnail(
+                    thumbnailUrl = album.album.thumbnailUrl,
+                    isActive = isActive,
+                    isPlaying = isPlaying,
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.fillMaxSize(),
+                )
+                if (onPlay != null) {
+                    AlbumPlayButton(
+                        visible = !isActive,
+                        onClick = onPlay,
+                    )
+                }
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = album.album.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Row {
+                trailingContent()
+            }
+        }
+    }
+}
+
+
+@Composable
+fun LibraryArtistSpotlightCard(
+    artist: Artist,
+    modifier: Modifier = Modifier,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+) {
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        ) {
+            LocalThumbnail(
+                thumbnailUrl = artist.artist.thumbnailUrl,
+                isActive = false,
+                isPlaying = false,
+                shape = CircleShape,
+                modifier = Modifier.size(80.dp),
+            )
+            Spacer(Modifier.width(16.dp))
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = artist.artist.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = pluralStringResource(R.plurals.n_song, artist.songCount, artist.songCount),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Row {
+                trailingContent()
+            }
+        }
+    }
+}
+
+
+@Composable
+fun LibraryPinnedCollectionTile(
+    title: String,
+    @DrawableRes iconRes: Int,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
+) {
+    val animatedColor by animateColorAsState(accentColor, spring())
+
+    Card(
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        ) {
+            Surface(shape = CircleShape) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    tint = animatedColor,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                subtitle?.takeIf { it.isNotBlank() }?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
     }
 }
