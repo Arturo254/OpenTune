@@ -153,6 +153,7 @@ import com.arturo254.opentune.utils.rememberPreference
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import coil3.compose.AsyncImage
 import com.arturo254.opentune.constants.BlurRadiusKey
+import com.arturo254.opentune.ui.component.COLLAPSED_ANCHOR
 import com.skydoves.cloudy.cloudy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
