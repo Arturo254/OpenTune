@@ -43,7 +43,7 @@ data class ReleaseInfo(
  *
  * @param tagName        Tag del release en GitHub (ej. "v1.4.2")
  * @param versionName    Versión normalizada sin prefijo "v" (ej. "1.4.2")
- * @param downloadUrl    URL directa a `app-release.apk` del release
+ * @param downloadUrl    URL directa a `app-universal-release.apk` del release
  * @param releasePageUrl URL de la página HTML del release en GitHub
  * @param releaseNotes   Changelog / body del release (puede ser null)
  * @param publishedAt    Fecha de publicación en ISO 8601
@@ -57,7 +57,7 @@ data class UpdateInfo(
     val publishedAt: String,
 )
 
-private const val APK_ASSET_NAME = "app-release.apk"
+private const val APK_ASSET_NAME = "app-universal-release.apk"
 
 private data class ReleasesNetworkResult(
     val status: HttpStatusCode,
@@ -284,7 +284,7 @@ object Updater {
      * Comprueba si hay una versión más reciente que [currentVersionName].
      *
      * - Reutiliza la caché existente (ETag / DataStore) a través de [getLatestReleaseInfo].
-     * - Busca el asset `app-release.apk` en la API de assets del release. Si no
+     * - Busca el asset `app-universal-release.apk` en la API de assets del release. Si no
      *   aparece listado, construye la URL canónica de descarga como fallback.
      * - Devuelve `null` dentro del [Result] cuando ya se tiene la versión más
      *   reciente instalada.
@@ -300,7 +300,7 @@ object Updater {
             // Sin actualización disponible
             if (isSameVersion(latestVersionName, currentVersionName)) return@runCatching null
 
-            // Intentar obtener la URL exacta del asset app-release.apk desde la API
+            // Intentar obtener la URL exacta del asset app-universal-release.apk desde la API
             val downloadUrl = resolveApkDownloadUrl(latest.tagName)
 
             UpdateInfo(
@@ -315,7 +315,7 @@ object Updater {
 
     /**
      * Consulta los assets del release [tagName] y devuelve la URL de descarga
-     * de `app-release.apk`. Si la llamada falla o el asset no está listado,
+     * de `app-universal-release.apk`. Si la llamada falla o el asset no está listado,
      * usa la URL canónica de GitHub como fallback.
      */
     private suspend fun resolveApkDownloadUrl(tagName: String): String {
@@ -378,7 +378,7 @@ object Updater {
     fun getLatestDownloadUrl(): String {
         val baseUrl = "https://github.com/Arturo254/OpenTune/releases/latest/download/"
         val architecture = BuildConfig.ARCHITECTURE
-        return baseUrl + "app-release.apk"
+        return baseUrl + "app-universal-release.apk"
     }
 
     suspend fun getAllReleases(
