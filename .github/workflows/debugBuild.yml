@@ -91,5 +91,5 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: debug-apk-${{ github.ref_name }}-run${{ github.run_number }}
-          path: "app/build/outputs/apk/debug/*.apk"
+        path: "app/build/outputs/apk/*/debug/*.apk"
           retention-days: 7
