@@ -15,32 +15,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      # ── 1. CHECKOUT ────────────────────────────────────────────────────────────────
+      # ── 1. CHECKOUT ────────────────────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 1
 
-      # ── 2. PERMISOS ────────────────────────────────────────────────────────────────
+      # ── 2. PERMISOS ────────────────────────────────────────────────────────────
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # ── 3. JDK ─────────────────────────────────────────────────────────────────────
+      # ── 3. JDK ─────────────────────────────────────────────────────────────────
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
 
-      # ── 4. GRADLE CACHE ────────────────────────────────────────────────────────────
+      # ── 4. GRADLE CACHE ────────────────────────────────────────────────────────
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           cache-read-only: false
 
-      # ── 5. SIGNING ─────────────────────────────────────────────────────────────────
+      # ── 5. SIGNING ─────────────────────────────────────────────────────────────
       #   - Si DEBUG_KEYSTORE_BASE64 existe → lo decodifica y lo usa (firma consistente)
       #   - Si no existe               → genera uno aleatorio con aviso (firma efímera)
       # En ambos casos termina con los env vars de firma configurados.
@@ -79,18 +79,17 @@ jobs:
           echo "MUSIC_DEBUG_SIGNING_KEY_PASSWORD=android" >> $GITHUB_ENV
           echo "MUSIC_DEBUG_SIGNING_KEY_ALIAS=androiddebugkey" >> $GITHUB_ENV
 
-      # ── 6. BUILD ───────────────────────────────────────────────────────────────────
+      # ── 6. BUILD ───────────────────────────────────────────────────────────────
       # --build-cache       → reutiliza outputs de tareas cacheadas
       # --configuration-cache → cachea la fase de configuración de Gradle
       # --parallel          → ejecuta tareas independientes en paralelo
       - name: Build Debug APK
         run: ./gradlew assembleDebug --build-cache --configuration-cache --parallel
 
-      # ── 7. ARTIFACT ────────────────────────────────────────────────────────────────
-      # Captura todos los APKs de debug (todas las arquitecturas)
+      # ── 7. ARTIFACT ────────────────────────────────────────────────────────────
       - name: Upload Debug APK
         uses: actions/upload-artifact@v6
         with:
           name: debug-apk-${{ github.ref_name }}-run${{ github.run_number }}
-          path: app/build/outputs/apk/*/debug/*.apk
+          path: "app/build/outputs/apk/debug/*.apk"
           retention-days: 7
