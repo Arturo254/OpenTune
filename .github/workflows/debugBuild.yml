@@ -79,19 +79,15 @@ jobs:
           echo "MUSIC_DEBUG_SIGNING_KEY_PASSWORD=android" >> $GITHUB_ENV
           echo "MUSIC_DEBUG_SIGNING_KEY_ALIAS=androiddebugkey" >> $GITHUB_ENV
 
-      # ── 6. BUILD ───────────────────────────────────────────────────────────────────
-      # --build-cache       → reutiliza outputs de tareas cacheadas
-      # --configuration-cache → cachea la fase de configuración de Gradle
-      # --parallel          → ejecuta tareas independientes en paralelo
-      # assembleUniversalDebug → solo genera app-universal-debug.apk
+
       - name: Build Debug APK (Universal)
-        run: ./gradlew assembleUniversalDebug --build-cache --configuration-cache --parallel
+        run: ./gradlew assembleUniversalDebug 
 
       # ── 7. ARTIFACT ────────────────────────────────────────────────────────────────
       # Solo sube app-universal-debug.apk
       - name: Upload Debug APK
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
-          name: debug-apk-${{ github.ref_name }}-run${{ github.run_number }}
+           name: app-universal-debug
           path: app/build/outputs/apk/universal/debug/*.apk
           retention-days: 7
