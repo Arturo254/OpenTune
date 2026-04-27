@@ -8,7 +8,7 @@
         <intent
             android:action="com.arturo254.opentune.action.SEARCH"
             android:targetClass="com.arturo254.opentune.MainActivity"
-            android:targetPackage="com.arturo254.opentune.debug" />
+            android:targetPackage="com.arturo254.opentune" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -18,6 +18,6 @@
         <intent
             android:action="com.arturo254.opentune.action.LIBRARY"
             android:targetClass="com.arturo254.opentune.MainActivity"
-            android:targetPackage="com.arturo254.opentune.debug" />
+            android:targetPackage="com.arturo254.opentune" />
     </shortcut>
 </shortcuts>
