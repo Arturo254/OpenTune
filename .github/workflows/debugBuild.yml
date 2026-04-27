@@ -87,4 +87,10 @@ jobs:
         run: ./gradlew assembleDebug --build-cache --configuration-cache --parallel
 
       # ── 7. ARTIFACT ────────────────────────────────────────────────────────────────
-      # Captura todos los APKs de debug (todas las arquitect
+      # Captura todos los APKs de debug (todas las arquitecturas)
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: debug-apk-${{ github.ref_name }}-run${{ github.run_number }}
+          path: app/build/outputs/apk/*/debug/*.apk
+          retention-days: 7
