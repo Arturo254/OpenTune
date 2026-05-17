@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -75,8 +76,10 @@ import com.arturo254.opentune.extensions.togglePlayPause
 import com.arturo254.opentune.utils.makeTimeString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import me.saket.squiggles.SquigglySlider
 import kotlin.math.abs
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlwaysOnDisplayScreen(navController: NavController) {
 
@@ -146,7 +149,7 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
     // ── Cálculos derivados ───────────────────────────────────────────────────
     val displayPosition = sliderPosition ?: position
     val progressFraction = remember(displayPosition, duration) {
-        if (duration > 0L && duration != C.TIME_UNSET)
+        if (duration > 0L)
             (displayPosition.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
         else 0f
     }
@@ -267,10 +270,10 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
             Spacer(Modifier.height(42.dp))
 
             // ── WavySlider de progreso ───────────────────────────────────────
-            Slider(
+            SquigglySlider(
                 value = progressFraction,
                 onValueChange = { fraction ->
-                    if (duration > 0L && duration != C.TIME_UNSET) {
+                    if (duration > 0L) {
                         sliderPosition = (fraction * duration).toLong().coerceIn(0L, duration)
                     }
                 },
@@ -303,7 +306,7 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
                     color = Color.White.copy(alpha = 0.48f),
                     style = MaterialTheme.typography.labelMedium
                 )
-                if (duration > 0L && duration != C.TIME_UNSET) {
+                if (duration > 0L) {
                     Text(
                         text = makeTimeString(duration),
                         color = Color.White.copy(alpha = 0.48f),
