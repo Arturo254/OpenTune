@@ -8,6 +8,9 @@
 
 package com.arturo254.opentune.ui.player
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -22,9 +25,9 @@ import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -39,6 +42,7 @@ import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,41 +68,44 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
-import androidx.media3.common.C
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
-import androidx.compose.material3.Icon
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.size.Scale
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
-import com.arturo254.opentune.canvas.OpenTuneCanvas
 import com.arturo254.opentune.canvas.CanvasArtwork
+import com.arturo254.opentune.canvas.OpenTuneCanvas
+import com.arturo254.opentune.constants.CropThumbnailToSquareKey
+import com.arturo254.opentune.constants.HidePlayerThumbnailKey
+import com.arturo254.opentune.constants.MaxCanvasCacheSizeKey
+import com.arturo254.opentune.constants.OpenTuneCanvasKey
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerHorizontalPadding
 import com.arturo254.opentune.constants.SeekExtraSeconds
 import com.arturo254.opentune.constants.SwipeThumbnailKey
-import com.arturo254.opentune.constants.OpenTuneCanvasKey
-import com.arturo254.opentune.constants.MaxCanvasCacheSizeKey
 import com.arturo254.opentune.constants.ThumbnailCornerRadiusKey
-import com.arturo254.opentune.constants.CropThumbnailToSquareKey
-import com.arturo254.opentune.constants.HidePlayerThumbnailKey
 import com.arturo254.opentune.extensions.metadata
 import com.arturo254.opentune.extensions.toMediaItem
 import com.arturo254.opentune.innertube.YouTube
@@ -117,21 +124,43 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.File
-import java.util.LinkedHashMap
 import java.util.Locale
 import kotlin.math.abs
-import android.content.Context
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import androidx.compose.ui.viewinterop.AndroidView
 
+
+
+private object ThumbnailConstants {
+    const val CANVAS_DEFAULT_MAX_SIZE = 256
+    const val PERSIST_FILE = "canvas_artwork_cache.json"
+    const val PERSIST_DEBOUNCE_MS = 2_000L
+    const val HEADER_HORIZONTAL_PADDING = 32
+    const val HEADER_VERTICAL_PADDING = 16
+    const val ICON_SIZE = 120
+    const val THUMBNAIL_CORNER_RADIUS_DEFAULT = 16f
+    const val HORIZONTAL_ITEM_WIDTH_FACTOR = 1f
+    const val BLUR_RADIUS = 60f
+    const val BLUR_ALPHA = 0.6f
+    const val SEEK_EFFECT_DURATION_MS = 1_000L
+    const val DOUBLE_TAP_WINDOW_MS = 1_000L
+    const val SEEK_INCREMENT_MS = 5_000
+    const val SEEK_TEXT_ALPHA = 0.7f
+    const val VELOCITY_THRESHOLD = 500f
+
+    const val ARTWORK_SIZE_TARGET = 1440
+}
 object CanvasArtworkPlaybackCache {
-    private const val defaultMaxSize = 256
-    private const val PERSIST_FILE = "canvas_artwork_cache.json"
-    private const val PERSIST_DEBOUNCE_MS = 2_000L
 
-    private val map = LinkedHashMap<String, CanvasArtwork>(defaultMaxSize, 0.75f, true)
-    @Volatile private var maxSize = defaultMaxSize
-    @Volatile private var cacheFile: File? = null
+    private val map = LinkedHashMap<String, CanvasArtwork>(
+        ThumbnailConstants.CANVAS_DEFAULT_MAX_SIZE,
+        0.75f,
+        true // accessOrder = true para comportamiento LRU
+    )
+
+    @Volatile
+    private var maxSize = ThumbnailConstants.CANVAS_DEFAULT_MAX_SIZE
+
+    @Volatile
+    private var cacheFile: File? = null
 
     private val persistScope = CoroutineScope(Dispatchers.IO)
     private var persistJob: Job? = null
@@ -142,115 +171,174 @@ object CanvasArtworkPlaybackCache {
         explicitNulls = false
     }
 
-    private val mapSerializer = MapSerializer(String.serializer(), CanvasArtwork.serializer())
+    private val mapSerializer =
+        MapSerializer(
+            String.serializer(),
+            CanvasArtwork.serializer()
+        )
 
+    /**
+     * Inicializa el caché y restaura el contenido guardado en disco.
+     * Debe llamarse una vez al iniciar la aplicación.
+     */
     fun init(context: Context) {
-        cacheFile = File(context.filesDir, PERSIST_FILE)
+        cacheFile = File(
+            context.filesDir,
+            ThumbnailConstants.PERSIST_FILE
+        )
         loadFromDisk()
     }
 
+    /**
+     * Obtiene un item del caché.
+     */
     @Synchronized
     fun get(mediaId: String): CanvasArtwork? {
         if (maxSize <= 0) return null
+        if (mediaId.isBlank()) return null
         return map[mediaId]
     }
 
+    /**
+     * Guarda un item en el caché.
+     */
     @Synchronized
     fun put(mediaId: String, artwork: CanvasArtwork) {
-        val limit = maxSize
-        if (limit <= 0) return
+        if (maxSize <= 0) return
         if (mediaId.isBlank()) return
+
         map[mediaId] = artwork
-        while (map.size > limit) {
-            val it = map.entries.iterator()
-            if (it.hasNext()) {
-                it.next()
-                it.remove()
-            }
-        }
+        trimToSize()
         schedulePersist()
     }
 
+    /**
+     * Cambia el tamaño máximo del caché.
+     */
+    @Synchronized
+    fun setMaxSize(value: Int) {
+        maxSize = value.coerceAtLeast(0)
+
+        if (maxSize == 0) {
+            map.clear()
+        } else {
+            trimToSize()
+        }
+
+        schedulePersist()
+    }
+
+    /**
+     * Tamaño actual del caché.
+     */
     @Synchronized
     fun size(): Int = map.size
 
+    /**
+     * Limpia completamente el caché.
+     */
     @Synchronized
     fun clear() {
         map.clear()
         schedulePersist()
     }
 
+    /**
+     * Elimina los elementos más antiguos si exceden maxSize.
+     */
     @Synchronized
-    fun setMaxSize(value: Int) {
-        maxSize = value.coerceAtLeast(0)
-        if (maxSize == 0) {
-            map.clear()
-            schedulePersist()
-            return
-        }
-        var evicted = false
+    private fun trimToSize() {
         while (map.size > maxSize) {
-            val it = map.entries.iterator()
-            if (it.hasNext()) {
-                it.next()
-                it.remove()
-                evicted = true
+            val iterator = map.entries.iterator()
+            if (iterator.hasNext()) {
+                iterator.next()
+                iterator.remove()
             } else {
                 break
             }
         }
-        if (evicted) schedulePersist()
     }
 
+    /**
+     * Carga el caché desde disco.
+     */
     @Synchronized
     private fun loadFromDisk() {
         val file = cacheFile ?: return
         if (!file.exists()) return
+
         try {
             val raw = file.readText()
             if (raw.isBlank()) return
+
             val restored = json.decodeFromString(mapSerializer, raw)
+
             map.clear()
             map.putAll(restored)
-            while (maxSize > 0 && map.size > maxSize) {
-                val it = map.entries.iterator()
-                if (it.hasNext()) {
-                    it.next()
-                    it.remove()
-                } else {
-                    break
-                }
-            }
-            Timber.d("Canvas cache restored: ${map.size} entries from disk")
+
+            trimToSize()
+
+            Timber.d("Canvas cache restored: ${map.size} entries")
         } catch (e: Exception) {
-            Timber.e(e, "Failed to restore canvas cache from disk")
+            Timber.e(e, "Failed to restore canvas cache")
             runCatching { file.delete() }
         }
     }
 
+    /**
+     * Programa una escritura diferida a disco.
+     */
     private fun schedulePersist() {
         persistJob?.cancel()
         persistJob = persistScope.launch {
-            delay(PERSIST_DEBOUNCE_MS)
+            delay(ThumbnailConstants.PERSIST_DEBOUNCE_MS)
             writeToDisk()
         }
     }
 
+    /**
+     * Guarda el caché actual en disco.
+     */
     private fun writeToDisk() {
         val file = cacheFile ?: return
+
         try {
-            val snapshot: Map<String, CanvasArtwork>
-            synchronized(this@CanvasArtworkPlaybackCache) {
-                snapshot = LinkedHashMap(map)
-            }
-            val raw = json.encodeToString(mapSerializer, snapshot)
+            val snapshot: Map<String, CanvasArtwork> =
+                synchronized(this@CanvasArtworkPlaybackCache) {
+                    LinkedHashMap(map)
+                }
+
+            val raw = json.encodeToString(
+                mapSerializer,
+                snapshot
+            )
+
             file.writeText(raw)
         } catch (e: Exception) {
-            Timber.e(e, "Failed to persist canvas cache to disk")
+            Timber.e(e, "Failed to persist canvas cache")
         }
     }
 }
 
+
+@Composable
+private fun createImageRequest(
+    context: Context,
+    uri: String?
+): ImageRequest {
+    return remember(uri) {
+        ImageRequest.Builder(context)
+            .data(uri)
+            .size(ThumbnailConstants.ARTWORK_SIZE_TARGET)
+            .scale(Scale.FILL)
+            .crossfade(true)
+            .build()
+    }
+}
+
+
+
+@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Thumbnail(
@@ -880,54 +968,63 @@ private fun CanvasArtworkPlayer(
     )
 }
 
-private fun normalizeCanvasSongTitle(raw: String): String {
-    val stripped =
-        raw
-            .replace(Regex("\\s*\\[[^]]*]"), "")
-            .replace(
-                Regex(
-                    "\\s*\\((?:feat\\.?|ft\\.?|featuring|with)\\b[^)]*\\)",
-                    RegexOption.IGNORE_CASE,
-                ),
-                "",
-            )
-            .replace(
-                Regex(
-                    "\\s*\\((?:official\\s*)?(?:music\\s*)?(?:video|mv|lyrics?|audio|visualizer|live|remaster(?:ed)?|version|edit|mix|remix)[^)]*\\)",
-                    RegexOption.IGNORE_CASE,
-                ),
-                "",
-            )
-            .replace(
-                Regex(
-                    "\\s*-\\s*(?:official\\s*)?(?:music\\s*)?(?:video|mv|lyrics?|audio|visualizer|live|remaster(?:ed)?|version|edit|mix|remix)\\b.*$",
-                    RegexOption.IGNORE_CASE,
-                ),
-                "",
-            )
-            .replace(Regex("\\s+"), " ")
-            .trim()
+private fun restartDiscordPresenceIfRunning() {
+    if (
+        com.arturo254.opentune.ui.screens.settings.DiscordPresenceManager.isRunning()
+    ) {
+        try {
+            com.arturo254.opentune.ui.screens.settings.DiscordPresenceManager.restart()
+        } catch (_: Exception) {
+        }
+    }
+}
 
-    return stripped
-        .trim('-')
+
+private fun normalizeCanvasSongTitle(raw: String): String {
+    return raw
+        .replace(Regex("\\s*\\[[^]]*]"), "")
+        .replace(
+            Regex(
+                "\\s*\\((?:feat\\.?|ft\\.?|featuring|with)\\b[^)]*\\)",
+                RegexOption.IGNORE_CASE
+            ),
+            ""
+        )
+        .replace(
+            Regex(
+                "\\s*\\((?:official\\s*)?(?:music\\s*)?(?:video|mv|lyrics?|audio|visualizer|live|remaster(?:ed)?|version|edit|mix|remix)[^)]*\\)",
+                RegexOption.IGNORE_CASE
+            ),
+            ""
+        )
+        .replace(
+            Regex(
+                "\\s*-\\s*(?:official\\s*)?(?:music\\s*)?(?:video|mv|lyrics?|audio|visualizer|live|remaster(?:ed)?|version|edit|mix|remix)\\b.*$",
+                RegexOption.IGNORE_CASE
+            ),
+            ""
+        )
         .replace(Regex("\\s+"), " ")
         .trim()
+        .trim('-')
 }
 
 private fun normalizeCanvasArtistName(raw: String): String {
-    val first =
-        raw
-            .split(
-                Regex(
-                    "(?:\\s*,\\s*|\\s*&\\s*|\\s+×\\s+|\\s+x\\s+|\\bfeat\\.?\\b|\\bft\\.?\\b|\\bfeaturing\\b|\\bwith\\b)",
-                    RegexOption.IGNORE_CASE,
-                ),
-                limit = 2,
-            ).firstOrNull().orEmpty()
+    val first = raw
+        .split(
+            Regex(
+                "(?:\\s*,\\s*|\\s*&\\s*|\\s+×\\s+|\\s+x\\s+|\\bfeat\\.?\\b|\\bft\\.?\\b|\\bfeaturing\\b|\\bwith\\b)",
+                RegexOption.IGNORE_CASE
+            ),
+            limit = 2
+        )
+        .firstOrNull()
+        .orEmpty()
 
-    return first.replace(Regex("\\s+"), " ").trim()
+    return first
+        .replace(Regex("\\s+"), " ")
+        .trim()
 }
-
 /*
  * Copyright (C) OuterTune Project
  * Custom SnapLayoutInfoProvider idea belongs to OuterTune

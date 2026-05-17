@@ -26,7 +26,13 @@ data class ThumbnailRenderer(
         val thumbnailCrop: String?,
         val thumbnailScale: String?,
     ) {
-        fun getThumbnailUrl() = thumbnail.thumbnails.lastOrNull()?.url
+        fun getThumbnailUrl(): String? {
+            return thumbnail.thumbnails
+                .filter { it.width != null && it.height != null }
+                .maxByOrNull { it.width!! * it.height!! }
+                ?.url
+                ?: thumbnail.thumbnails.lastOrNull()?.url  // Fallback to last if no dimensions available
+        }
     }
 
     @Serializable

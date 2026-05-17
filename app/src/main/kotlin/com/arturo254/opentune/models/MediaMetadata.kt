@@ -32,6 +32,8 @@ data class MediaMetadata(
 ) : Serializable {
     companion object {
         private const val serialVersionUID = 1L
+
+        const val UNKNOWN_DURATION = -1
     }
 
     data class Artist(
@@ -68,12 +70,23 @@ data class MediaMetadata(
         )
 }
 
+private fun resolveAlbum(
+    album: com.arturo254.opentune.db.entities.Album?,
+    albumId: String?,
+    albumName: String?
+): MediaMetadata.Album? =
+    album?.let {
+        MediaMetadata.Album(id = it.id, title = it.title)
+    } ?: albumId?.let {
+        MediaMetadata.Album(id = it, title = albumName.orEmpty())
+    }
+
+
 fun Song.toMediaMetadata() =
     MediaMetadata(
         id = song.id,
         title = song.title,
-        artists =
-        artists.map {
+        artists = artists.map {
             MediaMetadata.Artist(
                 id = it.id,
                 name = it.name,
@@ -108,7 +121,7 @@ fun SongItem.toMediaMetadata() =
                 thumbnailUrl = null,
             )
         },
-        duration = duration ?: -1,
+        duration = duration ?: MediaMetadata.UNKNOWN_DURATION,
         thumbnailUrl = thumbnail.resize(544, 544),
         album =
         album?.let {
