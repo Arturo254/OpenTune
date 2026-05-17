@@ -1,0 +1,31 @@
+name: Android CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 21
+
+    - name: Grant execute permission
+      run: chmod +x gradlew
+
+    - name: Build ARM64 APK
+      run: ./gradlew assembleArm64Debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenTune-arm64
+        path: app/build/outputs/apk/arm64/debug/*.apk
