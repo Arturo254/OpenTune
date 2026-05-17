@@ -118,7 +118,7 @@ fun UpdateScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var nightlyInstallUrl by remember {
-        mutableStateOf("https://github.com/Arturo254/OpenTune/releases/download/latest/app-universal-release.apk")
+        mutableStateOf("https://pub-2218e6bbd5b948e1b5d882cf4d92086d.r2.dev/app-universal-release.apk")
     }
 
     val (enableUpdateNotification, onEnableUpdateNotificationChange) = rememberPreference(
