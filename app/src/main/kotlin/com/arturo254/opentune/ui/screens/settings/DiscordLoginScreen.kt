@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.arturo254.opentune.BuildConfig
 import com.arturo254.opentune.R
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -67,7 +68,9 @@ fun DiscordLoginScreen(navController: NavController) {
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
 
-                WebView.setWebContentsDebuggingEnabled(true)
+                if (BuildConfig.DEBUG) {
+                    WebView.setWebContentsDebuggingEnabled(true)
+                }
 
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
