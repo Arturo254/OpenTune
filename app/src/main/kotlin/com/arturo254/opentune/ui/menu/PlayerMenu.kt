@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.ui.menu
 
 import android.annotation.SuppressLint
@@ -135,6 +133,7 @@ import kotlin.math.round
 import kotlin.math.roundToInt
 import java.util.UUID
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun ColumnScope.PlayerMenu(
     mediaMetadata: MediaMetadata?,
@@ -163,7 +162,6 @@ fun ColumnScope.PlayerMenu(
             mediaMetadata.artists.filter { it.id != null }
         }
 
-    // Artist separators for splitting artist names
     val (artistSeparators) = rememberPreference(ArtistSeparatorsKey, defaultValue = ",;/&")
     val (externalDownloaderEnabled) = rememberPreference(ExternalDownloaderEnabledKey, defaultValue = false)
     val (externalDownloaderPackage) = rememberPreference(ExternalDownloaderPackageKey, defaultValue = "")
@@ -178,7 +176,6 @@ fun ColumnScope.PlayerMenu(
     }
     val isInSpeedDial = remember(speedDialSongs, mediaMetadata.id) { mediaMetadata.id in speedDialSongs }
 
-    // Split artists by configured separators
     data class SplitArtist(
         val name: String,
         val originalArtist: MediaMetadata.Artist?
@@ -202,24 +199,18 @@ fun ColumnScope.PlayerMenu(
         }
     }
 
-    var showChoosePlaylistDialog by rememberSaveable {
-        mutableStateOf(false)
-    }
+    var showChoosePlaylistDialog by rememberSaveable { mutableStateOf(false) }
 
     AddToPlaylistDialog(
         isVisible = showChoosePlaylistDialog,
         onGetSong = { playlist ->
-            database.transaction {
-                insert(mediaMetadata)
-            }
+            database.transaction { insert(mediaMetadata) }
             coroutineScope.launch(Dispatchers.IO) {
                 playlist.playlist.browseId?.let { YouTube.addToPlaylist(it, mediaMetadata.id) }
             }
             listOf(mediaMetadata.id)
         },
-        onDismiss = {
-            showChoosePlaylistDialog = false
-        },
+        onDismiss = { showChoosePlaylistDialog = false },
         onAddComplete = { songCount, playlistNames ->
             val message = when {
                 playlistNames.size == 1 -> context.getString(R.string.added_to_playlist, playlistNames.first())
@@ -229,32 +220,23 @@ fun ColumnScope.PlayerMenu(
         },
     )
 
-    var showSelectArtistDialog by rememberSaveable {
-        mutableStateOf(false)
-    }
+    var showSelectArtistDialog by rememberSaveable { mutableStateOf(false) }
 
     if (showSelectArtistDialog) {
-        ListDialog(
-            onDismiss = { showSelectArtistDialog = false },
-        ) {
+        ListDialog(onDismiss = { showSelectArtistDialog = false }) {
             items(splitArtists.distinctBy { it.name }) { splitArtist ->
                 ListItem(
                     headlineContent = {
-                        Text(
-                            text = splitArtist.name,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Text(text = splitArtist.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     },
                     leadingContent = {
                         val thumbUrl = splitArtist.originalArtist?.thumbnailUrl
                         if (thumbUrl.isNullOrBlank()) {
                             Box(
-                                modifier =
-                                    Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
@@ -269,57 +251,41 @@ fun ColumnScope.PlayerMenu(
                                 model = thumbUrl,
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
-                                modifier =
-                                    Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape),
+                                modifier = Modifier.size(40.dp).clip(CircleShape),
                             )
                         }
                     },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                splitArtist.originalArtist?.let { artist ->
-                                    navController.navigate("artist/${artist.id}")
-                                    showSelectArtistDialog = false
-                                    playerBottomSheetState.collapseSoft()
-                                    onDismiss()
-                                }
-                            },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            splitArtist.originalArtist?.let { artist ->
+                                navController.navigate("artist/${artist.id}")
+                                showSelectArtistDialog = false
+                                playerBottomSheetState.collapseSoft()
+                                onDismiss()
+                            }
+                        },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
         }
     }
 
-    var showPitchTempoDialog by rememberSaveable {
-        mutableStateOf(false)
-    }
-
+    var showPitchTempoDialog by rememberSaveable { mutableStateOf(false) }
     if (showPitchTempoDialog) {
-        TempoPitchDialog(
-            onDismiss = { showPitchTempoDialog = false },
-        )
+        TempoPitchDialog(onDismiss = { showPitchTempoDialog = false })
     }
 
-    var showEqualizerDialog by rememberSaveable {
-        mutableStateOf(false)
-    }
-
+    var showEqualizerDialog by rememberSaveable { mutableStateOf(false) }
     if (showEqualizerDialog) {
         EqualizerDialog(
             onDismiss = { showEqualizerDialog = false },
             openSystemEqualizer = {
-                val intent =
-                    Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
-                        putExtra(
-                            AudioEffect.EXTRA_AUDIO_SESSION,
-                            playerConnection.player.audioSessionId,
-                        )
-                        putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
-                        putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
-                    }
+                val intent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
+                    putExtra(AudioEffect.EXTRA_AUDIO_SESSION, playerConnection.player.audioSessionId)
+                    putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
+                    putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
+                }
                 if (intent.resolveActivity(context.packageManager) != null) {
                     activityResultLauncher.launch(intent)
                 }
@@ -327,15 +293,12 @@ fun ColumnScope.PlayerMenu(
         )
     }
 
-    val nowPlayingTitle =
-        remember(mediaMetadata.title) {
-            mediaMetadata.title.ifBlank { context.getString(R.string.no_title) }
-        }
-
-    val nowPlayingSubtitle =
-        remember(mediaMetadata.artists) {
-            mediaMetadata.artists.joinToString(separator = " • ") { it.name }
-        }
+    val nowPlayingTitle = remember(mediaMetadata.title) {
+        mediaMetadata.title.ifBlank { context.getString(R.string.no_title) }
+    }
+    val nowPlayingSubtitle = remember(mediaMetadata.artists) {
+        mediaMetadata.artists.joinToString(separator = " • ") { it.name }
+    }
 
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
@@ -349,6 +312,7 @@ fun ColumnScope.PlayerMenu(
             bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
         ),
     ) {
+        // ── Cabecera "Now Playing" ────────────────────────────────────────────
         item {
             Surface(
                 shape = RoundedCornerShape(28.dp),
@@ -363,11 +327,10 @@ fun ColumnScope.PlayerMenu(
                     val thumb = mediaMetadata.thumbnailUrl
                     if (thumb.isNullOrBlank()) {
                         Box(
-                            modifier =
-                                Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -382,10 +345,7 @@ fun ColumnScope.PlayerMenu(
                             model = thumb,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            modifier =
-                                Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(16.dp)),
+                            modifier = Modifier.size(56.dp).clip(RoundedCornerShape(16.dp)),
                         )
                     }
 
@@ -420,10 +380,10 @@ fun ColumnScope.PlayerMenu(
             }
         }
 
+        // ── Volumen (solo fuera de cola) ─────────────────────────────────────
         if (isQueueTrigger != true) {
             item {
                 Spacer(modifier = Modifier.height(12.dp))
-
                 PlayerVolumeCard(
                     volume = playerVolume.value,
                     onVolumeChange = { playerConnection.service.playerVolume.value = it },
@@ -431,10 +391,9 @@ fun ColumnScope.PlayerMenu(
             }
         }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
+        item { Spacer(modifier = Modifier.height(16.dp)) }
 
+        // ── Acciones rápidas ─────────────────────────────────────────────────
         item {
             NewActionGrid(
                 actions = listOf(
@@ -469,7 +428,9 @@ fun ColumnScope.PlayerMenu(
                     NewAction(
                         icon = {
                             Icon(
-                                painter = painterResource(if (isInSpeedDial) R.drawable.bookmark_filled else R.drawable.bookmark),
+                                painter = painterResource(
+                                    if (isInSpeedDial) R.drawable.bookmark_filled else R.drawable.bookmark
+                                ),
                                 contentDescription = null,
                                 modifier = Modifier.size(28.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -500,13 +461,11 @@ fun ColumnScope.PlayerMenu(
                         },
                         text = stringResource(R.string.copy_link),
                         onClick = {
-                            val clipboard =
-                                context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                            val clip =
-                                android.content.ClipData.newPlainText(
-                                    context.getString(R.string.copy_link),
-                                    "https://music.youtube.com/watch?v=${mediaMetadata.id}",
-                                )
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText(
+                                context.getString(R.string.copy_link),
+                                "https://music.youtube.com/watch?v=${mediaMetadata.id}",
+                            )
                             clipboard.setPrimaryClip(clip)
                             android.widget.Toast.makeText(context, R.string.link_copied, android.widget.Toast.LENGTH_SHORT).show()
                             onDismiss()
@@ -527,14 +486,34 @@ fun ColumnScope.PlayerMenu(
                             playerBottomSheetState.snapTo(playerBottomSheetState.collapsedBound)
                             navController.navigate("settings/music_together")
                         }
-                    )
+                    ),
+                    // ── Always On Display ─────────────────────────────────────
+                    NewAction(
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.dark_mode),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        text = "Always On Display",
+                        onClick = {
+                            onDismiss()
+                            // Colapsar suavemente el bottom sheet
+                            playerBottomSheetState.collapseSoft()
+                            // Navegar normalmente, sin popUpTo
+                            navController.navigate("always_on_display")
+                        }
+                    ),
                 ),
                 modifier = Modifier.padding(vertical = 4.dp)
             )
         }
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+
+        // ── Artista / Álbum ──────────────────────────────────────────────────
         if (splitArtists.isNotEmpty() || mediaMetadata.album != null) {
             item {
                 MenuSurfaceSection(modifier = Modifier.padding(vertical = 6.dp)) {
@@ -543,21 +522,17 @@ fun ColumnScope.PlayerMenu(
                             ListItem(
                                 headlineContent = { Text(text = stringResource(R.string.view_artist)) },
                                 leadingContent = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.artist),
-                                        contentDescription = null,
-                                    )
+                                    Icon(painter = painterResource(R.drawable.artist), contentDescription = null)
                                 },
-                                modifier =
-                                    Modifier.clickable {
-                                        if (splitArtists.size == 1 && splitArtists[0].originalArtist != null) {
-                                            onDismiss()
-                                            playerBottomSheetState.snapTo(playerBottomSheetState.collapsedBound)
-                                            navController.navigate("artist/${splitArtists[0].originalArtist!!.id}")
-                                        } else {
-                                            showSelectArtistDialog = true
-                                        }
-                                    },
+                                modifier = Modifier.clickable {
+                                    if (splitArtists.size == 1 && splitArtists[0].originalArtist != null) {
+                                        onDismiss()
+                                        playerBottomSheetState.snapTo(playerBottomSheetState.collapsedBound)
+                                        navController.navigate("artist/${splitArtists[0].originalArtist!!.id}")
+                                    } else {
+                                        showSelectArtistDialog = true
+                                    }
+                                },
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             )
                         }
@@ -573,52 +548,36 @@ fun ColumnScope.PlayerMenu(
                             ListItem(
                                 headlineContent = { Text(text = stringResource(R.string.view_album)) },
                                 leadingContent = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.album),
-                                        contentDescription = null,
-                                    )
+                                    Icon(painter = painterResource(R.drawable.album), contentDescription = null)
                                 },
-                                modifier =
-                                    Modifier.clickable {
-                                        onDismiss()
-                                        playerBottomSheetState.snapTo(playerBottomSheetState.collapsedBound)
-                                        navController.navigate("album/${mediaMetadata.album.id}")
-                                    },
+                                modifier = Modifier.clickable {
+                                    onDismiss()
+                                    playerBottomSheetState.snapTo(playerBottomSheetState.collapsedBound)
+                                    navController.navigate("album/${mediaMetadata.album.id}")
+                                },
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             )
                         }
                     }
                 }
             }
-            item {
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+            item { Spacer(modifier = Modifier.height(12.dp)) }
         }
+
+        // ── Descarga ─────────────────────────────────────────────────────────
         item {
             MenuSurfaceSection(modifier = Modifier.padding(vertical = 6.dp)) {
                 when (download?.state) {
                     Download.STATE_COMPLETED -> {
                         ListItem(
                             headlineContent = {
-                                Text(
-                                    text = stringResource(R.string.remove_download),
-                                    color = MaterialTheme.colorScheme.error,
-                                )
+                                Text(text = stringResource(R.string.remove_download), color = MaterialTheme.colorScheme.error)
                             },
                             leadingContent = {
-                                Icon(
-                                    painter = painterResource(R.drawable.offline),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
+                                Icon(painter = painterResource(R.drawable.offline), contentDescription = null, tint = MaterialTheme.colorScheme.error)
                             },
                             modifier = Modifier.clickable {
-                                DownloadService.sendRemoveDownload(
-                                    context,
-                                    ExoDownloadService::class.java,
-                                    mediaMetadata.id,
-                                    false,
-                                )
+                                DownloadService.sendRemoveDownload(context, ExoDownloadService::class.java, mediaMetadata.id, false)
                             },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
@@ -626,19 +585,9 @@ fun ColumnScope.PlayerMenu(
                     Download.STATE_QUEUED, Download.STATE_DOWNLOADING -> {
                         ListItem(
                             headlineContent = { Text(text = stringResource(R.string.downloading)) },
-                            leadingContent = {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp,
-                                )
-                            },
+                            leadingContent = { CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp) },
                             modifier = Modifier.clickable {
-                                DownloadService.sendRemoveDownload(
-                                    context,
-                                    ExoDownloadService::class.java,
-                                    mediaMetadata.id,
-                                    false,
-                                )
+                                DownloadService.sendRemoveDownload(context, ExoDownloadService::class.java, mediaMetadata.id, false)
                             },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
@@ -647,45 +596,27 @@ fun ColumnScope.PlayerMenu(
                         ListItem(
                             headlineContent = { Text(text = stringResource(R.string.action_download)) },
                             leadingContent = {
-                                Icon(
-                                    painter = painterResource(R.drawable.download),
-                                    contentDescription = null,
-                                )
+                                Icon(painter = painterResource(R.drawable.download), contentDescription = null)
                             },
                             modifier = Modifier.clickable {
-                                database.transaction {
-                                    insert(mediaMetadata)
-                                }
-                                val downloadRequest =
-                                    DownloadRequest
-                                        .Builder(mediaMetadata.id, mediaMetadata.id.toUri())
-                                        .setCustomCacheKey(mediaMetadata.id)
-                                        .setData(mediaMetadata.title.toByteArray())
-                                        .build()
-                                DownloadService.sendAddDownload(
-                                    context,
-                                    ExoDownloadService::class.java,
-                                    downloadRequest,
-                                    false,
-                                )
+                                database.transaction { insert(mediaMetadata) }
+                                val downloadRequest = DownloadRequest
+                                    .Builder(mediaMetadata.id, mediaMetadata.id.toUri())
+                                    .setCustomCacheKey(mediaMetadata.id)
+                                    .setData(mediaMetadata.title.toByteArray())
+                                    .build()
+                                DownloadService.sendAddDownload(context, ExoDownloadService::class.java, downloadRequest, false)
                             },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
                     }
                 }
+
                 if (externalDownloaderEnabled) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 56.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                    )
+                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant)
                     ListItem(
                         headlineContent = { Text(text = stringResource(R.string.open_with_downloader)) },
-                        leadingContent = {
-                            Icon(
-                                painter = painterResource(R.drawable.download),
-                                contentDescription = null,
-                            )
-                        },
+                        leadingContent = { Icon(painter = painterResource(R.drawable.download), contentDescription = null) },
                         modifier = Modifier.clickable {
                             onDismiss()
                             val url = "https://music.youtube.com/watch?v=${mediaMetadata.id}"
@@ -709,56 +640,36 @@ fun ColumnScope.PlayerMenu(
                 }
             }
         }
+
+        // ── Detalles / Ecualizador / Tempo ───────────────────────────────────
         item {
             MenuSurfaceSection(modifier = Modifier.padding(vertical = 6.dp)) {
                 Column {
                     ListItem(
                         headlineContent = { Text(text = stringResource(R.string.details)) },
-                        leadingContent = {
-                            Icon(
-                                painter = painterResource(R.drawable.info),
-                                contentDescription = null,
-                            )
+                        leadingContent = { Icon(painter = painterResource(R.drawable.info), contentDescription = null) },
+                        modifier = Modifier.clickable {
+                            onShowDetailsDialog()
+                            onDismiss()
                         },
-                        modifier =
-                            Modifier.clickable {
-                                onShowDetailsDialog()
-                                onDismiss()
-                            },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     )
 
                     if (isQueueTrigger != true) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(start = 56.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                        )
+                        HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant)
 
                         ListItem(
                             headlineContent = { Text(text = stringResource(R.string.equalizer)) },
-                            leadingContent = {
-                                Icon(
-                                    painter = painterResource(R.drawable.equalizer),
-                                    contentDescription = null,
-                                )
-                            },
+                            leadingContent = { Icon(painter = painterResource(R.drawable.equalizer), contentDescription = null) },
                             modifier = Modifier.clickable { showEqualizerDialog = true },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
 
-                        HorizontalDivider(
-                            modifier = Modifier.padding(start = 56.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                        )
+                        HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant)
 
                         ListItem(
                             headlineContent = { Text(text = stringResource(R.string.tempo_and_pitch)) },
-                            leadingContent = {
-                                Icon(
-                                    painter = painterResource(R.drawable.speed),
-                                    contentDescription = null,
-                                )
-                            },
+                            leadingContent = { Icon(painter = painterResource(R.drawable.speed), contentDescription = null) },
                             supportingContent = {
                                 val playbackParameters by playerConnection.playbackParameters.collectAsState()
                                 Text(
@@ -777,6 +688,8 @@ fun ColumnScope.PlayerMenu(
     }
 }
 
+// ── El resto del archivo permanece igual que el original ─────────────────────
+
 @Composable
 private fun PlayerVolumeCard(
     volume: Float,
@@ -785,21 +698,13 @@ private fun PlayerVolumeCard(
 ) {
     val safeVolume = volume.coerceIn(0f, 1f)
     var previousVolume by remember { mutableFloatStateOf(0.5f) }
-
-    // Mute state derived from actual volume
     val isMuted = safeVolume == 0f
-
-    // Handle mute/unmute toggle
     val onMuteToggle = {
         if (isMuted) {
-            // Unmute: restore previous volume
             val targetVolume = if (previousVolume > 0f) previousVolume else 0.5f
             onVolumeChange(targetVolume)
         } else {
-            // Mute: store current volume and set to 0
-            if (safeVolume > 0f) {
-                previousVolume = safeVolume
-            }
+            if (safeVolume > 0f) previousVolume = safeVolume
             onVolumeChange(0f)
         }
     }
@@ -817,12 +722,7 @@ private fun PlayerVolumeCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(
-                    text = stringResource(R.string.volume),
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.weight(1f),
-                )
-
+                Text(text = stringResource(R.string.volume), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                 Text(
                     text = "${(safeVolume * 100).roundToInt()}%",
                     style = MaterialTheme.typography.titleSmall,
@@ -838,31 +738,20 @@ private fun PlayerVolumeCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
                 ) {
-                    IconButton(
-                        onClick = onMuteToggle,
-                        modifier = Modifier.size(24.dp)
-                    ) {
+                    IconButton(onClick = onMuteToggle, modifier = Modifier.size(24.dp)) {
                         Icon(
-                            painter = painterResource(
-                                if (isMuted) R.drawable.volume_off else R.drawable.volume_up
-                            ),
+                            painter = painterResource(if (isMuted) R.drawable.volume_off else R.drawable.volume_up),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(18.dp),
                         )
                     }
-
                     VolumeSliderL(
                         value = safeVolume,
                         onValueChange = { newVolume ->
-                            // Manual volume change exits mute and updates previousVolume
-                            if (newVolume > 0f) {
-                                previousVolume = newVolume
-                            }
+                            if (newVolume > 0f) previousVolume = newVolume
                             onVolumeChange(newVolume)
                         },
                         modifier = Modifier.weight(1f),
@@ -875,18 +764,12 @@ private fun PlayerVolumeCard(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun VolumeSliderL(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun VolumeSliderL(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = Modifier) {
     val safeValue = value.coerceIn(0f, 1f)
     var sliderValue by remember { mutableFloatStateOf(safeValue) }
     var isDragging by remember { mutableStateOf(false) }
 
-    LaunchedEffect(safeValue) {
-        if (!isDragging) sliderValue = safeValue
-    }
+    LaunchedEffect(safeValue) { if (!isDragging) sliderValue = safeValue }
 
     Slider(
         value = sliderValue,
@@ -900,13 +783,7 @@ private fun VolumeSliderL(
         valueRange = 0f..1f,
         modifier = modifier.height(36.dp),
         thumb = {
-            Box(
-                modifier =
-                    Modifier
-                        .size(14.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-            )
+            Box(modifier = Modifier.size(14.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
         },
         colors = SliderDefaults.colors(
             thumbColor = MaterialTheme.colorScheme.primary,
@@ -924,145 +801,80 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
     val initialSpeed = remember { playerConnection.player.playbackParameters.speed }
     val initialPitch = remember { playerConnection.player.playbackParameters.pitch }
 
-    var tempo by remember {
-        mutableFloatStateOf(initialSpeed.safeCoerceIn(TempoMin, TempoMax, fallback = 1f))
-    }
-
-    var pitch by remember {
-        mutableFloatStateOf(initialPitch.safeCoerceIn(PitchMin, PitchMax, fallback = 1f))
-    }
-
+    var tempo by remember { mutableFloatStateOf(initialSpeed.safeCoerceIn(TempoMin, TempoMax, fallback = 1f)) }
+    var pitch by remember { mutableFloatStateOf(initialPitch.safeCoerceIn(PitchMin, PitchMax, fallback = 1f)) }
     var pitchMode by rememberSaveable {
-        mutableStateOf(
-            if (isPitchSemitoneAligned(pitch)) PitchMode.Semitones else PitchMode.Multiplier
-        )
+        mutableStateOf(if (isPitchSemitoneAligned(pitch)) PitchMode.Semitones else PitchMode.Multiplier)
     }
 
     val applyPlaybackParameters: (Float, Float) -> Unit = { speed, pitchMultiplier ->
-        playerConnection.player.playbackParameters =
-            PlaybackParameters(
-                speed.coerceIn(TempoMin, TempoMax),
-                pitchMultiplier.coerceIn(PitchMin, PitchMax),
-            )
+        playerConnection.player.playbackParameters = PlaybackParameters(
+            speed.coerceIn(TempoMin, TempoMax),
+            pitchMultiplier.coerceIn(PitchMin, PitchMax),
+        )
     }
 
     AlertDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = onDismiss,
-        title = {
-            Text(stringResource(R.string.tempo_and_pitch))
-        },
+        title = { Text(stringResource(R.string.tempo_and_pitch)) },
         dismissButton = {
-            TextButton(
-                onClick = {
-                    tempo = 1f
-                    pitch = 1f
-                    applyPlaybackParameters(tempo, pitch)
-                },
-            ) {
-                Text(stringResource(R.string.reset))
-            }
+            TextButton(onClick = {
+                tempo = 1f; pitch = 1f; applyPlaybackParameters(tempo, pitch)
+            }) { Text(stringResource(R.string.reset)) }
         },
         confirmButton = {
-            TextButton(
-                onClick = onDismiss,
-            ) {
-                Text(stringResource(android.R.string.ok))
-            }
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
         },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(18.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.speed),
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                    )
-
-                    Text(
-                        text = stringResource(R.string.tempo),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-
-                    Text(
-                        text = "x${formatMultiplier(tempo)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.End,
-                    )
+                    Icon(painter = painterResource(R.drawable.speed), contentDescription = null, modifier = Modifier.size(28.dp))
+                    Text(text = stringResource(R.string.tempo), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    Text(text = "x${formatMultiplier(tempo)}", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.End)
                 }
-
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    IconButton(
-                        enabled = tempo > TempoMin,
-                        onClick = {
-                            tempo = (tempo - 0.01f).coerceIn(TempoMin, TempoMax).quantize(0.01f)
-                            applyPlaybackParameters(tempo, pitch)
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.remove),
-                            contentDescription = null,
-                        )
-                    }
+                    IconButton(enabled = tempo > TempoMin, onClick = {
+                        tempo = (tempo - 0.01f).coerceIn(TempoMin, TempoMax).quantize(0.01f)
+                        applyPlaybackParameters(tempo, pitch)
+                    }) { Icon(painter = painterResource(R.drawable.remove), contentDescription = null) }
 
                     Slider(
                         value = multiplierToSlider(tempo),
                         onValueChange = { slider ->
                             val updated = sliderToMultiplier(slider).quantize(0.01f)
-                            if (abs(updated - tempo) >= 0.005f) {
-                                tempo = updated
-                                applyPlaybackParameters(tempo, pitch)
-                            }
+                            if (abs(updated - tempo) >= 0.005f) { tempo = updated; applyPlaybackParameters(tempo, pitch) }
                         },
                         valueRange = 0f..1f,
                         modifier = Modifier.weight(1f),
-                        colors = SliderDefaults.colors(),
                     )
 
-                    IconButton(
-                        enabled = tempo < TempoMax,
-                        onClick = {
-                            tempo = (tempo + 0.01f).coerceIn(TempoMin, TempoMax).quantize(0.01f)
-                            applyPlaybackParameters(tempo, pitch)
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.add),
-                            contentDescription = null,
-                        )
-                    }
+                    IconButton(enabled = tempo < TempoMax, onClick = {
+                        tempo = (tempo + 0.01f).coerceIn(TempoMin, TempoMax).quantize(0.01f)
+                        applyPlaybackParameters(tempo, pitch)
+                    }) { Icon(painter = painterResource(R.drawable.add), contentDescription = null) }
                 }
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 ) {
-                    val presets = listOf(0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
-                    presets.forEach { preset ->
-                        val selected = abs(tempo - preset) < 0.005f
+                    listOf(0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f).forEach { preset ->
                         FilterChip(
-                            selected = selected,
-                            onClick = {
-                                tempo = preset
-                                applyPlaybackParameters(tempo, pitch)
-                            },
+                            selected = abs(tempo - preset) < 0.005f,
+                            onClick = { tempo = preset; applyPlaybackParameters(tempo, pitch) },
                             label = { Text("x${formatMultiplier(preset)}") },
                         )
                     }
@@ -1075,28 +887,13 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.discover_tune),
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                    )
-
+                    Icon(painter = painterResource(R.drawable.discover_tune), contentDescription = null, modifier = Modifier.size(28.dp))
+                    Text(text = stringResource(R.string.pitch), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                     Text(
-                        text = stringResource(R.string.pitch),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-
-                    Text(
-                        text =
-                            when (pitchMode) {
-                                PitchMode.Semitones -> {
-                                    val semitones = pitchToSemitones(pitch)
-                                    "${if (semitones > 0) "+" else ""}$semitones"
-                                }
-
-                                PitchMode.Multiplier -> "x${formatMultiplier(pitch)}"
-                            },
+                        text = when (pitchMode) {
+                            PitchMode.Semitones -> { val s = pitchToSemitones(pitch); "${if (s > 0) "+" else ""}$s" }
+                            PitchMode.Multiplier -> "x${formatMultiplier(pitch)}"
+                        },
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.End,
                     )
@@ -1105,20 +902,10 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 ) {
-                    FilterChip(
-                        selected = pitchMode == PitchMode.Semitones,
-                        onClick = { pitchMode = PitchMode.Semitones },
-                        label = { Text(stringResource(R.string.pitch_mode_semitones_short)) },
-                    )
-                    FilterChip(
-                        selected = pitchMode == PitchMode.Multiplier,
-                        onClick = { pitchMode = PitchMode.Multiplier },
-                        label = { Text(stringResource(R.string.pitch_mode_multiplier_short)) },
-                    )
+                    FilterChip(selected = pitchMode == PitchMode.Semitones, onClick = { pitchMode = PitchMode.Semitones }, label = { Text(stringResource(R.string.pitch_mode_semitones_short)) })
+                    FilterChip(selected = pitchMode == PitchMode.Multiplier, onClick = { pitchMode = PitchMode.Multiplier }, label = { Text(stringResource(R.string.pitch_mode_multiplier_short)) })
                 }
 
                 when (pitchMode) {
@@ -1129,102 +916,61 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
                             onValueChange = { slider ->
                                 val semitones = slider.roundToInt().coerceIn(-12, 12)
                                 val updated = semitonesToPitch(semitones)
-                                if (abs(updated - pitch) >= 0.0005f) {
-                                    pitch = updated
-                                    applyPlaybackParameters(tempo, pitch)
-                                }
+                                if (abs(updated - pitch) >= 0.0005f) { pitch = updated; applyPlaybackParameters(tempo, pitch) }
                             },
                             valueRange = -12f..12f,
                             steps = 23,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = SliderDefaults.colors(),
                         )
-
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
+                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                         ) {
-                            val presets = listOf(-12, -7, -5, 0, 5, 7, 12)
-                            presets.forEach { preset ->
-                                val selected = currentSemitones == preset
+                            listOf(-12, -7, -5, 0, 5, 7, 12).forEach { preset ->
                                 FilterChip(
-                                    selected = selected,
-                                    onClick = {
-                                        pitch = semitonesToPitch(preset)
-                                        applyPlaybackParameters(tempo, pitch)
-                                    },
+                                    selected = currentSemitones == preset,
+                                    onClick = { pitch = semitonesToPitch(preset); applyPlaybackParameters(tempo, pitch) },
                                     label = { Text("${if (preset > 0) "+" else ""}$preset") },
                                 )
                             }
                         }
                     }
-
                     PitchMode.Multiplier -> {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            IconButton(
-                                enabled = pitch > PitchMin,
-                                onClick = {
-                                    pitch = (pitch - 0.01f).coerceIn(PitchMin, PitchMax).quantize(0.01f)
-                                    applyPlaybackParameters(tempo, pitch)
-                                }
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.remove),
-                                    contentDescription = null,
-                                )
-                            }
+                            IconButton(enabled = pitch > PitchMin, onClick = {
+                                pitch = (pitch - 0.01f).coerceIn(PitchMin, PitchMax).quantize(0.01f)
+                                applyPlaybackParameters(tempo, pitch)
+                            }) { Icon(painter = painterResource(R.drawable.remove), contentDescription = null) }
 
                             Slider(
                                 value = multiplierToSlider(pitch),
                                 onValueChange = { slider ->
                                     val updated = sliderToMultiplier(slider).quantize(0.01f)
-                                    if (abs(updated - pitch) >= 0.005f) {
-                                        pitch = updated
-                                        applyPlaybackParameters(tempo, pitch)
-                                    }
+                                    if (abs(updated - pitch) >= 0.005f) { pitch = updated; applyPlaybackParameters(tempo, pitch) }
                                 },
                                 valueRange = 0f..1f,
                                 modifier = Modifier.weight(1f),
-                                colors = SliderDefaults.colors(),
                             )
 
-                            IconButton(
-                                enabled = pitch < PitchMax,
-                                onClick = {
-                                    pitch = (pitch + 0.01f).coerceIn(PitchMin, PitchMax).quantize(0.01f)
-                                    applyPlaybackParameters(tempo, pitch)
-                                }
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.add),
-                                    contentDescription = null,
-                                )
-                            }
+                            IconButton(enabled = pitch < PitchMax, onClick = {
+                                pitch = (pitch + 0.01f).coerceIn(PitchMin, PitchMax).quantize(0.01f)
+                                applyPlaybackParameters(tempo, pitch)
+                            }) { Icon(painter = painterResource(R.drawable.add), contentDescription = null) }
                         }
-
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
+                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                         ) {
-                            val presets = listOf(0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
-                            presets.forEach { preset ->
-                                val selected = abs(pitch - preset) < 0.005f
+                            listOf(0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f).forEach { preset ->
                                 FilterChip(
-                                    selected = selected,
-                                    onClick = {
-                                        pitch = preset
-                                        applyPlaybackParameters(tempo, pitch)
-                                    },
+                                    selected = abs(pitch - preset) < 0.005f,
+                                    onClick = { pitch = preset; applyPlaybackParameters(tempo, pitch) },
                                     label = { Text("x${formatMultiplier(preset)}") },
                                 )
                             }
@@ -1236,10 +982,7 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
     )
 }
 
-private enum class PitchMode {
-    Semitones,
-    Multiplier
-}
+private enum class PitchMode { Semitones, Multiplier }
 
 private const val TempoMin = 0.25f
 private const val TempoMax = 2f
@@ -1261,9 +1004,8 @@ private fun pitchToSemitones(pitch: Float): Int {
     return (12f * log2(safePitch)).roundToInt().coerceIn(-12, 12)
 }
 
-private fun semitonesToPitch(semitones: Int): Float {
-    return 2f.pow(semitones.toFloat() / 12f).coerceIn(PitchMin, PitchMax)
-}
+private fun semitonesToPitch(semitones: Int): Float =
+    2f.pow(semitones.toFloat() / 12f).coerceIn(PitchMin, PitchMax)
 
 private fun isPitchSemitoneAligned(pitch: Float): Boolean {
     val safePitch = pitch.safeCoerceIn(PitchMin, PitchMax, fallback = 1f).coerceAtLeast(0.0001f)
@@ -1272,9 +1014,7 @@ private fun isPitchSemitoneAligned(pitch: Float): Boolean {
     return abs(reconstructed - pitch) < 0.0015f
 }
 
-private fun formatMultiplier(multiplier: Float): String {
-    return String.format("%.2f", multiplier)
-}
+private fun formatMultiplier(multiplier: Float): String = String.format("%.2f", multiplier)
 
 private fun sliderToMultiplier(slider: Float): Float {
     val t = slider.coerceIn(0f, 1f)
@@ -1307,10 +1047,7 @@ private fun multiplierToSlider(multiplier: Float): Float {
 @SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EqualizerDialog(
-    onDismiss: () -> Unit,
-    openSystemEqualizer: () -> Unit,
-) {
+fun EqualizerDialog(onDismiss: () -> Unit, openSystemEqualizer: () -> Unit) {
     val context = LocalContext.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val eqCapabilities by playerConnection.service.eqCapabilities.collectAsState()
@@ -1318,16 +1055,12 @@ fun EqualizerDialog(
     val (eqEnabled, setEqEnabled) = rememberPreference(EqualizerEnabledKey, defaultValue = false)
     val (selectedProfileId, setSelectedProfileId) = rememberPreference(EqualizerSelectedProfileIdKey, defaultValue = "flat")
     val (bandLevelsRaw, setBandLevelsRaw) = rememberPreference(EqualizerBandLevelsMbKey, defaultValue = "")
-
     val (outputGainEnabled, setOutputGainEnabled) = rememberPreference(EqualizerOutputGainEnabledKey, defaultValue = false)
     val (outputGainMb, setOutputGainMb) = rememberPreference(EqualizerOutputGainMbKey, defaultValue = 0)
-
     val (bassBoostEnabled, setBassBoostEnabled) = rememberPreference(EqualizerBassBoostEnabledKey, defaultValue = false)
     val (bassBoostStrength, setBassBoostStrength) = rememberPreference(EqualizerBassBoostStrengthKey, defaultValue = 0)
-
     val (virtualizerEnabled, setVirtualizerEnabled) = rememberPreference(EqualizerVirtualizerEnabledKey, defaultValue = false)
     val (virtualizerStrength, setVirtualizerStrength) = rememberPreference(EqualizerVirtualizerStrengthKey, defaultValue = 0)
-
     val (customProfilesJson, setCustomProfilesJson) = rememberPreference(EqualizerCustomProfilesJsonKey, defaultValue = "")
 
     val caps = eqCapabilities
@@ -1364,25 +1097,12 @@ fun EqualizerDialog(
             onDone = { name ->
                 val trimmed = name.trim()
                 if (trimmed.isNotBlank()) {
-                    val newProfile =
-                        EqProfile(
-                            id = UUID.randomUUID().toString(),
-                            name = trimmed,
-                            bandCenterFreqHz = caps?.centerFreqHz.orEmpty(),
-                            bandLevelsMb = bandLevelsMb,
-                            outputGainMb = outputGainMb,
-                            bassBoostStrength = bassBoostStrength,
-                            virtualizerStrength = virtualizerStrength,
-                        )
-
-                    val updatedPayload =
-                        EqProfilesPayload(
-                            profiles =
-                                (profiles + newProfile)
-                                    .distinctBy { it.id }
-                                    .sortedBy { it.name.lowercase() },
-                        )
-
+                    val newProfile = EqProfile(
+                        id = UUID.randomUUID().toString(), name = trimmed,
+                        bandCenterFreqHz = caps?.centerFreqHz.orEmpty(), bandLevelsMb = bandLevelsMb,
+                        outputGainMb = outputGainMb, bassBoostStrength = bassBoostStrength, virtualizerStrength = virtualizerStrength,
+                    )
+                    val updatedPayload = EqProfilesPayload(profiles = (profiles + newProfile).distinctBy { it.id }.sortedBy { it.name.lowercase() })
                     setCustomProfilesJson(encodeProfilesPayload(updatedPayload))
                     setSelectedProfileId("profile:${newProfile.id}")
                 }
@@ -1395,267 +1115,115 @@ fun EqualizerDialog(
         TextFieldDialog(
             title = { Text(text = stringResource(R.string.eq_import_profiles)) },
             placeholder = { Text(text = stringResource(R.string.eq_import_profiles_placeholder)) },
-            singleLine = false,
-            maxLines = 10,
-            isInputValid = { it.trim().isNotBlank() },
+            singleLine = false, maxLines = 10, isInputValid = { it.trim().isNotBlank() },
             onDone = { raw ->
                 val trimmed = raw.trim()
-                val payload =
-                    decodeProfilesPayload(trimmed).takeIf { it.profiles.isNotEmpty() }
-                        ?: runCatching {
-                            EqProfilesPayload(EqualizerJson.json.decodeFromString<List<EqProfile>>(trimmed))
-                        }.getOrNull()
-                        ?: EqProfilesPayload()
-
+                val payload = decodeProfilesPayload(trimmed).takeIf { it.profiles.isNotEmpty() }
+                    ?: runCatching { EqProfilesPayload(EqualizerJson.json.decodeFromString<List<EqProfile>>(trimmed)) }.getOrNull()
+                    ?: EqProfilesPayload()
                 if (payload.profiles.isEmpty()) {
-                    Toast
-                        .makeText(context, context.getString(R.string.eq_import_failed), Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(context, context.getString(R.string.eq_import_failed), Toast.LENGTH_SHORT).show()
                     return@TextFieldDialog
                 }
-
                 val existingIds = profiles.map { it.id }.toMutableSet()
-                val normalizedImported =
-                    payload.profiles
-                        .map { p ->
-                            val baseName = p.name.trim().ifBlank { context.getString(R.string.eq_imported_profile) }
-                            val incomingId = p.id.trim()
-                            val finalId =
-                                if (incomingId.isBlank() || !existingIds.add(incomingId)) {
-                                    generateSequence { UUID.randomUUID().toString() }
-                                        .first { existingIds.add(it) }
-                                } else {
-                                    incomingId
-                                }
-
-                            p.copy(
-                                id = finalId,
-                                name = baseName,
-                            )
-                        }
-
-                val updatedPayload =
-                    EqProfilesPayload(
-                        profiles =
-                            (profiles + normalizedImported)
-                                .distinctBy { it.id }
-                                .sortedBy { it.name.lowercase() },
-                    )
-
-                setCustomProfilesJson(encodeProfilesPayload(updatedPayload))
-                val firstImportedId = normalizedImported.firstOrNull()?.id
-                if (firstImportedId != null) {
-                    setSelectedProfileId("profile:$firstImportedId")
+                val normalizedImported = payload.profiles.map { p ->
+                    val baseName = p.name.trim().ifBlank { context.getString(R.string.eq_imported_profile) }
+                    val incomingId = p.id.trim()
+                    val finalId = if (incomingId.isBlank() || !existingIds.add(incomingId)) {
+                        generateSequence { UUID.randomUUID().toString() }.first { existingIds.add(it) }
+                    } else incomingId
+                    p.copy(id = finalId, name = baseName)
                 }
-
-                Toast
-                    .makeText(
-                        context,
-                        context.getString(R.string.eq_import_success, normalizedImported.size),
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                val updatedPayload = EqProfilesPayload(profiles = (profiles + normalizedImported).distinctBy { it.id }.sortedBy { it.name.lowercase() })
+                setCustomProfilesJson(encodeProfilesPayload(updatedPayload))
+                normalizedImported.firstOrNull()?.id?.let { setSelectedProfileId("profile:$it") }
+                Toast.makeText(context, context.getString(R.string.eq_import_success, normalizedImported.size), Toast.LENGTH_SHORT).show()
             },
             onDismiss = { showImportProfilesDialog = false },
         )
     }
 
     if (showManageProfilesDialog) {
-        ListDialog(
-            onDismiss = { showManageProfilesDialog = false },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            items(
-                items = profiles,
-                key = { it.id },
-            ) { profile ->
+        ListDialog(onDismiss = { showManageProfilesDialog = false }, modifier = Modifier.fillMaxWidth()) {
+            items(items = profiles, key = { it.id }) { profile ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                setEqEnabled(true)
-                                setBandLevelsRaw(encodeBandLevelsMb(profile.bandLevelsMb))
-                                setOutputGainMb(profile.outputGainMb)
-                                setOutputGainEnabled(profile.outputGainMb != 0)
-                                setBassBoostStrength(profile.bassBoostStrength)
-                                setBassBoostEnabled(profile.bassBoostStrength != 0)
-                                setVirtualizerStrength(profile.virtualizerStrength)
-                                setVirtualizerEnabled(profile.virtualizerStrength != 0)
-                                setSelectedProfileId("profile:${profile.id}")
-                                showManageProfilesDialog = false
-                            }.padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                        .clickable {
+                            setEqEnabled(true)
+                            setBandLevelsRaw(encodeBandLevelsMb(profile.bandLevelsMb))
+                            setOutputGainMb(profile.outputGainMb)
+                            setOutputGainEnabled(profile.outputGainMb != 0)
+                            setBassBoostStrength(profile.bassBoostStrength)
+                            setBassBoostEnabled(profile.bassBoostStrength != 0)
+                            setVirtualizerStrength(profile.virtualizerStrength)
+                            setVirtualizerEnabled(profile.virtualizerStrength != 0)
+                            setSelectedProfileId("profile:${profile.id}")
+                            showManageProfilesDialog = false
+                        }.padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = profile.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = stringResource(R.string.eq_custom_profile),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Text(text = profile.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(text = stringResource(R.string.eq_custom_profile), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-
-                    IconButton(
-                        onClick = {
-                            val updatedPayload =
-                                EqProfilesPayload(
-                                    profiles = profiles.filterNot { it.id == profile.id },
-                                )
-                            setCustomProfilesJson(encodeProfilesPayload(updatedPayload))
-                            if (selectedProfileId == "profile:${profile.id}") {
-                                setSelectedProfileId("manual")
-                            }
-                        },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.delete),
-                            contentDescription = null,
-                        )
+                    IconButton(onClick = {
+                        val updatedPayload = EqProfilesPayload(profiles = profiles.filterNot { it.id == profile.id })
+                        setCustomProfilesJson(encodeProfilesPayload(updatedPayload))
+                        if (selectedProfileId == "profile:${profile.id}") setSelectedProfileId("manual")
+                    }) {
+                        Icon(painter = painterResource(R.drawable.delete), contentDescription = null)
                     }
                 }
             }
         }
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.surface,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-            ) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+            Column(modifier = Modifier.fillMaxSize()) {
                 TopAppBar(
                     title = { Text(text = stringResource(R.string.equalizer)) },
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {
-                            Icon(
-                                painter = painterResource(R.drawable.close),
-                                contentDescription = null,
-                            )
+                            Icon(painter = painterResource(R.drawable.close), contentDescription = null)
                         }
                     },
                     actions = {
                         Switch(
                             checked = eqEnabled,
-                            onCheckedChange = {
-                                setEqEnabled(it)
-                                if (it && selectedProfileId.isBlank()) setSelectedProfileId("manual")
-                            },
+                            onCheckedChange = { setEqEnabled(it); if (it && selectedProfileId.isBlank()) setSelectedProfileId("manual") },
                             thumbContent = {
-                                Icon(
-                                    painter = painterResource(id = if (eqEnabled) R.drawable.check else R.drawable.close),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                                )
+                                Icon(painter = painterResource(id = if (eqEnabled) R.drawable.check else R.drawable.close), contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize))
                             },
                         )
                         Spacer(Modifier.width(8.dp))
                     },
-                    colors =
-                        TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            scrolledContainerColor = MaterialTheme.colorScheme.surface,
-                        ),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, scrolledContainerColor = MaterialTheme.colorScheme.surface),
                 )
 
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp)
-                            .padding(bottom = 24.dp),
-                ) {
+                Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
                     Spacer(Modifier.height(12.dp))
 
                     if (caps == null || bandCount <= 0) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            shape = RoundedCornerShape(24.dp),
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(24.dp),
-                            ) {
+                        Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth()) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
                                 CircularProgressIndicator()
                                 Spacer(Modifier.height(16.dp))
-                                Text(
-                                    text = stringResource(R.string.eq_waiting_for_audio_session),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center,
-                                )
+                                Text(text = stringResource(R.string.eq_waiting_for_audio_session), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                                 Spacer(Modifier.height(16.dp))
-                                Button(onClick = openSystemEqualizer) {
-                                    Text(text = stringResource(R.string.eq_open_system_equalizer))
-                                }
+                                Button(onClick = openSystemEqualizer) { Text(text = stringResource(R.string.eq_open_system_equalizer)) }
                             }
                         }
                         Spacer(Modifier.height(24.dp))
                         return@Column
                     }
 
-                    EqSection(
-                        title = stringResource(R.string.eq_presets),
-                        trailing = {
-                            TextButton(onClick = openSystemEqualizer) {
-                                Text(text = stringResource(R.string.eq_system))
-                            }
-                        },
-                    ) {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 8.dp)
-                                    .horizontalScroll(rememberScrollState()),
-                        ) {
-                            FilterChip(
-                                selected = selectedProfileId == "flat",
-                                onClick = {
-                                    playerConnection.service.applyEqFlatPreset()
-                                    setSelectedProfileId("flat")
-                                },
-                                label = { Text(text = stringResource(R.string.eq_flat)) },
-                                colors =
-                                    FilterChipDefaults.filterChipColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    ),
-                                border = null,
-                            )
-
+                    EqSection(title = stringResource(R.string.eq_presets), trailing = { TextButton(onClick = openSystemEqualizer) { Text(text = stringResource(R.string.eq_system)) } }) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).horizontalScroll(rememberScrollState())) {
+                            FilterChip(selected = selectedProfileId == "flat", onClick = { playerConnection.service.applyEqFlatPreset(); setSelectedProfileId("flat") }, label = { Text(text = stringResource(R.string.eq_flat)) }, colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), border = null)
                             Spacer(Modifier.width(8.dp))
-
                             caps.systemPresets.forEachIndexed { index, name ->
-                                FilterChip(
-                                    selected = selectedProfileId == "system:$index",
-                                    onClick = {
-                                        playerConnection.service.applySystemEqPreset(index)
-                                        setSelectedProfileId("system:$index")
-                                    },
-                                    label = {
-                                        Text(
-                                            text = name,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                    },
-                                    colors =
-                                        FilterChipDefaults.filterChipColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        ),
-                                    border = null,
-                                )
+                                FilterChip(selected = selectedProfileId == "system:$index", onClick = { playerConnection.service.applySystemEqPreset(index); setSelectedProfileId("system:$index") }, label = { Text(text = name, maxLines = 1, overflow = TextOverflow.Ellipsis) }, colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), border = null)
                                 Spacer(Modifier.width(8.dp))
                             }
                         }
@@ -1663,113 +1231,46 @@ fun EqualizerDialog(
 
                     Spacer(Modifier.height(12.dp))
 
-                    EqSection(
-                        title = stringResource(R.string.eq_profiles),
-                        trailing = {
-                            TextButton(onClick = { showManageProfilesDialog = true }) {
-                                Text(text = stringResource(R.string.eq_manage))
-                            }
-                        },
-                    ) {
-                        val subtitle =
-                            when {
-                                selectedProfileId == "flat" -> stringResource(R.string.eq_flat)
-                                selectedProfileId.startsWith("system:") -> stringResource(R.string.eq_system_preset)
-                                activeProfile != null -> activeProfile.name
-                                else -> stringResource(R.string.eq_manual)
-                            }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 8.dp),
-                        ) {
+                    EqSection(title = stringResource(R.string.eq_profiles), trailing = { TextButton(onClick = { showManageProfilesDialog = true }) { Text(text = stringResource(R.string.eq_manage)) } }) {
+                        val subtitle = when {
+                            selectedProfileId == "flat" -> stringResource(R.string.eq_flat)
+                            selectedProfileId.startsWith("system:") -> stringResource(R.string.eq_system_preset)
+                            activeProfile != null -> activeProfile.name
+                            else -> stringResource(R.string.eq_manual)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = subtitle,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text(
-                                    text = stringResource(R.string.eq_profile_hint),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                                Text(text = subtitle, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(text = stringResource(R.string.eq_profile_hint), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            TextButton(onClick = { showSaveProfileDialog = true }) {
-                                Text(text = stringResource(R.string.eq_save))
-                            }
-                            TextButton(onClick = { showImportProfilesDialog = true }) {
-                                Text(text = stringResource(R.string.eq_import))
-                            }
+                            TextButton(onClick = { showSaveProfileDialog = true }) { Text(text = stringResource(R.string.eq_save)) }
+                            TextButton(onClick = { showImportProfilesDialog = true }) { Text(text = stringResource(R.string.eq_import)) }
                         }
                     }
 
                     Spacer(Modifier.height(12.dp))
 
-                    EqSection(
-                        title = stringResource(R.string.eq_bands),
-                        trailing = {
-                            TextButton(
-                                onClick = {
-                                    setSelectedProfileId("manual")
-                                    setBandLevelsRaw(encodeBandLevelsMb(List(bandCount) { 0 }))
-                                },
-                            ) {
-                                Text(text = stringResource(R.string.reset))
-                            }
-                        },
-                    ) {
+                    EqSection(title = stringResource(R.string.eq_bands), trailing = {
+                        TextButton(onClick = { setSelectedProfileId("manual"); setBandLevelsRaw(encodeBandLevelsMb(List(bandCount) { 0 })) }) { Text(text = stringResource(R.string.reset)) }
+                    }) {
                         caps.centerFreqHz.forEachIndexed { band, hz ->
                             val label = formatHz(hz)
                             val value = bandLevelsMb.getOrNull(band) ?: 0
                             val valueDb = (value / 100f).coerceIn(-24f, 24f)
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 8.dp, vertical = 10.dp),
-                            ) {
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    modifier = Modifier.width(64.dp),
-                                )
-
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp)) {
+                                Text(text = label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.width(64.dp))
                                 Slider(
                                     value = value.toFloat().coerceIn(minMb.toFloat(), maxMb.toFloat()),
                                     onValueChange = { newValue ->
                                         val coerced = newValue.toInt().coerceIn(minMb, maxMb)
-                                        bandLevelsMb =
-                                            bandLevelsMb.toMutableList().apply {
-                                                while (size < bandCount) add(0)
-                                                set(band, coerced)
-                                            }
+                                        bandLevelsMb = bandLevelsMb.toMutableList().apply { while (size < bandCount) add(0); set(band, coerced) }
                                     },
-                                    onValueChangeFinished = {
-                                        setSelectedProfileId("manual")
-                                        setBandLevelsRaw(encodeBandLevelsMb(bandLevelsMb))
-                                    },
+                                    onValueChangeFinished = { setSelectedProfileId("manual"); setBandLevelsRaw(encodeBandLevelsMb(bandLevelsMb)) },
                                     valueRange = minMb.toFloat()..maxMb.toFloat(),
-                                    colors =
-                                        SliderDefaults.colors(
-                                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                                            inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        ),
+                                    colors = SliderDefaults.colors(activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
                                     modifier = Modifier.weight(1f),
                                 )
-
-                                Text(
-                                    text = formatDb(valueDb),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    textAlign = TextAlign.End,
-                                    modifier = Modifier.width(64.dp),
-                                )
+                                Text(text = formatDb(valueDb), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.End, modifier = Modifier.width(64.dp))
                             }
                         }
                     }
@@ -1777,64 +1278,19 @@ fun EqualizerDialog(
                     Spacer(Modifier.height(12.dp))
 
                     EqSection(title = stringResource(R.string.eq_output_gain)) {
-                        EqToggleSliderRow(
-                            enabled = outputGainEnabled,
-                            onEnabledChange = {
-                                setSelectedProfileId("manual")
-                                setOutputGainEnabled(it)
-                            },
-                            value = outputGainLocal,
-                            onValueChange = { outputGainLocal = it },
-                            valueRange = -1500..1500,
-                            formatValue = { formatDb(it / 100f) },
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            onValueChangeFinished = {
-                                setSelectedProfileId("manual")
-                                setOutputGainMb(outputGainLocal)
-                            },
-                        )
+                        EqToggleSliderRow(enabled = outputGainEnabled, onEnabledChange = { setSelectedProfileId("manual"); setOutputGainEnabled(it) }, value = outputGainLocal, onValueChange = { outputGainLocal = it }, valueRange = -1500..1500, formatValue = { formatDb(it / 100f) }, modifier = Modifier.padding(horizontal = 8.dp), onValueChangeFinished = { setSelectedProfileId("manual"); setOutputGainMb(outputGainLocal) })
                     }
 
                     Spacer(Modifier.height(12.dp))
 
                     EqSection(title = stringResource(R.string.eq_bass_boost)) {
-                        EqToggleSliderRow(
-                            enabled = bassBoostEnabled,
-                            onEnabledChange = {
-                                setSelectedProfileId("manual")
-                                setBassBoostEnabled(it)
-                            },
-                            value = bassBoostStrengthLocal,
-                            onValueChange = { bassBoostStrengthLocal = it },
-                            valueRange = 0..1000,
-                            formatValue = { "${it / 10}%" },
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            onValueChangeFinished = {
-                                setSelectedProfileId("manual")
-                                setBassBoostStrength(bassBoostStrengthLocal)
-                            },
-                        )
+                        EqToggleSliderRow(enabled = bassBoostEnabled, onEnabledChange = { setSelectedProfileId("manual"); setBassBoostEnabled(it) }, value = bassBoostStrengthLocal, onValueChange = { bassBoostStrengthLocal = it }, valueRange = 0..1000, formatValue = { "${it / 10}%" }, modifier = Modifier.padding(horizontal = 8.dp), onValueChangeFinished = { setSelectedProfileId("manual"); setBassBoostStrength(bassBoostStrengthLocal) })
                     }
 
                     Spacer(Modifier.height(12.dp))
 
                     EqSection(title = stringResource(R.string.eq_virtualizer)) {
-                        EqToggleSliderRow(
-                            enabled = virtualizerEnabled,
-                            onEnabledChange = {
-                                setSelectedProfileId("manual")
-                                setVirtualizerEnabled(it)
-                            },
-                            value = virtualizerStrengthLocal,
-                            onValueChange = { virtualizerStrengthLocal = it },
-                            valueRange = 0..1000,
-                            formatValue = { "${it / 10}%" },
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            onValueChangeFinished = {
-                                setSelectedProfileId("manual")
-                                setVirtualizerStrength(virtualizerStrengthLocal)
-                            },
-                        )
+                        EqToggleSliderRow(enabled = virtualizerEnabled, onEnabledChange = { setSelectedProfileId("manual"); setVirtualizerEnabled(it) }, value = virtualizerStrengthLocal, onValueChange = { virtualizerStrengthLocal = it }, valueRange = 0..1000, formatValue = { "${it / 10}%" }, modifier = Modifier.padding(horizontal = 8.dp), onValueChangeFinished = { setSelectedProfileId("manual"); setVirtualizerStrength(virtualizerStrengthLocal) })
                     }
                 }
             }
@@ -1843,26 +1299,11 @@ fun EqualizerDialog(
 }
 
 @Composable
-private fun EqSection(
-    title: String,
-    trailing: @Composable (() -> Unit)? = null,
-    content: @Composable () -> Unit,
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+private fun EqSection(title: String, trailing: @Composable (() -> Unit)? = null, content: @Composable () -> Unit) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(vertical = 16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                Text(text = title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 trailing?.invoke()
             }
             content()
@@ -1872,55 +1313,28 @@ private fun EqSection(
 
 @Composable
 private fun EqToggleSliderRow(
-    enabled: Boolean,
-    onEnabledChange: (Boolean) -> Unit,
-    value: Int,
-    onValueChange: (Int) -> Unit,
-    valueRange: IntRange,
-    formatValue: (Int) -> String,
-    modifier: Modifier = Modifier,
-    onValueChangeFinished: (() -> Unit)? = null,
+    enabled: Boolean, onEnabledChange: (Boolean) -> Unit,
+    value: Int, onValueChange: (Int) -> Unit,
+    valueRange: IntRange, formatValue: (Int) -> String,
+    modifier: Modifier = Modifier, onValueChangeFinished: (() -> Unit)? = null,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth().padding(vertical = 8.dp),
-    ) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Switch(
-            checked = enabled,
-            onCheckedChange = onEnabledChange,
-            thumbContent = {
-                Icon(
-                    painter = painterResource(id = if (enabled) R.drawable.check else R.drawable.close),
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                )
-            },
+            checked = enabled, onCheckedChange = onEnabledChange,
+            thumbContent = { Icon(painter = painterResource(id = if (enabled) R.drawable.check else R.drawable.close), contentDescription = null, modifier = Modifier.size(SwitchDefaults.IconSize)) },
         )
-
         Spacer(Modifier.width(12.dp))
-
         Slider(
             value = value.toFloat().coerceIn(valueRange.first.toFloat(), valueRange.last.toFloat()),
             onValueChange = { onValueChange(it.toInt().coerceIn(valueRange.first, valueRange.last)) },
             onValueChangeFinished = { onValueChangeFinished?.invoke() },
             valueRange = valueRange.first.toFloat()..valueRange.last.toFloat(),
             enabled = enabled,
-            colors =
-                SliderDefaults.colors(
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                ),
+            colors = SliderDefaults.colors(activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
             modifier = Modifier.weight(1f),
         )
-
         Spacer(Modifier.width(12.dp))
-
-        Text(
-            text = formatValue(value),
-            style = MaterialTheme.typography.labelLarge,
-            textAlign = TextAlign.End,
-            modifier = Modifier.width(72.dp),
-        )
+        Text(text = formatValue(value), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.End, modifier = Modifier.width(72.dp))
     }
 }
 
@@ -1929,34 +1343,29 @@ private fun decodeBandLevelsMb(raw: String?): List<Int> {
     return runCatching { EqualizerJson.json.decodeFromString<List<Int>>(raw) }.getOrNull() ?: emptyList()
 }
 
-private fun encodeBandLevelsMb(levelsMb: List<Int>): String {
-    return runCatching { EqualizerJson.json.encodeToString(levelsMb) }.getOrNull().orEmpty()
-}
+private fun encodeBandLevelsMb(levelsMb: List<Int>): String =
+    runCatching { EqualizerJson.json.encodeToString(levelsMb) }.getOrNull().orEmpty()
 
 private fun decodeProfilesPayload(raw: String?): EqProfilesPayload {
     if (raw.isNullOrBlank()) return EqProfilesPayload()
     return runCatching { EqualizerJson.json.decodeFromString<EqProfilesPayload>(raw) }.getOrNull() ?: EqProfilesPayload()
 }
 
-private fun encodeProfilesPayload(payload: EqProfilesPayload): String {
-    return runCatching { EqualizerJson.json.encodeToString(payload) }.getOrNull().orEmpty()
-}
+private fun encodeProfilesPayload(payload: EqProfilesPayload): String =
+    runCatching { EqualizerJson.json.encodeToString(payload) }.getOrNull().orEmpty()
 
 private fun resampleLevelsByIndex(levelsMb: List<Int>, targetCount: Int): List<Int> {
     if (targetCount <= 0) return emptyList()
     if (levelsMb.isEmpty()) return List(targetCount) { 0 }
     if (levelsMb.size == targetCount) return levelsMb
     if (targetCount == 1) return listOf(levelsMb.sum() / levelsMb.size)
-
     val lastIndex = levelsMb.lastIndex.toFloat().coerceAtLeast(1f)
     return List(targetCount) { i ->
         val pos = i.toFloat() * lastIndex / (targetCount - 1).toFloat()
         val lo = kotlin.math.floor(pos).toInt().coerceIn(0, levelsMb.lastIndex)
         val hi = kotlin.math.ceil(pos).toInt().coerceIn(0, levelsMb.lastIndex)
         val t = (pos - lo.toFloat()).coerceIn(0f, 1f)
-        val a = levelsMb[lo]
-        val b = levelsMb[hi]
-        (a + ((b - a) * t)).toInt()
+        (levelsMb[lo] + ((levelsMb[hi] - levelsMb[lo]) * t)).toInt()
     }
 }
 
