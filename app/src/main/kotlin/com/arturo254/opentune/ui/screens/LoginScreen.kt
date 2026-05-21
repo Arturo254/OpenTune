@@ -87,9 +87,9 @@ fun LoginScreen(
                     override fun onPageFinished(view: WebView, url: String?) {
                         val isYouTubePage = url?.contains("youtube.com", ignoreCase = true) == true
                         if (isYouTubePage) {
-                            loadUrl("javascript:Android.onRetrieveVisitorData(window.yt.config_.VISITOR_DATA)")
-                            loadUrl("javascript:Android.onRetrieveDataSyncId(window.yt.config_.DATASYNC_ID)")
-                            loadUrl("javascript:void((function(){try{var c=window.ytcfg;if(c&&c.get){var t=c.get('PO_TOKEN');if(t){Android.onRetrievePoToken(t);return}}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/\"PO_TOKEN\":\"([^\"]+)\"/);if(m){Android.onRetrievePoToken(m[1]);return}}}catch(e){}})())")
+                            view.evaluateJavascript("Android.onRetrieveVisitorData(window.yt.config_.VISITOR_DATA)", null)
+                            view.evaluateJavascript("Android.onRetrieveDataSyncId(window.yt.config_.DATASYNC_ID)", null)
+                            view.evaluateJavascript("(function(){try{var c=window.ytcfg;if(c&&c.get){var t=c.get('PO_TOKEN');if(t){Android.onRetrievePoToken(t);return}}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/\"PO_TOKEN\":\"([^\"]+)\"/);if(m){Android.onRetrievePoToken(m[1]);return}}}catch(e){}})()", null)
                         }
 
                         val mergedCookie = mergeYouTubeCookies(cookieManager)
