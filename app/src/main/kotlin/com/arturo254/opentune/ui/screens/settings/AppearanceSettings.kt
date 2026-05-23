@@ -824,6 +824,14 @@ fun AppearanceSettings(
             onValueSelected = onDefaultChipChange,
         )
 
+
+        PreferenceEntry(
+            title = { Text("Always On Display") },
+            description = "Estilos, formas y opciones de personalización",
+            icon = { Icon(painterResource(R.drawable.dark_mode), null) },
+            onClick = { navController.navigate("settings/appearance/always_on_display") }
+        )
+
         SwitchPreference(
             title = { Text(stringResource(R.string.show_home_category_chips)) },
             description = stringResource(R.string.show_home_category_chips_desc),

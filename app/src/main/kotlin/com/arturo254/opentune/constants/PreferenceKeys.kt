@@ -586,3 +586,37 @@ enum class UpdateChannel {
     STABLE,
     NIGHTLY,
 }
+
+
+// Always On Display
+
+enum class AodStyle {
+    CLASSIC,
+    BACKGROUND,
+    MINIMAL,
+    LARGE,
+    SPOTLIGHT,
+}
+
+enum class AodArtShape {
+    ROUNDED,
+    CIRCLE,
+    SQUIRCLE,
+    DIAMOND,
+    HEXAGON,
+    STAR,
+    ARCH,
+    PETAL,
+}
+
+val AodStyleKey = stringPreferencesKey("aod_style")
+val AodArtShapeKey = stringPreferencesKey("aod_art_shape")
+
+val AodDarknessKey = floatPreferencesKey("aod_darkness")
+val AodArtSizeKey = floatPreferencesKey("aod_art_size")
+
+val AodShowTitleKey = booleanPreferencesKey("aod_show_title")
+val AodShowArtistKey = booleanPreferencesKey("aod_show_artist")
+val AodShowTimeKey = booleanPreferencesKey("aod_show_time_labels")
+val AodShowProgressKey = booleanPreferencesKey("aod_show_progress")
+val AodShowControlsKey = booleanPreferencesKey("aod_show_controls")

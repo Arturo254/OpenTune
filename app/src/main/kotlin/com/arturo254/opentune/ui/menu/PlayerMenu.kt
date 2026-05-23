@@ -133,7 +133,6 @@ import kotlin.math.round
 import kotlin.math.roundToInt
 import java.util.UUID
 
-@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun ColumnScope.PlayerMenu(
     mediaMetadata: MediaMetadata?,
@@ -491,6 +490,8 @@ fun ColumnScope.PlayerMenu(
                     NewAction(
                         icon = {
                             Icon(
+                                // Cambia el drawable si "dark_mode" no existe en tu proyecto
+                                // Alternativas: R.drawable.bedtime, R.drawable.phone_android
                                 painter = painterResource(R.drawable.dark_mode),
                                 contentDescription = null,
                                 modifier = Modifier.size(28.dp),
@@ -500,9 +501,7 @@ fun ColumnScope.PlayerMenu(
                         text = "Always On Display",
                         onClick = {
                             onDismiss()
-                            // Colapsar suavemente el bottom sheet
                             playerBottomSheetState.collapseSoft()
-                            // Navegar normalmente, sin popUpTo
                             navController.navigate("always_on_display")
                         }
                     ),
