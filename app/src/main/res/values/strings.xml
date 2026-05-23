@@ -815,4 +815,45 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="player_design_v7">Immersive</string>
     <string name="liquid_glass_navbar">Liquid Glass Navbar</string>
 
+    <string name="aod_style_title">AOD Style</string>
+    <string name="aod_style_classic">Classic</string>
+    <string name="aod_style_background">Ambient</string>
+    <string name="aod_style_minimal">Minimal</string>
+    <string name="aod_style_large">Immersive</string>
+    <string name="aod_style_spotlight">Spotlight</string>
+    <string name="aod_style_classic_desc">Centered artwork</string>
+    <string name="aod_style_background_desc">Blurred background art</string>
+    <string name="aod_style_minimal_desc">Only essentials</string>
+    <string name="aod_style_large_desc">Fullscreen artwork</string>
+    <string name="aod_style_spotlight_desc">Light halo effect</string>
+
+    <string name="aod_shape_title">Artwork shape</string>
+    <string name="aod_shape_rounded">Rounded</string>
+    <string name="aod_shape_circle">Circle</string>
+    <string name="aod_shape_squircle">Squircle</string>
+    <string name="aod_shape_diamond">Diamond</string>
+    <string name="aod_shape_hexagon">Hexagon</string>
+    <string name="aod_shape_star">Star</string>
+    <string name="aod_shape_arch">Arch</string>
+    <string name="aod_shape_petal">Flower</string>
+
+    <string name="aod_darkness_title">Background darkness</string>
+    <string name="aod_darkness_label">Darkness level</string>
+    <string name="aod_darkness_description">Overlay opacity for Ambient and Spotlight styles</string>
+
+    <string name="aod_art_size_title">Artwork size</string>
+    <string name="aod_art_size_label">Relative size</string>
+    <string name="aod_art_size_description">Fraction of screen width occupied by artwork</string>
+
+    <string name="aod_visible_elements_title">Visible elements</string>
+    <string name="aod_show_title">Show title</string>
+    <string name="aod_show_artist">Show artist</string>
+    <string name="aod_show_time">Show time</string>
+    <string name="aod_show_time_description">Position and duration labels</string>
+    <string name="aod_show_progress">Show progress bar</string>
+    <string name="aod_show_controls">Show controls</string>
+    <string name="aod_show_controls_description">Previous, Play/Pause, Next</string>
+
+    <string name="aod_screen_title">Always On Display</string>
+
 </resources>

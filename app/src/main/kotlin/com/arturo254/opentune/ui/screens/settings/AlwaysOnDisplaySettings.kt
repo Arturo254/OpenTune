@@ -51,11 +51,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -85,32 +89,20 @@ import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 
-
-// ═════════════════════════════════════════════════════════════════════════════
-//  Shape definitions — M3 Expressive inspired
-// ═════════════════════════════════════════════════════════════════════════════
-
-/** Squircle / superelipse (|x|^(2/n) + |y|^(2/n) = r, n = 4) */
 private val squircleShape: Shape = GenericShape { size, _ ->
-    val cx = size.width / 2.0
-    val cy = size.height / 2.0
-    val rx = size.width / 2.0
-    val ry = size.height / 2.0
-    val n = 4.0
-    val steps = 120
+    val cx = size.width / 2.0; val cy = size.height / 2.0
+    val rx = size.width / 2.0; val ry = size.height / 2.0
+    val n = 4.0; val steps = 120
     for (i in 0..steps) {
         val t = 2.0 * PI * i / steps
         val ct = cos(t); val st = sin(t)
-        val sx = if (ct >= 0) 1.0 else -1.0
-        val sy = if (st >= 0) 1.0 else -1.0
-        val x = (cx + rx * sx * ct.absoluteValue.pow(2.0 / n)).toFloat()
-        val y = (cy + ry * sy * st.absoluteValue.pow(2.0 / n)).toFloat()
+        val x = (cx + rx * (if (ct >= 0) 1.0 else -1.0) * ct.absoluteValue.pow(2.0 / n)).toFloat()
+        val y = (cy + ry * (if (st >= 0) 1.0 else -1.0) * st.absoluteValue.pow(2.0 / n)).toFloat()
         if (i == 0) moveTo(x, y) else lineTo(x, y)
     }
     close()
 }
 
-/** Diamante (cuadrado rotado 45°) */
 private val diamondShape: Shape = GenericShape { size, _ ->
     moveTo(size.width / 2f, 0f)
     lineTo(size.width, size.height / 2f)
@@ -119,48 +111,37 @@ private val diamondShape: Shape = GenericShape { size, _ ->
     close()
 }
 
-/** Hexágono regular */
 private val hexagonShape: Shape = GenericShape { size, _ ->
     val cx = size.width / 2f; val cy = size.height / 2f
     val r = minOf(cx, cy) * 0.96f
     for (i in 0..5) {
-        val angle = (PI / 180.0 * (60.0 * i - 30.0)).toFloat()
-        val x = cx + r * cos(angle); val y = cy + r * sin(angle)
-        if (i == 0) moveTo(x, y) else lineTo(x, y)
+        val a = (PI / 180.0 * (60.0 * i - 30.0)).toFloat()
+        if (i == 0) moveTo(cx + r * cos(a), cy + r * sin(a))
+        else lineTo(cx + r * cos(a), cy + r * sin(a))
     }
     close()
 }
 
-/** Estrella de 5 puntas */
 private val starShape: Shape = GenericShape { size, _ ->
     val cx = size.width / 2f; val cy = size.height / 2f
-    val outerR = minOf(cx, cy) * 0.96f
-    val innerR = outerR * 0.42f
+    val outerR = minOf(cx, cy) * 0.96f; val innerR = outerR * 0.42f
     for (i in 0 until 10) {
-        val angle = (PI * i / 5.0 - PI / 2.0).toFloat()
+        val a = (PI * i / 5.0 - PI / 2.0).toFloat()
         val r = if (i % 2 == 0) outerR else innerR
-        val x = cx + r * cos(angle); val y = cy + r * sin(angle)
-        if (i == 0) moveTo(x, y) else lineTo(x, y)
+        if (i == 0) moveTo(cx + r * cos(a), cy + r * sin(a))
+        else lineTo(cx + r * cos(a), cy + r * sin(a))
     }
     close()
 }
 
-/** Arco — semicírculo en la parte superior, lados rectos abajo */
 private val archShape: Shape = GenericShape { size, _ ->
-    val r = size.width / 2f
-    moveTo(0f, r)
-    arcTo(
-        rect = Rect(0f, 0f, size.width, size.width),
-        startAngleDegrees = 180f,
-        sweepAngleDegrees = 180f,
-        forceMoveTo = false
-    )
+    moveTo(0f, size.width / 2f)
+    arcTo(Rect(0f, 0f, size.width, size.width), 180f, 180f, false)
     lineTo(size.width, size.height)
     lineTo(0f, size.height)
     close()
 }
 
-/** Flor de 4 pétalos (curva rosa r = a·|cos(2θ)|) */
 private val petalShape: Shape = GenericShape { size, _ ->
     val cx = size.width / 2.0; val cy = size.height / 2.0
     val r = minOf(size.width, size.height) / 2.0 * 0.92
@@ -168,15 +149,12 @@ private val petalShape: Shape = GenericShape { size, _ ->
     for (i in 0..240) {
         val t = 2.0 * PI * i / 240
         val rT = r * cos(2.0 * t).absoluteValue
-        val x = (cx + rT * cos(t)).toFloat()
-        val y = (cy + rT * sin(t)).toFloat()
+        val x = (cx + rT * cos(t)).toFloat(); val y = (cy + rT * sin(t)).toFloat()
         if (!started) { moveTo(x, y); started = true } else lineTo(x, y)
     }
     close()
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-/** Convierte el enum al Shape de Compose correspondiente */
 fun AodArtShape.toShape(): Shape = when (this) {
     AodArtShape.ROUNDED  -> RoundedCornerShape(24.dp)
     AodArtShape.CIRCLE   -> CircleShape
@@ -188,24 +166,19 @@ fun AodArtShape.toShape(): Shape = when (this) {
     AodArtShape.PETAL    -> petalShape
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  Settings Screen
-// ═════════════════════════════════════════════════════════════════════════════
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AODSettings(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
-    // ── Preferences ─────────────────────────────────────────────────────────
-    val (rawStyle, setRawStyle)     = rememberPreference(AodStyleKey,        AodStyle.CLASSIC.name)
-    val (rawShape, setRawShape)     = rememberPreference(AodArtShapeKey,     AodArtShape.ROUNDED.name)
-    val (darkness, setDarkness)     = rememberPreference(AodDarknessKey,     0.55f)
-    val (artSize, setArtSize)       = rememberPreference(AodArtSizeKey,      0.65f)
-    val (showTitle, setShowTitle)   = rememberPreference(AodShowTitleKey,    true)
+    val (rawStyle,   setRawStyle)   = rememberPreference(AodStyleKey,        AodStyle.CLASSIC.name)
+    val (rawShape,   setRawShape)   = rememberPreference(AodArtShapeKey,     AodArtShape.ROUNDED.name)
+    val (darkness,   setDarkness)   = rememberPreference(AodDarknessKey,     0.55f)
+    val (artSize,    setArtSize)    = rememberPreference(AodArtSizeKey,      0.65f)
+    val (showTitle,  setShowTitle)  = rememberPreference(AodShowTitleKey,    true)
     val (showArtist, setShowArtist) = rememberPreference(AodShowArtistKey,   true)
-    val (showTime, setShowTime)     = rememberPreference(AodShowTimeKey,     true)
+    val (showTime,   setShowTime)   = rememberPreference(AodShowTimeKey,     true)
     val (showProgress, setShowProgress) = rememberPreference(AodShowProgressKey, true)
     val (showControls, setShowControls) = rememberPreference(AodShowControlsKey, true)
 
@@ -216,22 +189,19 @@ fun AODSettings(
         runCatching { AodArtShape.valueOf(rawShape) }.getOrDefault(AodArtShape.ROUNDED)
     }
 
-    // ── UI ──────────────────────────────────────────────────────────────────
     Column(
         modifier = Modifier
             .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
             .verticalScroll(rememberScrollState())
     ) {
-
-        // ── Estilo AOD ───────────────────────────────────────────────────────
-        PreferenceGroupTitle(title = "Estilo AOD")
+        PreferenceGroupTitle(title = stringResource(R.string.aod_style_title))
 
         LazyRow(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp)
+                .height(172.dp)
         ) {
             items(AodStyle.entries) { style ->
                 AodStyleCard(
@@ -242,10 +212,9 @@ fun AODSettings(
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
-        // ── Forma de la portada ──────────────────────────────────────────────
-        PreferenceGroupTitle(title = "Forma de la portada")
+        PreferenceGroupTitle(title = stringResource(R.string.aod_shape_title))
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
@@ -254,7 +223,7 @@ fun AODSettings(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp) // 2 rows × ~90dp
+                .height(210.dp)
         ) {
             items(AodArtShape.entries) { shape ->
                 AodShapeCard(
@@ -265,10 +234,9 @@ fun AODSettings(
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
-        // ── Oscuridad del fondo ──────────────────────────────────────────────
-        PreferenceGroupTitle(title = "Oscuridad del fondo")
+        PreferenceGroupTitle(title = stringResource(R.string.aod_darkness_title))
 
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             Row(
@@ -276,7 +244,7 @@ fun AODSettings(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Nivel de oscuridad",
+                    text = stringResource(R.string.aod_darkness_label),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -287,42 +255,29 @@ fun AODSettings(
                     fontWeight = FontWeight.SemiBold
                 )
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(2.dp))
             Text(
-                text = "Controla cuán oscuro es el fondo en estilos Fondo y Spotlight",
+                text = stringResource(R.string.aod_darkness_description),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(8.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "0%",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("0%", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Slider(
-                    value = darkness,
-                    onValueChange = setDarkness,
+                    value = darkness, onValueChange = setDarkness,
                     valueRange = 0f..1f,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 8.dp)
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
                 )
-                Text(
-                    text = "100%",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("100%", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
-        // ── Tamaño de la portada ─────────────────────────────────────────────
-        PreferenceGroupTitle(title = "Tamaño de la portada")
+        PreferenceGroupTitle(title = stringResource(R.string.aod_art_size_title))
 
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             Row(
@@ -330,7 +285,7 @@ fun AODSettings(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Tamaño relativo",
+                    text = stringResource(R.string.aod_art_size_label),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -341,85 +296,63 @@ fun AODSettings(
                     fontWeight = FontWeight.SemiBold
                 )
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(2.dp))
             Text(
-                text = "Porcentaje del ancho de pantalla que ocupa la portada",
+                text = stringResource(R.string.aod_art_size_description),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(8.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "40%",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("40%", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Slider(
-                    value = artSize,
-                    onValueChange = setArtSize,
+                    value = artSize, onValueChange = setArtSize,
                     valueRange = 0.40f..1.0f,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 8.dp)
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
                 )
-                Text(
-                    text = "100%",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("100%", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
-        // ── Elementos visibles ───────────────────────────────────────────────
-        PreferenceGroupTitle(title = "Elementos visibles")
+        PreferenceGroupTitle(title = stringResource(R.string.aod_visible_elements_title))
 
         SwitchPreference(
-            title = { Text("Mostrar título") },
+            title = { Text(stringResource(R.string.aod_show_title)) },
             icon = { Icon(painterResource(R.drawable.text_fields), null) },
-            checked = showTitle,
-            onCheckedChange = setShowTitle,
+            checked = showTitle, onCheckedChange = setShowTitle,
         )
-
         SwitchPreference(
-            title = { Text("Mostrar artista") },
+            title = { Text(stringResource(R.string.aod_show_artist)) },
             icon = { Icon(painterResource(R.drawable.artist), null) },
-            checked = showArtist,
-            onCheckedChange = setShowArtist,
+            checked = showArtist, onCheckedChange = setShowArtist,
         )
-
         SwitchPreference(
-            title = { Text("Mostrar tiempo") },
-            description = "Etiquetas de posición y duración",
+            title = { Text(stringResource(R.string.aod_show_time)) },
+            description = stringResource(R.string.aod_show_time_description),
             icon = { Icon(painterResource(R.drawable.timer), null) },
-            checked = showTime,
-            onCheckedChange = setShowTime,
+            checked = showTime, onCheckedChange = setShowTime,
         )
-
         SwitchPreference(
-            title = { Text("Mostrar barra de progreso") },
+            title = { Text(stringResource(R.string.aod_show_progress)) },
             icon = { Icon(painterResource(R.drawable.sliders), null) },
-            checked = showProgress,
-            onCheckedChange = setShowProgress,
+            checked = showProgress, onCheckedChange = setShowProgress,
         )
-
         SwitchPreference(
-            title = { Text("Mostrar controles") },
-            description = "Anterior, Play/Pausa, Siguiente",
+            title = { Text(stringResource(R.string.aod_show_controls)) },
+            description = stringResource(R.string.aod_show_controls_description),
             icon = { Icon(painterResource(R.drawable.queue_music), null) },
-            checked = showControls,
-            onCheckedChange = setShowControls,
+            checked = showControls, onCheckedChange = setShowControls,
         )
 
         Spacer(Modifier.height(16.dp))
     }
 
     TopAppBar(
-        title = { Text("Always On Display") },
+        title = { Text(stringResource(R.string.aod_screen_title)) },
         navigationIcon = {
             IconButton(
                 onClick = navController::navigateUp,
@@ -432,10 +365,6 @@ fun AODSettings(
     )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Style card — miniatura visual del estilo AOD
-// ─────────────────────────────────────────────────────────────────────────────
-
 @Composable
 private fun AodStyleCard(
     style: AodStyle,
@@ -446,185 +375,324 @@ private fun AodStyleCard(
     val borderColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.outlineVariant,
-        animationSpec = tween(250),
-        label = "aod_style_border"
+        animationSpec = tween(250), label = "style_border"
     )
+
     val label = when (style) {
-        AodStyle.CLASSIC    -> "Clásico"
-        AodStyle.BACKGROUND -> "Fondo"
-        AodStyle.MINIMAL    -> "Minimal"
-        AodStyle.LARGE      -> "Grande"
-        AodStyle.SPOTLIGHT  -> "Spotlight"
+        AodStyle.CLASSIC    -> stringResource(R.string.aod_style_classic)
+        AodStyle.BACKGROUND -> stringResource(R.string.aod_style_background)
+        AodStyle.MINIMAL    -> stringResource(R.string.aod_style_minimal)
+        AodStyle.LARGE      -> stringResource(R.string.aod_style_large)
+        AodStyle.SPOTLIGHT  -> stringResource(R.string.aod_style_spotlight)
+    }
+
+    val description = when (style) {
+        AodStyle.CLASSIC    -> stringResource(R.string.aod_style_classic_desc)
+        AodStyle.BACKGROUND -> stringResource(R.string.aod_style_background_desc)
+        AodStyle.MINIMAL    -> stringResource(R.string.aod_style_minimal_desc)
+        AodStyle.LARGE      -> stringResource(R.string.aod_style_large_desc)
+        AodStyle.SPOTLIGHT  -> stringResource(R.string.aod_style_spotlight_desc)
     }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
-            .width(112.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .width(116.dp)
+            .clip(RoundedCornerShape(18.dp))
             .border(
                 width = if (selected) 2.dp else 1.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(18.dp)
             )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
-            .padding(bottom = 8.dp)
     ) {
-        // ── Miniatura ────────────────────────────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(90.dp)
-                .clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp))
-                .background(Color.Black)
+                .height(100.dp)
+                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .background(Color(0xFF080808))
         ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(top = 3.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.12f))
+            )
+
             when (style) {
                 AodStyle.CLASSIC -> {
-                    // Portada pequeña centrada
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .align(Alignment.Center)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color.White.copy(alpha = 0.15f))
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .align(Alignment.Center)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(Color.White.copy(alpha = 0.25f))
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Canvas(modifier = Modifier.size(46.dp)) {
+                                drawCircle(
+                                    brush = Brush.radialGradient(
+                                        listOf(Color.White.copy(0.10f), Color.Transparent)
+                                    )
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.White.copy(0.18f))
+                            )
+                        }
+                        Spacer(Modifier.height(7.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.72f).height(4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(0.70f))
+                        )
+                        Spacer(Modifier.height(3.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.48f).height(3.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(0.30f))
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Box(modifier = Modifier.fillMaxWidth().height(1.5.dp)
+                            .clip(RoundedCornerShape(1.dp)).background(Color.White.copy(0.15f)))
+                        Box(modifier = Modifier.fillMaxWidth(0.55f).height(1.5.dp)
+                            .clip(RoundedCornerShape(1.dp)).background(Color.White.copy(0.80f)))
+                    }
                 }
+
                 AodStyle.BACKGROUND -> {
-                    // Gradiente que simula arte difuminado
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
+                        modifier = Modifier.fillMaxSize()
                             .background(
                                 Brush.radialGradient(
                                     listOf(
-                                        Color(0xFF7986CB).copy(alpha = 0.6f),
-                                        Color(0xFF303F9F).copy(alpha = 0.3f),
-                                        Color.Black
+                                        Color(0xFF6A4C93).copy(0.8f),
+                                        Color(0xFF1A237E).copy(0.5f),
+                                        Color(0xFF000000)
                                     )
                                 )
                             )
                     )
-                    // Overlay oscuro
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.45f))
+                        modifier = Modifier.fillMaxWidth().height(32.dp)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Black.copy(0.7f), Color.Transparent)
+                                )
+                            )
                     )
-                    // Portada pequeña centrada encima
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .align(Alignment.Center)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color.White.copy(alpha = 0.30f))
-                    )
-                }
-                AodStyle.MINIMAL -> {
-                    // Solo barra de progreso y texto tiny
                     Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(10.dp),
-                        verticalArrangement = Arrangement.Bottom
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(0.85f))
+                                )
+                            )
+                            .padding(bottom = 8.dp, top = 16.dp)
+                            .padding(horizontal = 10.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth(0.65f).height(3.dp)
+                            .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(0.85f)))
+                        Spacer(Modifier.height(3.dp))
+                        Box(modifier = Modifier.fillMaxWidth(0.45f).height(2.dp)
+                            .clip(RoundedCornerShape(1.dp)).background(Color.White.copy(0.40f)))
+                        Spacer(Modifier.height(5.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Box(modifier = Modifier.size(8.dp).clip(CircleShape)
+                                .background(Color.White.copy(0.25f)))
+                            Box(modifier = Modifier.size(12.dp).clip(CircleShape)
+                                .background(Color.White.copy(0.90f)))
+                            Box(modifier = Modifier.size(8.dp).clip(CircleShape)
+                                .background(Color.White.copy(0.25f)))
+                        }
+                    }
+                }
+
+                AodStyle.MINIMAL -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 10.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth(0.5f).height(2.dp)
+                            .clip(RoundedCornerShape(1.dp)).background(Color.White.copy(0.30f)))
+                        Spacer(Modifier.height(5.dp))
+                        Box(modifier = Modifier.fillMaxWidth(0.85f).height(0.5.dp)
+                            .background(Color.White.copy(0.15f)))
+                        Spacer(Modifier.height(5.dp))
+                        Box(modifier = Modifier.fillMaxWidth(0.78f).height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(0.75f)))
+                        Spacer(Modifier.height(12.dp))
+                        Box(modifier = Modifier.fillMaxWidth().height(1.dp)
+                            .background(Color.White.copy(0.12f)))
+                        Box(modifier = Modifier.fillMaxWidth(0.40f).height(1.dp)
+                            .background(Color.White.copy(0.65f)))
+                        Spacer(Modifier.height(10.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Box(modifier = Modifier.size(7.dp).clip(CircleShape)
+                                .background(Color.White.copy(0.20f)))
+                            Box(modifier = Modifier.size(11.dp).clip(CircleShape)
+                                .background(Color.White.copy(0.80f)))
+                            Box(modifier = Modifier.size(7.dp).clip(CircleShape)
+                                .background(Color.White.copy(0.20f)))
+                        }
+                    }
+                }
+
+                AodStyle.LARGE -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxSize(0.62f)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color(0xFF8BC34A).copy(0.6f),
+                                        Color(0xFF388E3C).copy(0.4f),
+                                        Color(0xFF1B5E20).copy(0.2f)
+                                    )
+                                )
+                            )
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxSize(0.45f)
+                            .align(Alignment.Center)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black)
+                                )
+                            )
+                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 8.dp)
+                            .padding(horizontal = 10.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth(0.65f).height(3.dp)
+                            .clip(RoundedCornerShape(2.dp)).background(Color.White.copy(0.85f)))
+                        Spacer(Modifier.height(2.dp))
+                        Box(modifier = Modifier.fillMaxWidth(0.45f).height(2.dp)
+                            .clip(RoundedCornerShape(1.dp)).background(Color.White.copy(0.35f)))
+                        Spacer(Modifier.height(5.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)
+                        ) {
+                            Box(modifier = Modifier.size(8.dp).clip(CircleShape)
+                                .background(Color.White.copy(0.20f)))
+                            Box(modifier = Modifier.size(12.dp).clip(CircleShape)
+                                .background(Color.White.copy(0.90f)))
+                            Box(modifier = Modifier.size(8.dp).clip(CircleShape)
+                                .background(Color.White.copy(0.20f)))
+                        }
+                    }
+                }
+
+                AodStyle.SPOTLIGHT -> {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val c = Offset(size.width / 2f, size.height * 0.42f)
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(Color.White.copy(0.06f), Color.Transparent),
+                                center = c, radius = size.minDimension * 0.56f
+                            ),
+                            center = c, radius = size.minDimension * 0.56f
+                        )
+                        drawCircle(
+                            color = Color.White.copy(0.10f),
+                            center = c, radius = size.minDimension * 0.34f,
+                            style = Stroke(width = 0.8f)
+                        )
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(Color.White.copy(0.18f), Color.Transparent),
+                                center = c, radius = size.minDimension * 0.26f
+                            ),
+                            center = c, radius = size.minDimension * 0.26f
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .align(Alignment.Center)
+                            .padding(bottom = 4.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(Color.White.copy(0.28f))
+                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 9.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(2.dp)
-                                .clip(RoundedCornerShape(1.dp))
-                                .background(Color.White.copy(alpha = 0.25f))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.6f)
-                                .height(2.dp)
-                                .clip(RoundedCornerShape(1.dp))
-                                .background(Color.White.copy(alpha = 0.8f))
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.8f)
+                                .fillMaxWidth(0.60f)
                                 .height(3.dp)
                                 .clip(RoundedCornerShape(2.dp))
-                                .background(Color.White.copy(alpha = 0.30f))
+                                .background(Color.White.copy(0.80f))
                         )
                         Spacer(Modifier.height(2.dp))
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(0.5f)
+                                .fillMaxWidth(0.42f)
                                 .height(2.dp)
                                 .clip(RoundedCornerShape(1.dp))
-                                .background(Color.White.copy(alpha = 0.18f))
+                                .background(Color.White.copy(0.32f))
                         )
                     }
-                }
-                AodStyle.LARGE -> {
-                    // Portada que casi llena el card
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxSize(0.85f)
-                            .align(Alignment.TopCenter)
-                            .padding(top = 6.dp, start = 6.dp, end = 6.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color.White.copy(alpha = 0.22f))
-                    )
-                }
-                AodStyle.SPOTLIGHT -> {
-                    // Halo radial + portada pequeña
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.18f),
-                                    Color.Transparent
-                                ),
-                                center = center,
-                                radius = size.minDimension * 0.55f
-                            ),
-                            radius = size.minDimension * 0.55f
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .align(Alignment.Center)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(Color.White.copy(alpha = 0.30f))
-                    )
                 }
             }
         }
 
-        // ── Etiqueta ─────────────────────────────────────────────────────────
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (selected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 9.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                lineHeight = 11.sp,
+            )
+        }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Shape card — muestra el shape aplicado como clip
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun AodShapeCard(
@@ -636,19 +704,20 @@ private fun AodShapeCard(
     val borderColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.outlineVariant,
-        animationSpec = tween(250),
-        label = "aod_shape_border"
+        animationSpec = tween(250), label = "shape_border"
     )
+
     val label = when (artShape) {
-        AodArtShape.ROUNDED  -> "Redondo"
-        AodArtShape.CIRCLE   -> "Círculo"
-        AodArtShape.SQUIRCLE -> "Squircle"
-        AodArtShape.DIAMOND  -> "Diamante"
-        AodArtShape.HEXAGON  -> "Hexágono"
-        AodArtShape.STAR     -> "Estrella"
-        AodArtShape.ARCH     -> "Arco"
-        AodArtShape.PETAL    -> "Flor"
+        AodArtShape.ROUNDED  -> stringResource(R.string.aod_shape_rounded)
+        AodArtShape.CIRCLE   -> stringResource(R.string.aod_shape_circle)
+        AodArtShape.SQUIRCLE -> stringResource(R.string.aod_shape_squircle)
+        AodArtShape.DIAMOND  -> stringResource(R.string.aod_shape_diamond)
+        AodArtShape.HEXAGON  -> stringResource(R.string.aod_shape_hexagon)
+        AodArtShape.STAR     -> stringResource(R.string.aod_shape_star)
+        AodArtShape.ARCH     -> stringResource(R.string.aod_shape_arch)
+        AodArtShape.PETAL    -> stringResource(R.string.aod_shape_petal)
     }
+    val shape = artShape.toShape()
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -667,30 +736,27 @@ private fun AodShapeCard(
             )
             .padding(vertical = 10.dp, horizontal = 4.dp)
     ) {
-        // ── Shape preview ─────────────────────────────────────────────────────
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(52.dp)
-                .clip(artShape.toShape())
+                .clip(shape)
                 .background(
-                    if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                    if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
                     else MaterialTheme.colorScheme.surfaceVariant
                 )
         ) {
-            // Inner subtle detail
             Box(
                 modifier = Modifier
-                    .fillMaxSize(0.6f)
-                    .clip(artShape.toShape())
+                    .fillMaxSize(0.55f)
+                    .clip(shape)
                     .background(
-                        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
-                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
+                        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                     )
             )
         }
 
-        // ── Etiqueta ──────────────────────────────────────────────────────────
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,

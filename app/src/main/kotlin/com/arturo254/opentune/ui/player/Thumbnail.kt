@@ -4,13 +4,14 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
-
 package com.arturo254.opentune.ui.player
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -42,6 +43,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -49,19 +51,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
@@ -69,12 +75,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.media3.common.C
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
 import androidx.compose.material3.Icon
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
+import com.arturo254.opentune.canvas.OpenTuneCanvas
+import com.arturo254.opentune.canvas.CanvasArtwork
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerDesignStyle
@@ -90,6 +106,9 @@ import com.arturo254.opentune.constants.HidePlayerThumbnailKey
 import com.arturo254.opentune.extensions.metadata
 import com.arturo254.opentune.extensions.toMediaItem
 import com.arturo254.opentune.ui.utils.highRes
+import com.arturo254.opentune.ui.utils.getHighQualityThumbnail
+import com.arturo254.opentune.innertube.YouTube
+import com.arturo254.opentune.innertube.models.YouTubeClient
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
@@ -101,13 +120,18 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.File
 import java.util.LinkedHashMap
 import java.util.Locale
 import kotlin.math.abs
 import android.content.Context
-import com.arturo254.opentune.canvas.CanvasArtwork
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.PlaybackException
+import com.arturo254.opentune.ui.utils.initThumbnailCache
 
 object CanvasArtworkPlaybackCache {
     private const val defaultMaxSize = 256
@@ -248,12 +272,13 @@ private data class ThumbnailPage(
 fun Thumbnail(
     sliderPositionProvider: () -> Long?,
     modifier: Modifier = Modifier,
-    isPlayerExpanded: Boolean = true, // Add parameter to control swipe based on player state
+    isPlayerExpanded: Boolean = true,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
+    val currentView = LocalView.current
+    val coroutineScope = rememberCoroutineScope()
 
-    // States
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val error by playerConnection.error.collectAsState()
@@ -278,7 +303,6 @@ fun Thumbnail(
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
 
-    // Player background style for consistent theming
     val playerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT
@@ -299,10 +323,12 @@ fun Thumbnail(
         CanvasArtworkPlaybackCache.setMaxSize(maxCanvasCacheSize)
     }
 
-    // Grid state
+    LaunchedEffect(Unit) {
+        initThumbnailCache(context)
+    }
+
     val thumbnailLazyGridState = rememberLazyGridState()
 
-    // Create a playlist using correct shuffle-aware logic
     val timeline = playerConnection.player.currentTimeline
     val currentIndex = playerConnection.player.currentMediaItemIndex
     val shuffleModeEnabled = playerConnection.player.shuffleModeEnabled
@@ -337,11 +363,8 @@ fun Thumbnail(
     } else null
 
     val currentMediaItem = remember(mediaMetadata) {
-        // Fallback to player's current item if mediaMetadata is null,
-        // but prefer mediaMetadata for immediate updates during crossfade.
         val metadata = mediaMetadata
         if (metadata != null) {
-            // Use extension to convert metadata to a proper MediaItem with all fields (uri, artwork, tag)
             metadata.toMediaItem()
         } else {
             try {
@@ -363,7 +386,6 @@ fun Thumbnail(
     }
     val currentMediaIndex = thumbnailPages.indexOfFirst { it.slotKey == "current" }
 
-    // OuterTune Snap behavior
     val horizontalLazyGridItemWidthFactor = 1f
     val thumbnailSnapLayoutInfoProvider = remember(thumbnailLazyGridState) {
         SnapLayoutInfoProvider(
@@ -375,11 +397,9 @@ fun Thumbnail(
         )
     }
 
-    // Current item tracking
     val currentItem by remember { derivedStateOf { thumbnailLazyGridState.firstVisibleItemIndex } }
     val itemScrollOffset by remember { derivedStateOf { thumbnailLazyGridState.firstVisibleItemScrollOffset } }
 
-    // Handle swipe to change song
     LaunchedEffect(itemScrollOffset) {
         if (!thumbnailLazyGridState.isScrollInProgress || !swipeThumbnail || itemScrollOffset != 0 || currentMediaIndex < 0) return@LaunchedEffect
 
@@ -396,7 +416,6 @@ fun Thumbnail(
         }
     }
 
-    // Update position when song changes
     LaunchedEffect(mediaMetadata, currentMediaItem?.mediaId, canSkipPrevious, canSkipNext) {
         val index = maxOf(0, currentMediaIndex)
         if (index >= 0 && index < thumbnailPages.size) {
@@ -415,13 +434,11 @@ fun Thumbnail(
         }
     }
 
-    // Seek on double tap
     var showSeekEffect by remember { mutableStateOf(false) }
     var seekDirection by remember { mutableStateOf("") }
     val layoutDirection = LocalLayoutDirection.current
 
     Box(modifier = modifier) {
-        // Error view
         AnimatedVisibility(
             visible = error != null,
             enter = fadeIn(),
@@ -441,7 +458,6 @@ fun Thumbnail(
             }
         }
 
-        // Main thumbnail view
         AnimatedVisibility(
             visible = error == null,
             enter = fadeIn(),
@@ -454,7 +470,6 @@ fun Thumbnail(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Now Playing header
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
@@ -464,7 +479,6 @@ fun Thumbnail(
                         style = MaterialTheme.typography.titleMedium,
                         color = textBackgroundColor
                     )
-                    // Show album title or queue title
                     val playingFrom = queueTitle ?: mediaMetadata?.album?.title
                     if (!playingFrom.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(4.dp))
@@ -478,7 +492,6 @@ fun Thumbnail(
                     }
                 }
 
-                // Thumbnail content
                 BoxWithConstraints(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize()
@@ -490,15 +503,14 @@ fun Thumbnail(
                         state = thumbnailLazyGridState,
                         rows = GridCells.Fixed(1),
                         flingBehavior = rememberSnapFlingBehavior(thumbnailSnapLayoutInfoProvider),
-                        userScrollEnabled = swipeThumbnail && isPlayerExpanded, // Only allow swipe when player is expanded
+                        userScrollEnabled = swipeThumbnail && isPlayerExpanded,
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(
                             items = thumbnailPages,
                             key = { page ->
                                 "${page.slotKey}:${page.windowIndex}:${page.mediaItem.mediaId.ifEmpty { "unknown" }}"
-                            },
-                            contentType = { "thumbnailPage" },
+                            }
                         ) { page ->
                             val item = page.mediaItem
                             val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
@@ -518,6 +530,8 @@ fun Thumbnail(
                             var canvasArtwork by remember(item.mediaId) { mutableStateOf<CanvasArtwork?>(null) }
                             var canvasFetchedAtMs by remember(item.mediaId) { mutableLongStateOf(0L) }
                             var canvasFetchInFlight by remember(item.mediaId) { mutableStateOf(false) }
+
+                            var highQualityBitmap by remember(item.mediaId) { mutableStateOf<Bitmap?>(null) }
 
                             LaunchedEffect(shouldAnimateCanvas) {
                                 if (!shouldAnimateCanvas) {
@@ -556,12 +570,26 @@ fun Thumbnail(
 
                                 val fetched =
                                     withContext(Dispatchers.IO) {
-                                        fetchCanvasArtworkForPlayback(
-                                            songTitleRaw = songTitleRaw,
-                                            artistNameRaw = artistNameRaw,
-                                            storefront = storefront,
-                                            requireVertical = false,
-                                        )
+                                        val songTitle = normalizeCanvasSongTitle(songTitleRaw)
+                                        val artistName = normalizeCanvasArtistName(artistNameRaw)
+                                        val candidates =
+                                            linkedSetOf(
+                                                songTitle to artistName,
+                                                songTitleRaw to artistName,
+                                                songTitle to artistNameRaw,
+                                                songTitleRaw to artistNameRaw,
+                                            ).filter { (song, artist) ->
+                                                song.isNotBlank() && artist.isNotBlank()
+                                            }
+
+                                        candidates.firstNotNullOfOrNull { (song, artist) ->
+                                            OpenTuneCanvas
+                                                .getBySongArtist(
+                                                    song = song,
+                                                    artist = artist,
+                                                    storefront = storefront,
+                                                )?.takeIf { !it.preferredAnimationUrl.isNullOrBlank() }
+                                        }
                                     }
                                 canvasArtwork = fetched
                                 canvasFetchedAtMs = now
@@ -569,6 +597,19 @@ fun Thumbnail(
                                     CanvasArtworkPlaybackCache.put(item.mediaId, fetched)
                                 }
                                 canvasFetchInFlight = false
+                            }
+
+                            LaunchedEffect(item.mediaId, item.metadata?.thumbnailUrl) {
+                                if (hidePlayerThumbnail) return@LaunchedEffect
+                                val url = item.metadata?.thumbnailUrl
+                                if (!url.isNullOrBlank()) {
+                                    val bitmap = getHighQualityThumbnail(
+                                        url = url,
+                                        preferredWidth = 1080,
+                                        preferredHeight = 1080
+                                    )
+                                    highQualityBitmap = bitmap
+                                }
                             }
 
                             Box(
@@ -606,7 +647,6 @@ fun Thumbnail(
                                                     )
                                                     seekDirection = context.getString(R.string.seek_forward_dynamic, skipAmount / 1000)
                                                 }
-                                                // If a user double-tap skip lands on a new media item, restart presence manager to pick up artwork quickly
                                                 if (com.arturo254.opentune.ui.screens.settings.DiscordPresenceManager.isRunning()) {
                                                     try { com.arturo254.opentune.ui.screens.settings.DiscordPresenceManager.restart() } catch (_: Exception) {}
                                                 }
@@ -623,7 +663,6 @@ fun Thumbnail(
                                         .clip(RoundedCornerShape(thumbnailCornerRadius.dp))
                                 ) {
                                     if (hidePlayerThumbnail) {
-                                        // Show app logo when thumbnail is hidden
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
@@ -631,7 +670,7 @@ fun Thumbnail(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                painter = painterResource(R.drawable.opentune),
+                                                painter = painterResource(R.drawable.opentune_monochrome),
                                                 contentDescription = stringResource(R.string.hide_player_thumbnail),
                                                 tint = textBackgroundColor.copy(alpha = 0.7f),
                                                 modifier = Modifier.size(120.dp)
@@ -645,29 +684,40 @@ fun Thumbnail(
                                             cropThumbnailToSquare &&
                                                     playerDesignStyle != PlayerDesignStyle.V7
 
-                                        AsyncImage(
-                                            model = item.metadata?.thumbnailUrl?.highRes()
-                                                ?: item.mediaMetadata.artworkUri?.toString(),
-                                            contentDescription = null,
-                                            contentScale = ContentScale.FillBounds,
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .let { if (shouldCropArtwork) it.aspectRatio(1f) else it }
-                                                .graphicsLayer(
-                                                    renderEffect = BlurEffect(radiusX = 60f, radiusY = 60f),
-                                                    alpha = 0.6f
-                                                )
-                                        )
+                                        if (highQualityBitmap != null) {
+                                            androidx.compose.foundation.Image(
+                                                bitmap = highQualityBitmap!!.asImageBitmap(),
+                                                contentDescription = null,
+                                                contentScale = if (shouldCropArtwork) ContentScale.Crop else ContentScale.Fit,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .let { if (shouldCropArtwork) it.aspectRatio(1f) else it }
+                                            )
+                                        } else {
+                                            AsyncImage(
+                                                model = item.metadata?.thumbnailUrl?.highRes()
+                                                    ?: item.mediaMetadata.artworkUri?.toString(),
+                                                contentDescription = null,
+                                                contentScale = ContentScale.FillBounds,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .let { if (shouldCropArtwork) it.aspectRatio(1f) else it }
+                                                    .graphicsLayer(
+                                                        renderEffect = BlurEffect(radiusX = 60f, radiusY = 60f),
+                                                        alpha = 0.6f
+                                                    )
+                                            )
 
-                                        AsyncImage(
-                                            model = item.metadata?.thumbnailUrl?.highRes()
-                                                ?: item.mediaMetadata.artworkUri?.toString(),
-                                            contentDescription = null,
-                                            contentScale = if (shouldCropArtwork) ContentScale.Crop else ContentScale.Fit,
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .let { if (shouldCropArtwork) it.aspectRatio(1f) else it }
-                                        )
+                                            AsyncImage(
+                                                model = item.metadata?.thumbnailUrl?.highRes()
+                                                    ?: item.mediaMetadata.artworkUri?.toString(),
+                                                contentDescription = null,
+                                                contentScale = if (shouldCropArtwork) ContentScale.Crop else ContentScale.Fit,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .let { if (shouldCropArtwork) it.aspectRatio(1f) else it }
+                                            )
+                                        }
 
                                         if (shouldAnimateCanvas && (!primaryCanvasUrl.isNullOrBlank() || !fallbackCanvasUrl.isNullOrBlank())) {
                                             CanvasArtworkPlayer(
@@ -686,7 +736,6 @@ fun Thumbnail(
             }
         }
 
-        // Seek effect
         LaunchedEffect(showSeekEffect) {
             if (showSeekEffect) {
                 delay(1000)
@@ -714,13 +763,225 @@ fun Thumbnail(
     }
 }
 
+@Composable
+private fun CanvasArtworkPlayer(
+    primaryUrl: String?,
+    fallbackUrl: String?,
+    isPlaying: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val primary = primaryUrl?.takeIf { it.isNotBlank() }
+    val fallback = fallbackUrl?.takeIf { it.isNotBlank() }
+    val initial = primary ?: fallback ?: return
+    var currentUrl by remember(initial) { mutableStateOf(initial) }
+    var isVideoReady by remember(initial) { mutableStateOf(false) }
 
-/*
- * Copyright (C) OuterTune Project
- * Custom SnapLayoutInfoProvider idea belongs to OuterTune
- */
+    val okHttpClient =
+        remember {
+            OkHttpClient
+                .Builder()
+                .proxy(YouTube.proxy)
+                .addInterceptor { chain ->
+                    val request = chain.request()
+                    val host = request.url.host
+                    val isYouTubeMediaHost =
+                        host.endsWith("googlevideo.com") ||
+                                host.endsWith("googleusercontent.com") ||
+                                host.endsWith("youtube.com") ||
+                                host.endsWith("youtube-nocookie.com") ||
+                                host.endsWith("ytimg.com")
 
-// SnapLayoutInfoProvider
+                    if (!isYouTubeMediaHost) return@addInterceptor chain.proceed(request)
+
+                    val clientParam = request.url.queryParameter("c")?.trim().orEmpty()
+                    val isWeb =
+                        clientParam.startsWith("WEB", ignoreCase = true) ||
+                                clientParam.startsWith("WEB_REMIX", ignoreCase = true) ||
+                                request.url.toString().contains("c=WEB", ignoreCase = true)
+
+                    val userAgent =
+                        when {
+                            clientParam.startsWith("WEB", ignoreCase = true) ||
+                                    clientParam.startsWith("WEB_REMIX", ignoreCase = true) -> YouTubeClient.USER_AGENT_WEB
+
+                            clientParam.startsWith("IOS", ignoreCase = true) -> YouTubeClient.IOS.userAgent
+
+                            clientParam.startsWith("ANDROID_VR", ignoreCase = true) -> YouTubeClient.ANDROID_VR_NO_AUTH.userAgent
+
+                            clientParam.startsWith("ANDROID", ignoreCase = true) -> YouTubeClient.MOBILE.userAgent
+
+                            else -> YouTubeClient.USER_AGENT_WEB
+                        }
+
+                    val builder = request.newBuilder().header("User-Agent", userAgent)
+                    if (isWeb) {
+                        builder.header("Origin", YouTubeClient.ORIGIN_YOUTUBE_MUSIC)
+                        builder.header("Referer", YouTubeClient.REFERER_YOUTUBE_MUSIC)
+                    }
+
+                    chain.proceed(builder.build())
+                }
+                .build()
+        }
+    val mediaSourceFactory =
+        remember(okHttpClient) {
+            DefaultMediaSourceFactory(
+                DefaultDataSource.Factory(
+                    context,
+                    OkHttpDataSource.Factory(okHttpClient),
+                ),
+            )
+        }
+    val exoPlayer =
+        remember(initial) {
+            ExoPlayer.Builder(context)
+                .setMediaSourceFactory(mediaSourceFactory)
+                .build()
+                .apply {
+                    setAudioAttributes(
+                        AudioAttributes
+                            .Builder()
+                            .setUsage(C.USAGE_MEDIA)
+                            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                            .build(),
+                        false,
+                    )
+                    volume = 0f
+                    repeatMode = Player.REPEAT_MODE_ONE
+                    playWhenReady = isPlaying
+                }
+        }
+
+    LaunchedEffect(isPlaying) {
+        if (exoPlayer.playWhenReady != isPlaying) {
+            exoPlayer.playWhenReady = isPlaying
+        }
+    }
+
+    DisposableEffect(exoPlayer, primary, fallback) {
+        val listener =
+            object : Player.Listener {
+                override fun onPlayerError(error: PlaybackException) {
+                    val next =
+                        when (currentUrl) {
+                            primary -> fallback
+                            else -> null
+                        }
+                    if (!next.isNullOrBlank()) {
+                        currentUrl = next
+                        isVideoReady = false
+                    }
+                }
+
+                override fun onRenderedFirstFrame() {
+                    isVideoReady = true
+                }
+            }
+        exoPlayer.addListener(listener)
+        onDispose { exoPlayer.removeListener(listener) }
+    }
+
+    LaunchedEffect(currentUrl, exoPlayer) {
+        val normalized = currentUrl.trim()
+        val mimeType =
+            when {
+                primary != null && currentUrl == primary -> MimeTypes.APPLICATION_M3U8
+                fallback != null && currentUrl == fallback -> MimeTypes.VIDEO_MP4
+                normalized.lowercase(Locale.ROOT).contains("m3u8") -> MimeTypes.APPLICATION_M3U8
+                normalized.lowercase(Locale.ROOT).contains("mp4") -> MimeTypes.VIDEO_MP4
+                else -> MimeTypes.APPLICATION_M3U8
+            }
+
+        val mediaItem =
+            MediaItem.Builder()
+                .setUri(normalized)
+                .setMimeType(mimeType)
+                .build()
+
+        exoPlayer.stop()
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.prepare()
+        exoPlayer.playWhenReady = isPlaying
+    }
+
+    DisposableEffect(exoPlayer) {
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+
+    val alpha by animateFloatAsState(
+        targetValue = if (isVideoReady) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "canvasAlpha"
+    )
+
+    AndroidView(
+        factory = { viewContext ->
+            PlayerView(viewContext).apply {
+                layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+                player = exoPlayer
+                useController = false
+                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
+            }
+        },
+        update = { view ->
+            if (view.player !== exoPlayer) view.player = exoPlayer
+        },
+        modifier = modifier.alpha(alpha),
+    )
+}
+
+private fun normalizeCanvasSongTitle(raw: String): String {
+    val stripped =
+        raw
+            .replace(Regex("\\s*\\[[^]]*]"), "")
+            .replace(
+                Regex(
+                    "\\s*\\((?:feat\\.?|ft\\.?|featuring|with)\\b[^)]*\\)",
+                    RegexOption.IGNORE_CASE,
+                ),
+                "",
+            )
+            .replace(
+                Regex(
+                    "\\s*\\((?:official\\s*)?(?:music\\s*)?(?:video|mv|lyrics?|audio|visualizer|live|remaster(?:ed)?|version|edit|mix|remix)[^)]*\\)",
+                    RegexOption.IGNORE_CASE,
+                ),
+                "",
+            )
+            .replace(
+                Regex(
+                    "\\s*-\\s*(?:official\\s*)?(?:music\\s*)?(?:video|mv|lyrics?|audio|visualizer|live|remaster(?:ed)?|version|edit|mix|remix)\\b.*$",
+                    RegexOption.IGNORE_CASE,
+                ),
+                "",
+            )
+            .replace(Regex("\\s+"), " ")
+            .trim()
+
+    return stripped
+        .trim('-')
+        .replace(Regex("\\s+"), " ")
+        .trim()
+}
+
+private fun normalizeCanvasArtistName(raw: String): String {
+    val first =
+        raw
+            .split(
+                Regex(
+                    "(?:\\s*,\\s*|\\s*&\\s*|\\s+×\\s+|\\s+x\\s+|\\bfeat\\.?\\b|\\bft\\.?\\b|\\bfeaturing\\b|\\bwith\\b)",
+                    RegexOption.IGNORE_CASE,
+                ),
+                limit = 2,
+            ).firstOrNull().orEmpty()
+
+    return first.replace(Regex("\\s+"), " ").trim()
+}
+
 @ExperimentalFoundationApi
 fun SnapLayoutInfoProvider(
     lazyGridState: LazyGridState,
@@ -736,7 +997,6 @@ fun SnapLayoutInfoProvider(
     override fun calculateSnapOffset(velocity: Float): Float {
         val bounds = calculateSnappingOffsetBounds()
 
-        // Only snap when velocity exceeds threshold
         if (abs(velocity) < velocityThreshold) {
             if (abs(bounds.start) < abs(bounds.endInclusive))
                 return bounds.start
@@ -758,12 +1018,10 @@ fun SnapLayoutInfoProvider(
         layoutInfo.visibleItemsInfo.fastForEach { item ->
             val offset = calculateDistanceToDesiredSnapPosition(layoutInfo, item, positionInLayout)
 
-            // Find item that is closest to the center
             if (offset <= 0 && offset > lowerBoundOffset) {
                 lowerBoundOffset = offset
             }
 
-            // Find item that is closest to center, but after it
             if (offset >= 0 && offset < upperBoundOffset) {
                 upperBoundOffset = offset
             }
