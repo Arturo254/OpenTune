@@ -1,4 +1,5 @@
 /*
+ Credits:
  * ArchiveTune (2026)
  * © Chartreux Westia — github.com/koiverse
  * GPL-3.0 License | Contributors: see git history
