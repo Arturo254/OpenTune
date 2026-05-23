@@ -8,6 +8,7 @@
 
 package com.arturo254.opentune.ui.screens
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -95,6 +96,7 @@ import kotlinx.coroutines.isActive
 import me.saket.squiggles.SquigglySlider
 import kotlin.math.abs
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun AlwaysOnDisplayScreen(navController: NavController) {
 
@@ -180,7 +182,7 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
     // ── Derived values ────────────────────────────────────────────────────────
     val displayPosition = sliderPosition ?: position
     val progressFraction = remember(displayPosition, duration) {
-        if (duration > 0L && duration != C.TIME_UNSET)
+        if (duration > 0L)
             (displayPosition.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
         else 0f
     }
@@ -194,7 +196,7 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
 
     // ── Seek callbacks ────────────────────────────────────────────────────────
     val onSeekChange: (Float) -> Unit = { fraction ->
-        if (duration > 0L && duration != C.TIME_UNSET)
+        if (duration > 0L)
             sliderPosition = (fraction * duration).toLong().coerceIn(0L, duration)
     }
     val onSeekFinished: () -> Unit = {
@@ -782,7 +784,7 @@ private fun AodMetaAndControls(
                 color = Color.White.copy(alpha = 0.48f),
                 style = MaterialTheme.typography.labelMedium
             )
-            if (duration > 0L && duration != C.TIME_UNSET) {
+            if (duration > 0L) {
                 Text(
                     text = makeTimeString(duration),
                     color = Color.White.copy(alpha = 0.48f),
