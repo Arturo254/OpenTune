@@ -698,4 +698,46 @@
     <string name="together_welcome_host_body">Pulsa \"comenzar sesión\", después comparte el enlace de sesión. Mantén OpenTune abierto en segundo plano mientras alojas.</string>
     <string name="stream_bypass_proxy">Proxy de derivación para transmisiones</string>
     <string name="stream_bypass_proxy_desc">Utiliza tu dirección IP directa para la reproducción de transmisiones y evita las incompatibilidades de IP</string>
+
+    <string name="aod_style_title">Estilo AOD</string>
+    <string name="aod_style_classic">Clásico</string>
+    <string name="aod_style_background">Ambiente</string>
+    <string name="aod_style_minimal">Minimal</string>
+    <string name="aod_style_large">Inmersivo</string>
+    <string name="aod_style_spotlight">Spotlight</string>
+    <string name="aod_style_classic_desc">Portada centrada</string>
+    <string name="aod_style_background_desc">Arte difuminado de fondo</string>
+    <string name="aod_style_minimal_desc">Solo esencial</string>
+    <string name="aod_style_large_desc">Arte a pantalla completa</string>
+    <string name="aod_style_spotlight_desc">Halo de luz</string>
+
+    <string name="aod_shape_title">Forma de la portada</string>
+    <string name="aod_shape_rounded">Redondo</string>
+    <string name="aod_shape_circle">Círculo</string>
+    <string name="aod_shape_squircle">Squircle</string>
+    <string name="aod_shape_diamond">Diamante</string>
+    <string name="aod_shape_hexagon">Hexágono</string>
+    <string name="aod_shape_star">Estrella</string>
+    <string name="aod_shape_arch">Arco</string>
+    <string name="aod_shape_petal">Flor</string>
+
+    <string name="aod_darkness_title">Oscuridad del fondo</string>
+    <string name="aod_darkness_label">Nivel de oscuridad</string>
+    <string name="aod_darkness_description">Opacidad del overlay en los estilos Ambiente y Spotlight</string>
+
+    <string name="aod_art_size_title">Tamaño de la portada</string>
+    <string name="aod_art_size_label">Tamaño relativo</string>
+    <string name="aod_art_size_description">Fracción del ancho de pantalla que ocupa la portada</string>
+
+    <string name="aod_visible_elements_title">Elementos visibles</string>
+    <string name="aod_show_title">Mostrar título</string>
+    <string name="aod_show_artist">Mostrar artista</string>
+    <string name="aod_show_time">Mostrar tiempo</string>
+    <string name="aod_show_time_description">Etiquetas de posición y duración</string>
+    <string name="aod_show_progress">Mostrar barra de progreso</string>
+    <string name="aod_show_controls">Mostrar controles</string>
+    <string name="aod_show_controls_description">Anterior, Play/Pausa, Siguiente</string>
+
+    <string name="aod_screen_title">Always On Display</string>
+
 </resources>

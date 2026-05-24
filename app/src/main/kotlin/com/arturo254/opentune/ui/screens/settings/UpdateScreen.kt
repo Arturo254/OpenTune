@@ -231,7 +231,7 @@ fun UpdateScreen(
                 }
             }
         } else {
-            nightlyInstallUrl = "https://github.com/Arturo254/OpenTune/releases/download/latest/app-universal-release.apk"
+            nightlyInstallUrl = "https://pub-2218e6bbd5b948e1b5d882cf4d92086d.r2.dev/app-universal-release.apk"
         }
     }
 

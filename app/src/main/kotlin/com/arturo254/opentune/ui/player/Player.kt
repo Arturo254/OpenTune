@@ -152,6 +152,8 @@ import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import coil3.compose.AsyncImage
+import com.arturo254.opentune.constants.AodAutoActivationKey
+import com.arturo254.opentune.constants.AodFullscreenKey
 import com.arturo254.opentune.constants.BlurRadiusKey
 import com.arturo254.opentune.ui.component.COLLAPSED_ANCHOR
 import com.skydoves.cloudy.cloudy
@@ -205,6 +207,36 @@ fun BottomSheetPlayer(
     val (incrementalSeekSkipEnabled) = rememberPreference(com.arturo254.opentune.constants.SeekExtraSeconds, defaultValue = false)
     var keyboardSkipMultiplier by remember { mutableStateOf(1) }
     var lastKeyboardTapTime by remember { mutableLongStateOf(0L) }
+
+
+
+    val (aodAutoTimeoutSeconds) = rememberPreference(AodAutoActivationKey, 30)
+
+    var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var isAodActive by remember { mutableStateOf(false) }
+
+    fun resetAodTimer() {
+        lastInteractionTime = System.currentTimeMillis()
+        if (isAodActive) {
+            isAodActive = false
+        }
+    }
+    LaunchedEffect(aodAutoTimeoutSeconds, state.isExpanded, lastInteractionTime, isAodActive) {
+        if (aodAutoTimeoutSeconds > 0 && state.isExpanded && !isAodActive) {
+            delay(100L)
+            while (isActive) {
+                delay(100L)  // ← Cambiado de 500ms a 100ms (más suave)
+                val elapsedSeconds = (System.currentTimeMillis() - lastInteractionTime) / 1000f  // ← Usar Float
+                if (elapsedSeconds >= aodAutoTimeoutSeconds) {
+                    isAodActive = true
+                    navController.navigate("always_on_display") {
+                        launchSingleTop = true
+                    }
+                    break
+                }
+            }
+        }
+    }
 
     val playerButtonsStyle by rememberEnumPreference(
         key = PlayerButtonsStyleKey,
@@ -579,16 +611,22 @@ fun BottomSheetPlayer(
 
     LaunchedEffect(state.isExpanded) {
         if (state.isExpanded) {
-            focusRequester.requestFocus()
+            lastInteractionTime = System.currentTimeMillis()
+            isAodActive = false
         }
     }
 
     BottomSheet(
+
         state = state,
         modifier = modifier
             .focusRequester(focusRequester)
             .focusable()
             .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown) {
+                    resetAodTimer()
+                }
+
                 if (keyEvent.type != KeyEventType.KeyDown || state.isCollapsed) return@onKeyEvent false
 
                 when (keyEvent.key) {
@@ -658,37 +696,26 @@ fun BottomSheetPlayer(
             Color.Black.copy(alpha = 1f - fadeProgress)
         } else when (playerBackground) {
             PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
-                // Apply same enhanced fade logic to blur/gradient backgrounds
                 val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
                     .coerceIn(0f, 1f)
-
-                // Only start fading when very close to dismissal (last 20%)
                 val fadeProgress = if (progress < 0.2f) {
                     ((0.2f - progress) / 0.2f).coerceIn(0f, 1f)
                 } else {
                     0f
                 }
-
                 MaterialTheme.colorScheme.surface.copy(alpha = 1f - fadeProgress)
             }
             else -> {
-                // Enhanced background - stable until last 20% of drag (both normal and pure black)
-                // Calculate progress for fade effect
                 val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
                     .coerceIn(0f, 1f)
-
-                // Only start fading when very close to dismissal (last 20%)
                 val fadeProgress = if (progress < 0.2f) {
                     ((0.2f - progress) / 0.2f).coerceIn(0f, 1f)
                 } else {
                     0f
                 }
-
                 if (useBlackBackground) {
-                    // Apply same logic to pure black background
                     Color.Black.copy(alpha = 1f - fadeProgress)
                 } else {
-                    // Apply same logic to normal theme
                     MaterialTheme.colorScheme.surface.copy(alpha = 1f - fadeProgress)
                 }
             }
@@ -779,6 +806,7 @@ fun BottomSheetPlayer(
                 onSliderValueChange = onSliderValueChange,
                 onSliderValueChangeFinished = onSliderValueChangeFinished,
                 currentFormat = if (playerDesignStyle == PlayerDesignStyle.V7) currentFormat else null,
+                onResetTimer = { resetAodTimer() },
             )
         }
 

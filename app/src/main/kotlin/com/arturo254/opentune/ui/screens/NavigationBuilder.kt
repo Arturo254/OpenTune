@@ -12,37 +12,68 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.arturo254.opentune.R
+import com.arturo254.opentune.constants.DarkModeKey
+import com.arturo254.opentune.constants.PureBlackKey
+import com.arturo254.opentune.ui.component.BottomSheet
+import com.arturo254.opentune.ui.component.BottomSheetMenu
+import com.arturo254.opentune.ui.component.LocalMenuState
+import com.arturo254.opentune.ui.component.rememberBottomSheetState
+import com.arturo254.opentune.ui.screens.BrowseScreen
 import com.arturo254.opentune.ui.screens.artist.ArtistAlbumsScreen
 import com.arturo254.opentune.ui.screens.artist.ArtistItemsScreen
 import com.arturo254.opentune.ui.screens.artist.ArtistScreen
 import com.arturo254.opentune.ui.screens.artist.ArtistSongsScreen
 import com.arturo254.opentune.ui.screens.library.LibraryScreen
-import com.arturo254.opentune.ui.screens.musicrecognition.MusicRecognitionRoute
-import com.arturo254.opentune.ui.screens.musicrecognition.MusicRecognitionScreen
 import com.arturo254.opentune.ui.screens.playlist.AutoPlaylistScreen
-import com.arturo254.opentune.ui.screens.playlist.CachePlaylistScreen
 import com.arturo254.opentune.ui.screens.playlist.LocalPlaylistScreen
 import com.arturo254.opentune.ui.screens.playlist.OnlinePlaylistScreen
 import com.arturo254.opentune.ui.screens.playlist.TopPlaylistScreen
+import com.arturo254.opentune.ui.screens.playlist.CachePlaylistScreen
 import com.arturo254.opentune.ui.screens.search.OnlineSearchResult
 import com.arturo254.opentune.ui.screens.settings.AboutScreen
+import com.arturo254.opentune.ui.screens.settings.AccountSettings
 import com.arturo254.opentune.ui.screens.settings.AppearanceSettings
+import com.arturo254.opentune.ui.screens.settings.CustomizeBackground
 import com.arturo254.opentune.ui.screens.settings.BackupAndRestore
 import com.arturo254.opentune.ui.screens.settings.ChangelogScreen
 import com.arturo254.opentune.ui.screens.settings.ContentSettings
-import com.arturo254.opentune.ui.screens.settings.CustomizeBackground
-import com.arturo254.opentune.ui.screens.settings.DebugSettings
+import com.arturo254.opentune.ui.screens.settings.DarkMode
 import com.arturo254.opentune.ui.screens.settings.DiscordLoginScreen
 import com.arturo254.opentune.ui.screens.settings.DiscordSettings
+import com.arturo254.opentune.ui.screens.settings.DebugSettings
 import com.arturo254.opentune.ui.screens.settings.IntegrationScreen
 import com.arturo254.opentune.ui.screens.settings.LastFMSettings
 import com.arturo254.opentune.ui.screens.settings.MusicTogetherScreen
@@ -54,6 +85,13 @@ import com.arturo254.opentune.ui.screens.settings.SettingsScreen
 import com.arturo254.opentune.ui.screens.settings.StorageSettings
 import com.arturo254.opentune.ui.screens.settings.ThemeCreatorScreen
 import com.arturo254.opentune.ui.screens.settings.UpdateScreen
+import com.arturo254.opentune.ui.screens.musicrecognition.MusicRecognitionRoute
+import com.arturo254.opentune.ui.screens.musicrecognition.MusicRecognitionScreen
+import com.arturo254.opentune.ui.screens.settings.AODSettings
+
+import com.arturo254.opentune.ui.utils.ShowMediaInfo
+import com.arturo254.opentune.utils.rememberEnumPreference
+import com.arturo254.opentune.utils.rememberPreference
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.navigationBuilder(
@@ -283,6 +321,23 @@ fun NavGraphBuilder.navigationBuilder(
     composable("settings/appearance/theme_creator") {
         ThemeCreatorScreen(navController)
     }
+    composable(
+        route = "settings/appearance/always_on_display",
+        enterTransition = {
+            fadeIn(tween(300)) + slideInHorizontally { it / 3 }
+        },
+        exitTransition = {
+            fadeOut(tween(200)) + slideOutHorizontally { -it / 3 }
+        },
+        popEnterTransition = {
+            fadeIn(tween(300)) + slideInHorizontally { -it / 3 }
+        },
+        popExitTransition = {
+            fadeOut(tween(200)) + slideOutHorizontally { it / 3 }
+        },
+    ) {
+        AODSettings(navController, scrollBehavior)
+    }
     composable("settings/content") {
         ContentSettings(navController, scrollBehavior)
     }
@@ -349,6 +404,7 @@ fun NavGraphBuilder.navigationBuilder(
             startUrl = backStackEntry.arguments?.getString(LOGIN_URL_ARGUMENT)?.let(Uri::decode)
         )
     }
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // Always On Display — como diálogo que cubre completamente
