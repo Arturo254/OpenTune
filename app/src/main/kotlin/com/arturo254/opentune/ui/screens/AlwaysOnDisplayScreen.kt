@@ -9,8 +9,14 @@
 package com.arturo254.opentune.ui.screens
 
 import android.app.Activity
+import android.content.res.Configuration
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -22,6 +28,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +40,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -71,6 +79,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -83,7 +92,9 @@ import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.AodArtShape
 import com.arturo254.opentune.constants.AodArtShapeKey
 import com.arturo254.opentune.constants.AodArtSizeKey
+import com.arturo254.opentune.constants.AodAutoActivationKey
 import com.arturo254.opentune.constants.AodDarknessKey
+import com.arturo254.opentune.constants.AodFullscreenKey
 import com.arturo254.opentune.constants.AodShowArtistKey
 import com.arturo254.opentune.constants.AodShowControlsKey
 import com.arturo254.opentune.constants.AodShowProgressKey
@@ -101,55 +112,82 @@ import kotlinx.coroutines.isActive
 import me.saket.squiggles.SquigglySlider
 import kotlin.math.abs
 
+@RequiresApi(Build.VERSION_CODES.R)
 @Composable
 fun AlwaysOnDisplayScreen(navController: NavController) {
-
     val playerConnection = LocalPlayerConnection.current ?: run {
         LaunchedEffect(Unit) { navController.navigateUp() }
         return
     }
 
     val view = LocalView.current
-    DisposableEffect(Unit) {
-        view.keepScreenOn = true
-        onDispose { view.keepScreenOn = false }
-    }
-
     val context = LocalContext.current
-    val window = (context as? Activity)?.window
-    DisposableEffect(Unit) {
-        window?.let { win ->
-            WindowCompat.setDecorFitsSystemWindows(win, false)
-            WindowInsetsControllerCompat(win, win.decorView).apply {
-                hide(WindowInsetsCompat.Type.statusBars())
-                systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    val activity = context as? Activity
+    val window = activity?.window
+
+    val (fullscreenMode) = rememberPreference(AodFullscreenKey, true)
+
+    DisposableEffect(Unit, fullscreenMode) {
+        view.keepScreenOn = true
+
+        if (fullscreenMode && window != null) {
+            // Método principal
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+
+            val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+
+            // Ocultar todo - usando el método correcto
+            insetsController.hide(WindowInsetsCompat.Type.statusBars())
+            insetsController.hide(WindowInsetsCompat.Type.navigationBars())
+
+            // También ocultar la barra de gestos
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                insetsController.hide(WindowInsetsCompat.Type.systemBars())
+            }
+
+            // Comportamiento: swipe muestra temporalmente
+            insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+            // Forzar layout en toda la pantalla
+            // Forzar layout en toda la pantalla - Versión corregida
+            window.decorView.setOnApplyWindowInsetsListener { _, insets ->
+                // Crear WindowInsets desde WindowInsetsCompat
+                androidx.core.view.WindowInsetsCompat.Builder()
+                    .setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.of(0, 0, 0, 0))
+                    .build()
+                    .toWindowInsets() ?: insets
             }
         }
+
         onDispose {
-            window?.let { win ->
-                WindowInsetsControllerCompat(win, win.decorView).show(WindowInsetsCompat.Type.statusBars())
+            view.keepScreenOn = false
+            if (window != null) {
+                val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+                insetsController.show(WindowInsetsCompat.Type.systemBars())
+                WindowCompat.setDecorFitsSystemWindows(window, true)
+                window.decorView.setOnApplyWindowInsetsListener(null)
             }
         }
     }
 
-    val (rawStyle)     = rememberPreference(AodStyleKey,        AodStyle.CLASSIC.name)
-    val (rawShape)     = rememberPreference(AodArtShapeKey,     AodArtShape.ROUNDED.name)
-    val (darkness)     = rememberPreference(AodDarknessKey,     0.55f)
-    val (artSizeFrac)  = rememberPreference(AodArtSizeKey,      0.65f)
-    val (showTitle)    = rememberPreference(AodShowTitleKey,    true)
-    val (showArtist)   = rememberPreference(AodShowArtistKey,   true)
-    val (showTime)     = rememberPreference(AodShowTimeKey,     true)
+    val (rawStyle) = rememberPreference(AodStyleKey, AodStyle.CLASSIC.name)
+    val (rawShape) = rememberPreference(AodArtShapeKey, AodArtShape.ROUNDED.name)
+    val (darkness) = rememberPreference(AodDarknessKey, 0.55f)
+    val (artSizeFrac) = rememberPreference(AodArtSizeKey, 0.65f)
+    val (showTitle) = rememberPreference(AodShowTitleKey, true)
+    val (showArtist) = rememberPreference(AodShowArtistKey, true)
+    val (showTime) = rememberPreference(AodShowTimeKey, true)
     val (showProgress) = rememberPreference(AodShowProgressKey, true)
     val (showControls) = rememberPreference(AodShowControlsKey, true)
 
-    val aodStyle = remember(rawStyle)  { runCatching { AodStyle.valueOf(rawStyle) }.getOrDefault(AodStyle.CLASSIC) }
-    val artShape = remember(rawShape)  { runCatching { AodArtShape.valueOf(rawShape) }.getOrDefault(AodArtShape.ROUNDED) }
+    val aodStyle = remember(rawStyle) { runCatching { AodStyle.valueOf(rawStyle) }.getOrDefault(AodStyle.CLASSIC) }
+    val artShape = remember(rawShape) { runCatching { AodArtShape.valueOf(rawShape) }.getOrDefault(AodArtShape.ROUNDED) }
 
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
-    val isPlaying     by playerConnection.isPlaying.collectAsState()
+    val isPlaying by playerConnection.isPlaying.collectAsState()
     val playbackState by playerConnection.playbackState.collectAsState()
-    val canSkipPrev   by playerConnection.canSkipPrevious.collectAsState()
-    val canSkipNext   by playerConnection.canSkipNext.collectAsState()
+    val canSkipPrev by playerConnection.canSkipPrevious.collectAsState()
+    val canSkipNext by playerConnection.canSkipNext.collectAsState()
 
     var position by rememberSaveable(mediaMetadata?.id) { mutableLongStateOf(playerConnection.player.currentPosition) }
     var duration by rememberSaveable(mediaMetadata?.id) { mutableLongStateOf(playerConnection.player.duration) }
@@ -166,6 +204,9 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
         }
     }
 
+
+
+
     val displayPosition = sliderPosition ?: position
     val progressFraction = remember(displayPosition, duration) {
         if (duration > 0L && duration != C.TIME_UNSET)
@@ -174,9 +215,13 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
     val artistText = remember(mediaMetadata?.artists) {
         mediaMetadata?.artists?.joinToString(", ") { it.name }.orEmpty()
     }
-    val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
-    val artSizeDp: Dp = remember(artSizeFrac, screenWidthDp) {
-        (screenWidthDp * artSizeFrac).coerceIn(120.dp, screenWidthDp)
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val artSizeDp: Dp = remember(artSizeFrac, screenWidthDp, isLandscape) {
+        val baseSize = if (isLandscape) screenWidthDp * 0.35f else screenWidthDp * artSizeFrac
+        (baseSize).coerceIn(100.dp, screenWidthDp)
     }
 
     val onSeekChange: (Float) -> Unit = { f ->
@@ -186,6 +231,15 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
     val onSeekFinished: () -> Unit = {
         sliderPosition?.let { playerConnection.player.seekTo(it); position = it }
         sliderPosition = null
+    }
+
+    val contentModifier = if (fullscreenMode) {
+        Modifier.fillMaxSize()
+    } else {
+        Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -203,6 +257,9 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
                 onPlayPause = { playerConnection.player.togglePlayPause() },
                 onSkipNext = { playerConnection.seekToNext() },
                 onCollapse = { navController.navigateUp() },
+                isLandscape = isLandscape,
+                fullscreen = fullscreenMode,
+                contentModifier = contentModifier
             )
             AodStyle.MINIMAL -> MinimalAodLayout(
                 title = mediaMetadata?.title.orEmpty(), artist = artistText,
@@ -215,6 +272,9 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
                 onPlayPause = { playerConnection.player.togglePlayPause() },
                 onSkipNext = { playerConnection.seekToNext() },
                 onCollapse = { navController.navigateUp() },
+                isLandscape = isLandscape,
+                fullscreen = fullscreenMode,
+                contentModifier = contentModifier
             )
             AodStyle.SPOTLIGHT -> SpotlightAodLayout(
                 thumbnailUrl = mediaMetadata?.thumbnailUrl, artSizeDp = artSizeDp,
@@ -229,6 +289,9 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
                 onPlayPause = { playerConnection.player.togglePlayPause() },
                 onSkipNext = { playerConnection.seekToNext() },
                 onCollapse = { navController.navigateUp() },
+                isLandscape = isLandscape,
+                fullscreen = fullscreenMode,
+                contentModifier = contentModifier
             )
             AodStyle.LARGE -> LargeAodLayout(
                 thumbnailUrl = mediaMetadata?.thumbnailUrl, artShape = artShape,
@@ -242,6 +305,9 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
                 onPlayPause = { playerConnection.player.togglePlayPause() },
                 onSkipNext = { playerConnection.seekToNext() },
                 onCollapse = { navController.navigateUp() },
+                isLandscape = isLandscape,
+                fullscreen = fullscreenMode,
+                contentModifier = contentModifier
             )
             AodStyle.CLASSIC -> ClassicAodLayout(
                 thumbnailUrl = mediaMetadata?.thumbnailUrl, artSizeDp = artSizeDp, artShape = artShape,
@@ -255,6 +321,9 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
                 onPlayPause = { playerConnection.player.togglePlayPause() },
                 onSkipNext = { playerConnection.seekToNext() },
                 onCollapse = { navController.navigateUp() },
+                isLandscape = isLandscape,
+                fullscreen = fullscreenMode,
+                contentModifier = contentModifier
             )
         }
     }
@@ -275,45 +344,127 @@ private fun ClassicAodLayout(
     onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
     onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
     onCollapse: () -> Unit,
+    isLandscape: Boolean,
+    fullscreen: Boolean,
+    contentModifier: Modifier = Modifier
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        CollapseButton(
-            onClick = onCollapse,
-            modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
-        )
+        if (!fullscreen) {
+            CollapseButton(
+                onClick = onCollapse,
+                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
+            )
+        }
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 36.dp)
-        ) {
-            Spacer(Modifier.weight(1f))
-
-            // Art with ambient glow ring
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(artSizeDp * 1.28f)
+        if (isLandscape) {
+            LandscapeClassicLayout(
+                thumbnailUrl = thumbnailUrl,
+                artSizeDp = artSizeDp,
+                artShape = artShape,
+                title = title,
+                artist = artist,
+                progressFraction = progressFraction,
+                displayPosition = displayPosition,
+                duration = duration,
+                isPlaying = isPlaying,
+                canSkipPrev = canSkipPrev,
+                canSkipNext = canSkipNext,
+                showTitle = showTitle,
+                showArtist = showArtist,
+                showTime = showTime,
+                showProgress = showProgress,
+                showControls = showControls,
+                onSeekChange = onSeekChange,
+                onSeekFinished = onSeekFinished,
+                onSkipPrev = onSkipPrev,
+                onPlayPause = onPlayPause,
+                onSkipNext = onSkipNext
+            )
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = contentModifier.padding(horizontal = 36.dp)
             ) {
-                // Soft ambient glow
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.055f),
-                                Color.White.copy(alpha = 0.018f),
-                                Color.Transparent
+                Spacer(Modifier.weight(1f))
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(artSizeDp * 1.28f)
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.055f),
+                                    Color.White.copy(alpha = 0.018f),
+                                    Color.Transparent
+                                )
                             )
                         )
-                    )
+                    }
+                    ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
                 }
-                ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
+
+                Spacer(Modifier.height(28.dp))
+
+                AodMetaAndControls(
+                    title = title, artist = artist,
+                    progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
+                    isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
+                    showTitle = showTitle, showArtist = showArtist,
+                    showTime = showTime, showProgress = showProgress, showControls = showControls,
+                    onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
+                    onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
+                )
+
+                Spacer(Modifier.weight(1f))
             }
+        }
+    }
+}
 
-            Spacer(Modifier.height(28.dp))
+@Composable
+private fun LandscapeClassicLayout(
+    thumbnailUrl: String?, artSizeDp: Dp, artShape: AodArtShape,
+    title: String, artist: String,
+    progressFraction: Float, displayPosition: Long, duration: Long,
+    isPlaying: Boolean, canSkipPrev: Boolean, canSkipNext: Boolean,
+    showTitle: Boolean, showArtist: Boolean, showTime: Boolean,
+    showProgress: Boolean, showControls: Boolean,
+    onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
+    onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)
+    ) {
+        // Art on the left
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(artSizeDp * 1.28f)
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.055f),
+                            Color.White.copy(alpha = 0.018f),
+                            Color.Transparent
+                        )
+                    )
+                )
+            }
+            ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
+        }
 
+        Spacer(Modifier.width(32.dp))
+
+        // Controls on the right
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f)
+        ) {
             AodMetaAndControls(
                 title = title, artist = artist,
                 progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
@@ -322,9 +473,8 @@ private fun ClassicAodLayout(
                 showTime = showTime, showProgress = showProgress, showControls = showControls,
                 onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
                 onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
+                isLandscape = true
             )
-
-            Spacer(Modifier.weight(1f))
         }
     }
 }
@@ -344,10 +494,11 @@ private fun BackgroundAodLayout(
     onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
     onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
     onCollapse: () -> Unit,
+    isLandscape: Boolean,
+    fullscreen: Boolean,
+    contentModifier: Modifier = Modifier
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-
-        // ── Full-screen blurred art ──────────────────────────────────────────
         AnimatedContent(
             targetState = thumbnailUrl,
             transitionSpec = { fadeIn(tween(1000)) togetherWith fadeOut(tween(800)) },
@@ -366,59 +517,79 @@ private fun BackgroundAodLayout(
             }
         }
 
-        // ── Dark overlay ─────────────────────────────────────────────────────
         Box(
             modifier = Modifier.fillMaxSize()
                 .background(Color.Black.copy(alpha = (0.28f + darkness * 0.62f).coerceIn(0.22f, 0.92f)))
         )
 
-        // ── Top vignette ─────────────────────────────────────────────────────
         Box(
             modifier = Modifier.fillMaxWidth().fillMaxHeight(0.28f).align(Alignment.TopCenter)
                 .background(Brush.verticalGradient(listOf(Color.Black.copy(0.82f), Color.Transparent)))
         )
 
-        // ── Bottom vignette (stronger, for legibility) ───────────────────────
         Box(
             modifier = Modifier.fillMaxWidth().fillMaxHeight(0.38f).align(Alignment.BottomCenter)
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(0.72f))))
         )
 
-        CollapseButton(
-            onClick = onCollapse,
-            modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
-        )
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 36.dp)
-        ) {
-            Spacer(Modifier.weight(1f))
-
-            // Smaller art (fondo already shows it large)
-            ArtImage(
-                url = thumbnailUrl,
-                sizeDp = (artSizeDp * 0.72f).coerceAtLeast(100.dp),
-                shape = artShape
+        if (!fullscreen) {
+            CollapseButton(
+                onClick = onCollapse,
+                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
             )
+        }
 
-            Spacer(Modifier.height(24.dp))
-
-            AodMetaAndControls(
-                title = title, artist = artist,
-                progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                showTitle = showTitle, showArtist = showArtist,
-                showTime = showTime, showProgress = showProgress, showControls = showControls,
-                onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
-            )
-
-            Spacer(Modifier.weight(1f))
+        if (isLandscape) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)
+            ) {
+                ArtImage(
+                    url = thumbnailUrl,
+                    sizeDp = (artSizeDp * 0.72f).coerceAtLeast(100.dp),
+                    shape = artShape
+                )
+                Spacer(Modifier.width(32.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    AodMetaAndControls(
+                        title = title, artist = artist,
+                        progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
+                        isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
+                        showTitle = showTitle, showArtist = showArtist,
+                        showTime = showTime, showProgress = showProgress, showControls = showControls,
+                        onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
+                        onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
+                        isLandscape = true
+                    )
+                }
+            }
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = contentModifier.padding(horizontal = 36.dp)
+            ) {
+                Spacer(Modifier.weight(1f))
+                ArtImage(
+                    url = thumbnailUrl,
+                    sizeDp = (artSizeDp * 0.72f).coerceAtLeast(100.dp),
+                    shape = artShape
+                )
+                Spacer(Modifier.height(24.dp))
+                AodMetaAndControls(
+                    title = title, artist = artist,
+                    progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
+                    isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
+                    showTitle = showTitle, showArtist = showArtist,
+                    showTime = showTime, showProgress = showProgress, showControls = showControls,
+                    onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
+                    onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
+                )
+                Spacer(Modifier.weight(1f))
+            }
         }
     }
 }
@@ -438,29 +609,29 @@ private fun MinimalAodLayout(
     onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
     onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
     onCollapse: () -> Unit,
+    isLandscape: Boolean,
+    fullscreen: Boolean,
+    contentModifier: Modifier = Modifier
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        CollapseButton(
-            onClick = onCollapse,
-            modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
-        )
+        if (!fullscreen) {
+            CollapseButton(
+                onClick = onCollapse,
+                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
+            )
+        }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 48.dp)
+            modifier = contentModifier.padding(horizontal = if (isLandscape) 80.dp else 48.dp)
         ) {
-            // Artist — small, letter-spaced, muted
             AnimatedVisibility(visible = showArtist, enter = fadeIn(), exit = fadeOut()) {
                 Text(
                     text = artist.uppercase(),
                     color = Color.White.copy(alpha = 0.40f),
                     style = MaterialTheme.typography.labelSmall,
-                    fontSize = 10.sp,
+                    fontSize = if (isLandscape) 12.sp else 10.sp,
                     letterSpacing = 2.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -471,7 +642,6 @@ private fun MinimalAodLayout(
 
             if (showArtist && showTitle) Spacer(Modifier.height(10.dp))
 
-            // Thin separator line
             if (showTitle && showArtist) {
                 Box(
                     modifier = Modifier
@@ -481,7 +651,6 @@ private fun MinimalAodLayout(
                 Spacer(Modifier.height(10.dp))
             }
 
-            // Title — large, prominent
             AnimatedVisibility(visible = showTitle, enter = fadeIn(), exit = fadeOut()) {
                 AnimatedContent(
                     targetState = title,
@@ -493,19 +662,19 @@ private fun MinimalAodLayout(
                         color = Color.White,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 2,
+                        maxLines = if (isLandscape) 1 else 2,
                         overflow = TextOverflow.Ellipsis,
                         textAlign = TextAlign.Center,
+                        fontSize = if (isLandscape) 28.sp else 24.sp,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
 
             if ((showTitle || showArtist) && (showProgress || showControls || showTime)) {
-                Spacer(Modifier.height(36.dp))
+                Spacer(Modifier.height(if (isLandscape) 24.dp else 36.dp))
             }
 
-            // Progress — ultra thin
             AnimatedVisibility(visible = showProgress, enter = fadeIn(), exit = fadeOut()) {
                 SquigglySlider(
                     value = progressFraction,
@@ -522,7 +691,6 @@ private fun MinimalAodLayout(
                 )
             }
 
-            // Time labels — small, very muted
             AnimatedVisibility(visible = showTime, enter = fadeIn(), exit = fadeOut()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
@@ -532,55 +700,153 @@ private fun MinimalAodLayout(
                         text = makeTimeString(displayPosition),
                         color = Color.White.copy(alpha = 0.38f),
                         style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp
+                        fontSize = if (isLandscape) 12.sp else 10.sp
                     )
                     if (duration > 0L && duration != C.TIME_UNSET) {
                         Text(
                             text = makeTimeString(duration),
                             color = Color.White.copy(alpha = 0.38f),
                             style = MaterialTheme.typography.labelSmall,
-                            fontSize = 10.sp
+                            fontSize = if (isLandscape) 12.sp else 10.sp
                         )
                     }
                 }
             }
 
-            if ((showProgress || showTime) && showControls) Spacer(Modifier.height(32.dp))
+            if ((showProgress || showTime) && showControls) Spacer(Modifier.height(if (isLandscape) 24.dp else 32.dp))
 
-            // Controls — minimal circles
             AnimatedVisibility(visible = showControls, enter = fadeIn(), exit = fadeOut()) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    AodControlButton(
-                        iconRes = R.drawable.skip_previous, enabled = canSkipPrev,
-                        size = 48.dp, iconSize = 22.dp, onClick = onSkipPrev
-                    )
-                    // Play button — slightly larger but still minimal
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(62.dp).clip(CircleShape)
-                            .background(Color.White)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null, onClick = onPlayPause
-                            )
-                    ) {
-                        Icon(
-                            painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                            contentDescription = null, tint = Color.Black,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                    AodControlButton(
-                        iconRes = R.drawable.skip_next, enabled = canSkipNext,
-                        size = 48.dp, iconSize = 22.dp, onClick = onSkipNext
-                    )
-                }
+                MinimalConnectedControlButtons(
+                    isPlaying = isPlaying,
+                    canSkipPrev = canSkipPrev,
+                    canSkipNext = canSkipNext,
+                    onSkipPrev = onSkipPrev,
+                    onPlayPause = onPlayPause,
+                    onSkipNext = onSkipNext,
+                    isLandscape = isLandscape
+                )
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MinimalConnectedControlButtons(
+    isPlaying: Boolean,
+    canSkipPrev: Boolean,
+    canSkipNext: Boolean,
+    onSkipPrev: () -> Unit,
+    onPlayPause: () -> Unit,
+    onSkipNext: () -> Unit,
+    isLandscape: Boolean = false
+) {
+    val buttonSize = if (isLandscape) 56.dp else 48.dp
+    val playButtonSize = if (isLandscape) 72.dp else 62.dp
+    val iconSize = if (isLandscape) 26.dp else 22.dp
+    val playIconSize = if (isLandscape) 32.dp else 26.dp
+
+    var expandedButton by remember { mutableStateOf<Int?>(null) }
+    val animateDuration = 150
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(if (isLandscape) 8.dp else 6.dp, Alignment.CenterHorizontally),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // Botón Skip Previous
+        MinimalAnimatedButton(
+            iconRes = R.drawable.skip_previous,
+            enabled = canSkipPrev,
+            baseSize = buttonSize,
+            iconSize = iconSize,
+            isExpanded = expandedButton == 0,
+            onClick = {
+                expandedButton = 0
+                onSkipPrev()
+            },
+            onAnimationEnd = { expandedButton = null },
+            animateDuration = animateDuration,
+            modifier = Modifier.weight(if (expandedButton == 0) 1.25f else 1f)
+        )
+
+        // Botón Play/Pause
+        MinimalAnimatedButton(
+            iconRes = if (isPlaying) R.drawable.pause else R.drawable.play,
+            enabled = true,
+            baseSize = playButtonSize,
+            iconSize = playIconSize,
+            isExpanded = expandedButton == 1,
+            isPlayButton = true,
+            onClick = {
+                expandedButton = 1
+                onPlayPause()
+            },
+            onAnimationEnd = { expandedButton = null },
+            animateDuration = animateDuration,
+            modifier = Modifier.weight(if (expandedButton == 1) 1.25f else 1f)
+        )
+
+        // Botón Skip Next
+        MinimalAnimatedButton(
+            iconRes = R.drawable.skip_next,
+            enabled = canSkipNext,
+            baseSize = buttonSize,
+            iconSize = iconSize,
+            isExpanded = expandedButton == 2,
+            onClick = {
+                expandedButton = 2
+                onSkipNext()
+            },
+            onAnimationEnd = { expandedButton = null },
+            animateDuration = animateDuration,
+            modifier = Modifier.weight(if (expandedButton == 2) 1.25f else 1f)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MinimalAnimatedButton(
+    iconRes: Int,
+    enabled: Boolean,
+    baseSize: Dp,
+    iconSize: Dp,
+    isExpanded: Boolean,
+    onClick: () -> Unit,
+    onAnimationEnd: () -> Unit = {},
+    animateDuration: Int = 150,
+    isPlayButton: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val animatedSize by animateDpAsState(
+        targetValue = if (isExpanded) baseSize * 1.2f else baseSize,
+        animationSpec = tween(durationMillis = animateDuration, easing = LinearEasing),
+        finishedListener = { onAnimationEnd() }
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(animatedSize)
+            .clip(CircleShape)
+            .background(
+                if (isPlayButton) Color.White
+                else Color.White.copy(if (enabled) 0.10f else 0.04f)
+            )
+            .clickable(
+                enabled = enabled,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = if (isPlayButton) Color.Black else Color.White.copy(if (enabled) 0.92f else 0.28f),
+            modifier = Modifier.size(iconSize)
+        )
     }
 }
 
@@ -596,34 +862,33 @@ private fun LargeAodLayout(
     onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
     onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
     onCollapse: () -> Unit,
+    isLandscape: Boolean,
+    fullscreen: Boolean,
+    contentModifier: Modifier = Modifier
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-
-        // ── Full-screen art (ocupa toda la pantalla) ──────────────────────────
         AnimatedContent(
             targetState = thumbnailUrl,
             transitionSpec = { fadeIn(tween(700)) togetherWith fadeOut(tween(700)) },
             label = "large_art"
         ) { url ->
             Box(modifier = Modifier.fillMaxSize()) {
-
-
                 val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-                // Imagen a pantalla completa
+                val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+
                 AsyncImage(
                     model = url, contentDescription = null, contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(screenWidth)
+                        .size(if (isLandscape) screenHeight else screenWidth)
                         .clip(artShape.toShape())
                         .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                         .drawWithCache {
-                            // Fade out bottom 38% of art into black
                             val fadeStart = 0.18f
                             val gradient = Brush.verticalGradient(
                                 colorStops = arrayOf(
-                                    0f        to Color.Black,
+                                    0f to Color.Black,
                                     fadeStart to Color.Black,
-                                    1f        to Color.Transparent
+                                    1f to Color.Transparent
                                 )
                             )
                             onDrawWithContent {
@@ -633,11 +898,10 @@ private fun LargeAodLayout(
                         }
                 )
 
-                // ── Gradient fade en la parte inferior para legibilidad ────────
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.42f)  // 42% desde abajo
+                        .fillMaxHeight(0.42f)
                         .align(Alignment.BottomCenter)
                         .background(
                             Brush.verticalGradient(
@@ -652,15 +916,24 @@ private fun LargeAodLayout(
             }
         }
 
-        // ── Controls and meta at bottom (flotando sobre el fade) ───────────────
+        if (!fullscreen) {
+            CollapseButton(
+                onClick = onCollapse,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(14.dp)
+            )
+        }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 36.dp)
-                .padding(bottom = 28.dp)
+                .then(if (!fullscreen) Modifier.navigationBarsPadding() else Modifier)
+                .padding(horizontal = if (isLandscape) 48.dp else 36.dp)
+                .padding(bottom = if (isLandscape) 32.dp else 28.dp)
         ) {
             AnimatedVisibility(visible = showTitle, enter = fadeIn(), exit = fadeOut()) {
                 Text(
@@ -671,6 +944,7 @@ private fun LargeAodLayout(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
+                    fontSize = if (isLandscape) 28.sp else 24.sp,
                     modifier = Modifier.fillMaxWidth().basicMarquee()
                 )
             }
@@ -685,6 +959,7 @@ private fun LargeAodLayout(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
+                    fontSize = if (isLandscape) 18.sp else 16.sp,
                     modifier = Modifier.fillMaxWidth().basicMarquee()
                 )
             }
@@ -715,58 +990,33 @@ private fun LargeAodLayout(
                     Text(
                         makeTimeString(displayPosition),
                         color = Color.White.copy(0.65f),
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelMedium,
+                        fontSize = if (isLandscape) 14.sp else 12.sp
                     )
                     if (duration > 0L && duration != C.TIME_UNSET)
                         Text(
                             makeTimeString(duration),
                             color = Color.White.copy(0.65f),
-                            style = MaterialTheme.typography.labelMedium
+                            style = MaterialTheme.typography.labelMedium,
+                            fontSize = if (isLandscape) 14.sp else 12.sp
                         )
                 }
             }
 
-            if ((showProgress || showTime) && showControls) Spacer(Modifier.height(28.dp))
+            if ((showProgress || showTime) && showControls) Spacer(Modifier.height(if (isLandscape) 20.dp else 28.dp))
 
             if (showControls) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    AodControlButton(R.drawable.skip_previous, canSkipPrev, 54.dp, 26.dp, onSkipPrev)
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.95f))
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onPlayPause
-                            )
-                    ) {
-                        Icon(
-                            painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                            null,
-                            tint = Color.Black,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                    AodControlButton(R.drawable.skip_next, canSkipNext, 54.dp, 26.dp, onSkipNext)
-                }
+                ConnectedControlButtons(
+                    isPlaying = isPlaying,
+                    canSkipPrev = canSkipPrev,
+                    canSkipNext = canSkipNext,
+                    onSkipPrev = onSkipPrev,
+                    onPlayPause = onPlayPause,
+                    onSkipNext = onSkipNext,
+                    isLandscape = isLandscape
+                )
             }
         }
-
-        // ── Collapse button (flotante sobre la imagen, esquina superior derecha) ──
-        CollapseButton(
-            onClick = onCollapse,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .statusBarsPadding()
-                .padding(14.dp)
-        )
     }
 }
 
@@ -785,18 +1035,18 @@ private fun SpotlightAodLayout(
     onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
     onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
     onCollapse: () -> Unit,
+    isLandscape: Boolean,
+    fullscreen: Boolean,
+    contentModifier: Modifier = Modifier
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-
-        // ── Concentric glow rings ─────────────────────────────────────────────
         Canvas(modifier = Modifier.fillMaxSize()) {
             val glowAlpha = (0.22f - darkness * 0.14f).coerceIn(0.04f, 0.24f)
             val artApproxRadius = artSizeDp.toPx() / 2f
             val cx = size.width / 2f
-            val cy = size.height * 0.40f
+            val cy = if (isLandscape) size.height / 2f else size.height * 0.40f
             val center = Offset(cx, cy)
 
-            // Outermost diffuse ring
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(Color.White.copy(glowAlpha * 0.28f), Color.Transparent),
@@ -804,14 +1054,12 @@ private fun SpotlightAodLayout(
                 ),
                 center = center, radius = artApproxRadius * 2.2f
             )
-            // Mid ring stroke (subtle circle outline)
             drawCircle(
                 color = Color.White.copy(alpha = glowAlpha * 0.35f),
                 center = center,
                 radius = artApproxRadius * 1.48f,
                 style = androidx.compose.ui.graphics.drawscope.Stroke(width = 0.6.dp.toPx())
             )
-            // Inner warm glow around art
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
@@ -825,32 +1073,56 @@ private fun SpotlightAodLayout(
             )
         }
 
-        CollapseButton(
-            onClick = onCollapse,
-            modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
-        )
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 36.dp)
-        ) {
-            Spacer(Modifier.weight(1f))
-            ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
-            Spacer(Modifier.height(32.dp))
-            AodMetaAndControls(
-                title = title, artist = artist,
-                progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                showTitle = showTitle, showArtist = showArtist,
-                showTime = showTime, showProgress = showProgress, showControls = showControls,
-                onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
+        if (!fullscreen) {
+            CollapseButton(
+                onClick = onCollapse,
+                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
             )
-            Spacer(Modifier.weight(1f))
+        }
+
+        if (isLandscape) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)
+            ) {
+                ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
+                Spacer(Modifier.width(32.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    AodMetaAndControls(
+                        title = title, artist = artist,
+                        progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
+                        isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
+                        showTitle = showTitle, showArtist = showArtist,
+                        showTime = showTime, showProgress = showProgress, showControls = showControls,
+                        onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
+                        onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
+                        isLandscape = true
+                    )
+                }
+            }
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = contentModifier.padding(horizontal = 36.dp)
+            ) {
+                Spacer(Modifier.weight(1f))
+                ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
+                Spacer(Modifier.height(32.dp))
+                AodMetaAndControls(
+                    title = title, artist = artist,
+                    progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
+                    isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
+                    showTitle = showTitle, showArtist = showArtist,
+                    showTime = showTime, showProgress = showProgress, showControls = showControls,
+                    onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
+                    onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
+                )
+                Spacer(Modifier.weight(1f))
+            }
         }
     }
 }
@@ -883,6 +1155,7 @@ private fun AodMetaAndControls(
     showProgress: Boolean, showControls: Boolean,
     onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
     onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
+    isLandscape: Boolean = false
 ) {
     if (showTitle) {
         AnimatedContent(
@@ -894,10 +1167,11 @@ private fun AodMetaAndControls(
                 text = t, color = Color.White,
                 style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
                 maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+                fontSize = if (isLandscape) 28.sp else 24.sp,
                 modifier = Modifier.fillMaxWidth().basicMarquee()
             )
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(if (isLandscape) 6.dp else 4.dp))
     }
 
     if (showArtist) {
@@ -910,12 +1184,13 @@ private fun AodMetaAndControls(
                 text = a, color = Color.White.copy(alpha = 0.55f),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+                fontSize = if (isLandscape) 18.sp else 16.sp,
                 modifier = Modifier.fillMaxWidth().basicMarquee()
             )
         }
     }
 
-    if ((showTitle || showArtist) && (showProgress || showControls)) Spacer(Modifier.height(30.dp))
+    if ((showTitle || showArtist) && (showProgress || showControls)) Spacer(Modifier.height(if (isLandscape) 20.dp else 30.dp))
 
     if (showProgress) {
         SquigglySlider(
@@ -936,51 +1211,164 @@ private fun AodMetaAndControls(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(makeTimeString(displayPosition), color = Color.White.copy(0.45f),
-                style = MaterialTheme.typography.labelMedium)
+                style = MaterialTheme.typography.labelMedium,
+                fontSize = if (isLandscape) 14.sp else 12.sp)
             if (duration > 0L && duration != C.TIME_UNSET)
                 Text(makeTimeString(duration), color = Color.White.copy(0.45f),
-                    style = MaterialTheme.typography.labelMedium)
+                    style = MaterialTheme.typography.labelMedium,
+                    fontSize = if (isLandscape) 14.sp else 12.sp)
         }
     }
 
-    if ((showProgress || showTime) && showControls) Spacer(Modifier.height(34.dp))
+    if ((showProgress || showTime) && showControls) Spacer(Modifier.height(if (isLandscape) 24.dp else 34.dp))
 
     if (showControls) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterHorizontally),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            AodControlButton(R.drawable.skip_previous, canSkipPrev, 56.dp, 28.dp, onSkipPrev)
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(74.dp).clip(CircleShape).background(Color.White)
-                    .clickable(interactionSource = remember { MutableInteractionSource() },
-                        indication = null, onClick = onPlayPause)
-            ) {
-                Icon(
-                    painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                    null, tint = Color.Black, modifier = Modifier.size(32.dp)
-                )
-            }
-            AodControlButton(R.drawable.skip_next, canSkipNext, 56.dp, 28.dp, onSkipNext)
-        }
+        ConnectedControlButtons(
+            isPlaying = isPlaying,
+            canSkipPrev = canSkipPrev,
+            canSkipNext = canSkipNext,
+            onSkipPrev = onSkipPrev,
+            onPlayPause = onPlayPause,
+            onSkipNext = onSkipNext,
+            isLandscape = isLandscape
+        )
     }
 }
 
 @Composable
-private fun AodControlButton(iconRes: Int, enabled: Boolean, size: Dp, iconSize: Dp, onClick: () -> Unit) {
+// ═════════════════════════════════════════════════════════════════════════════
+//  CONNECTED ANIMATED BUTTONS - Reemplaza a ButtonGroup
+// ═════════════════════════════════════════════════════════════════════════════
+
+@OptIn(ExperimentalMaterial3Api::class)
+private fun ConnectedControlButtons(
+    isPlaying: Boolean,
+    canSkipPrev: Boolean,
+    canSkipNext: Boolean,
+    onSkipPrev: () -> Unit,
+    onPlayPause: () -> Unit,
+    onSkipNext: () -> Unit,
+    isLandscape: Boolean = false
+) {
+    val buttonSize = if (isLandscape) 64.dp else 56.dp
+    val playButtonSize = if (isLandscape) 84.dp else 74.dp
+    val iconSize = if (isLandscape) 32.dp else 28.dp
+    val playIconSize = if (isLandscape) 38.dp else 32.dp
+    val spacing = if (isLandscape) 4.dp else 2.dp  // Espacio mínimo entre botones
+
+    var expandedButton by remember { mutableStateOf<Int?>(null) }
+    val animateDuration = 150
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // Botón Skip Previous
+        AnimatedButton(
+            iconRes = R.drawable.skip_previous,
+            enabled = canSkipPrev,
+            baseSize = buttonSize,
+            iconSize = iconSize,
+            isExpanded = expandedButton == 0,
+            onClick = {
+                expandedButton = 0
+                onSkipPrev()
+            },
+            onAnimationEnd = { expandedButton = null },
+            animateDuration = animateDuration,
+            modifier = Modifier.weight(if (expandedButton == 0) 1.3f else 1f)
+        )
+
+        Spacer(modifier = Modifier.width(spacing))
+
+        // Botón Play/Pause (central)
+        AnimatedButton(
+            iconRes = if (isPlaying) R.drawable.pause else R.drawable.play,
+            enabled = true,
+            baseSize = playButtonSize,
+            iconSize = playIconSize,
+            isExpanded = expandedButton == 1,
+            isPlayButton = true,
+            onClick = {
+                expandedButton = 1
+                onPlayPause()
+            },
+            onAnimationEnd = { expandedButton = null },
+            animateDuration = animateDuration,
+            modifier = Modifier.weight(if (expandedButton == 1) 1.3f else 1f)
+        )
+
+        Spacer(modifier = Modifier.width(spacing))
+
+        // Botón Skip Next
+        AnimatedButton(
+            iconRes = R.drawable.skip_next,
+            enabled = canSkipNext,
+            baseSize = buttonSize,
+            iconSize = iconSize,
+            isExpanded = expandedButton == 2,
+            onClick = {
+                expandedButton = 2
+                onSkipNext()
+            },
+            onAnimationEnd = { expandedButton = null },
+            animateDuration = animateDuration,
+            modifier = Modifier.weight(if (expandedButton == 2) 1.3f else 1f)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AnimatedButton(
+    iconRes: Int,
+    enabled: Boolean,
+    baseSize: Dp,
+    iconSize: Dp,
+    isExpanded: Boolean,
+    onClick: () -> Unit,
+    onAnimationEnd: () -> Unit = {},
+    animateDuration: Int = 150,
+    isPlayButton: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val animatedSize by animateDpAsState(
+        targetValue = if (isExpanded) baseSize * 1.2f else baseSize,
+        animationSpec = tween(durationMillis = animateDuration, easing = LinearEasing),
+        finishedListener = { onAnimationEnd() }
+    )
+
+    val animatedPadding by animateDpAsState(
+        targetValue = if (isExpanded) 4.dp else 0.dp,
+        animationSpec = tween(durationMillis = animateDuration, easing = LinearEasing)
+    )
+
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.size(size).clip(CircleShape)
-            .background(Color.White.copy(if (enabled) 0.10f else 0.04f))
-            .clickable(enabled = enabled,
+        modifier = modifier
+            .padding(horizontal = animatedPadding)
+            .size(animatedSize)
+            .clip(CircleShape)
+            .background(
+                if (isPlayButton) Color.White
+                else Color.White.copy(if (enabled) 0.10f else 0.04f)
+            )
+            .clickable(
+                enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null, onClick = onClick)
+                indication = null,
+                onClick = onClick
+            )
     ) {
-        Icon(painterResource(iconRes), null,
-            tint = Color.White.copy(if (enabled) 0.92f else 0.28f),
-            modifier = Modifier.size(iconSize))
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = if (isPlayButton) Color.Black else Color.White.copy(if (enabled) 0.92f else 0.28f),
+            modifier = Modifier
+                .size(iconSize)
+                .animateContentSize()
+        )
     }
 }
 

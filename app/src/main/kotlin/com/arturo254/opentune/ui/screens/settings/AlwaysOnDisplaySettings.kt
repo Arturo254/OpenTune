@@ -42,16 +42,18 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
@@ -70,7 +72,9 @@ import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.AodArtShape
 import com.arturo254.opentune.constants.AodArtShapeKey
 import com.arturo254.opentune.constants.AodArtSizeKey
+import com.arturo254.opentune.constants.AodAutoActivationKey
 import com.arturo254.opentune.constants.AodDarknessKey
+import com.arturo254.opentune.constants.AodFullscreenKey
 import com.arturo254.opentune.constants.AodShowArtistKey
 import com.arturo254.opentune.constants.AodShowControlsKey
 import com.arturo254.opentune.constants.AodShowProgressKey
@@ -83,10 +87,12 @@ import com.arturo254.opentune.ui.component.PreferenceGroupTitle
 import com.arturo254.opentune.ui.component.SwitchPreference
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.utils.rememberPreference
+import me.saket.squiggles.SquigglySlider
 import kotlin.math.PI
 import kotlin.math.absoluteValue
 import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 private val squircleShape: Shape = GenericShape { size, _ ->
@@ -166,6 +172,15 @@ fun AodArtShape.toShape(): Shape = when (this) {
     AodArtShape.PETAL    -> petalShape
 }
 
+// AOD Auto-activation timeout values
+enum class AodAutoTimeout(val seconds: Int, val labelRes: Int) {
+    NEVER(0, R.string.aod_auto_never),
+    SECONDS_15(15, R.string.aod_auto_15s),
+    SECONDS_30(30, R.string.aod_auto_30s),
+    MINUTE_1(60, R.string.aod_auto_1m),
+    MINUTE_2(120, R.string.aod_auto_2m)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AODSettings(
@@ -181,6 +196,8 @@ fun AODSettings(
     val (showTime,   setShowTime)   = rememberPreference(AodShowTimeKey,     true)
     val (showProgress, setShowProgress) = rememberPreference(AodShowProgressKey, true)
     val (showControls, setShowControls) = rememberPreference(AodShowControlsKey, true)
+    val (fullscreen, setFullscreen) = rememberPreference(AodFullscreenKey,   true)
+    val (autoTimeoutSeconds, setAutoTimeoutSeconds) = rememberPreference(AodAutoActivationKey, 30)
 
     val currentStyle = remember(rawStyle) {
         runCatching { AodStyle.valueOf(rawStyle) }.getOrDefault(AodStyle.CLASSIC)
@@ -189,11 +206,102 @@ fun AODSettings(
         runCatching { AodArtShape.valueOf(rawShape) }.getOrDefault(AodArtShape.ROUNDED)
     }
 
+    var autoTimeoutIndex by remember(autoTimeoutSeconds) {
+        mutableIntStateOf(
+            when (autoTimeoutSeconds) {
+                0 -> 0
+                15 -> 1
+                30 -> 2
+                60 -> 3
+                120 -> 4
+                else -> 2
+            }
+        )
+    }
+
+    val autoTimeouts = listOf(
+        AodAutoTimeout.NEVER,
+        AodAutoTimeout.SECONDS_15,
+        AodAutoTimeout.SECONDS_30,
+        AodAutoTimeout.MINUTE_1,
+        AodAutoTimeout.MINUTE_2
+    )
+
     Column(
         modifier = Modifier
             .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
             .verticalScroll(rememberScrollState())
     ) {
+        // Fullscreen mode preference (new)
+        PreferenceGroupTitle(title = stringResource(R.string.aod_fullscreen_title))
+
+        SwitchPreference(
+            title = { Text(stringResource(R.string.aod_fullscreen_label)) },
+            description = stringResource(R.string.aod_fullscreen_description),
+            icon = { Icon(painterResource(R.drawable.fullscreen), null) },
+            checked = fullscreen, onCheckedChange = setFullscreen,
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        PreferenceGroupTitle(title = stringResource(R.string.aod_auto_activation_title))
+
+        // Auto-activation timeout selector with nice animation
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = stringResource(R.string.aod_auto_activation_label),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = stringResource(autoTimeouts[autoTimeoutIndex].labelRes),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+
+            // Custom slider for timeout values
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = (" "),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.width(32.dp)
+                )
+                SquigglySlider(
+                    value = autoTimeoutIndex.toFloat(),
+                    onValueChange = { newIndex ->
+                        // Redondear al valor más cercano (0,1,2,3,4)
+                        val rounded = (newIndex + 0.5f).toInt().coerceIn(0, 4)
+                        autoTimeoutIndex = rounded
+                        val newSeconds = autoTimeouts[rounded].seconds
+                        setAutoTimeoutSeconds(newSeconds)
+                    },
+                    valueRange = 0f..4f,
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+                )
+                Text(
+                    text = stringResource(R.string.aod_auto_2m_short),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.aod_auto_activation_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
         PreferenceGroupTitle(title = stringResource(R.string.aod_style_title))
 
         LazyRow(
@@ -364,6 +472,7 @@ fun AODSettings(
         scrollBehavior = scrollBehavior,
     )
 }
+
 
 @Composable
 private fun AodStyleCard(

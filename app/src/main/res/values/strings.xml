@@ -856,4 +856,22 @@ OpenTune will only extract your token, and everything else is stored locally.</s
 
     <string name="aod_screen_title">Always On Display</string>
 
+
+    <!-- AOD Auto-activation -->
+    <string name="aod_auto_activation_title">Automatic Activation</string>
+    <string name="aod_auto_activation_label">Inactivity Time</string>
+    <string name="aod_auto_activation_description">Automatically activate AOD after the selected inactivity time</string>
+    <string name="aod_auto_never">Never</string>
+    <string name="aod_auto_15s">15 seconds</string>
+    <string name="aod_auto_30s">30 seconds</string>
+    <string name="aod_auto_1m">1 minute</string>
+    <string name="aod_auto_2m">2 minutes</string>
+    <string name="aod_auto_never_short">Never</string>
+    <string name="aod_auto_2m_short">2 minutes</string>
+
+    <!-- AOD Fullscreen -->
+    <string name="aod_fullscreen_title">Full Screen</string>
+    <string name="aod_fullscreen_label">Immersive Mode</string>
+    <string name="aod_fullscreen_description">Hides the system status bar, navigation, and clock</string>
+
 </resources>

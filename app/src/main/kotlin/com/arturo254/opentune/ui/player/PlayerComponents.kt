@@ -1713,6 +1713,7 @@ fun PlayerControlsContent(
     onSliderValueChange: (Long) -> Unit,
     onSliderValueChangeFinished: () -> Unit,
     currentFormat: FormatEntity? = null,
+    onResetTimer: () -> Unit = {},
 ) {
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
     val currentSongLiked = currentSong?.song?.liked == true

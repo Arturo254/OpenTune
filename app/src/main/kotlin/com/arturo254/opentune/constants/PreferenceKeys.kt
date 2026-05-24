@@ -620,3 +620,9 @@ val AodShowArtistKey = booleanPreferencesKey("aod_show_artist")
 val AodShowTimeKey = booleanPreferencesKey("aod_show_time_labels")
 val AodShowProgressKey = booleanPreferencesKey("aod_show_progress")
 val AodShowControlsKey = booleanPreferencesKey("aod_show_controls")
+
+// AOD Auto-activation timeout (seconds): 0 = never, 15, 30, 60, 120
+val AodAutoActivationKey = intPreferencesKey("aod_auto_activation_seconds")
+
+// AOD Fullscreen mode (hide system UI)
+val AodFullscreenKey = booleanPreferencesKey("aod_fullscreen_mode")
