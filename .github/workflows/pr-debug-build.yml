@@ -5,7 +5,7 @@
 # so only the latest commit's build result ever posts to the PR.
 # ───────────────────
 
-name: PR Debug Build test
+name: Debug Build
 
 on:
   pull_request:
