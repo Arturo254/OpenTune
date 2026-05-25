@@ -1474,7 +1474,6 @@ class MainActivity : ComponentActivity() {
                                             FloatingNavigationToolbar(
                                                 items = navigationItems,
                                                 pureBlack = pureBlack,
-                                                liquidGlass = liquidGlassNavBar,
                                                 modifier = Modifier
                                                     .align(Alignment.BottomCenter)
                                                     .padding(

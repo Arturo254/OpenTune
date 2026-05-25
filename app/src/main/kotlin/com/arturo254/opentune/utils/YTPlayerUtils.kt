@@ -137,6 +137,12 @@ object YTPlayerUtils {
         return true
     }
 
+    class InvalidPlaybackLoginContextException(
+        val videoId: String,
+        val targetUrl: String,
+        cause: Throwable,
+    ) : IllegalStateException("Invalid YouTube Music playback login context", cause)
+
     private fun normalizeStreamClientKey(clientKey: String?): String {
         return clientKey?.trim()?.takeIf { it.isNotBlank() }?.uppercase(Locale.US).orEmpty()
     }
