@@ -50,7 +50,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import android.content.Intent
-import com.arturo254.opentune.ui.utils.ThumbnailCache
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.system.exitProcess
@@ -78,9 +77,6 @@ class App : Application(), SingletonImageLoader.Factory {
     }
 
 
-    fun initThumbnailCache(context: android.content.Context) {
-        ThumbnailCache.init(context)
-    }
     
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {

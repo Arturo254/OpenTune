@@ -110,6 +110,7 @@ import com.arturo254.opentune.ui.menu.PlayerMenu
 import com.arturo254.opentune.ui.theme.PlayerBackgroundColorUtils
 import com.arturo254.opentune.ui.component.PlayerSliderColors
 import com.arturo254.opentune.ui.utils.ShowMediaInfo
+import com.arturo254.opentune.ui.utils.highRes
 import com.arturo254.opentune.utils.makeTimeString
 
 @Composable
@@ -1864,7 +1865,7 @@ fun PlayerBackground(
                     if (thumbnailUrl != null) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             AsyncImage(
-                                model = thumbnailUrl,
+                                model = thumbnailUrl.highRes(),
                                 contentDescription = "Blurred background",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize().let {
@@ -1965,7 +1966,7 @@ fun PlayerBackground(
                     if (thumbnailUrl != null) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             AsyncImage(
-                                model = thumbnailUrl,
+                                model = thumbnailUrl.highRes(),
                                 contentDescription = "Blurred background",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize().let {

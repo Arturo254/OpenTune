@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
-
 /*
  * OpenTune Project Original (2026)
  * Arturo254 (github.com/Arturo254)
@@ -7,6 +5,7 @@
  */
 
 
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 
 package com.arturo254.opentune.ui.component
 
@@ -17,7 +16,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -51,17 +49,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -74,7 +63,6 @@ import com.arturo254.opentune.ui.screens.Screens
 fun FloatingNavigationToolbar(
     items: List<Screens>,
     pureBlack: Boolean,
-    liquidGlass: Boolean = false,
     modifier: Modifier = Modifier,
     onFabClick: (() -> Unit)? = null,
     fabIconRes: Int? = null,
@@ -87,19 +75,12 @@ fun FloatingNavigationToolbar(
     isSelected: (Screens) -> Boolean,
     onItemClick: (Screens, Boolean) -> Unit,
 ) {
-    val toolbarContainerColor = floatingToolbarContainerColor(pureBlack = pureBlack, liquidGlass = liquidGlass)
+    val toolbarContainerColor = floatingToolbarContainerColor(pureBlack = pureBlack)
     val toolbarColors = FloatingToolbarDefaults.standardFloatingToolbarColors(
         toolbarContainerColor = toolbarContainerColor,
     )
     val hasOverflowAction = onShuffleClick != null && shuffleIconRes != null
     val hasFabAction = onFabClick != null && fabIconRes != null
-
-    // Modificador para el efecto Liquid Glass: borde con gradiente de luz y overlay sutil
-    val glassModifier = if (liquidGlass) {
-        Modifier.liquidGlassStyle(pureBlack = pureBlack)
-    } else {
-        Modifier
-    }
 
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
@@ -113,7 +94,6 @@ fun FloatingNavigationToolbar(
                 floatingActionButton = {
                     FloatingToolbarOverflowAction(
                         pureBlack = pureBlack,
-                        liquidGlass = liquidGlass,
                         onShuffleClick = onShuffleClick,
                         shuffleIconRes = shuffleIconRes,
                         shuffleContentDescription = shuffleContentDescription,
@@ -121,19 +101,17 @@ fun FloatingNavigationToolbar(
                         musicRecognitionContentDescription = musicRecognitionContentDescription,
                     )
                 },
-                modifier = Modifier
-                    .widthIn(max = 480.dp)
-                    .then(glassModifier),
+                modifier = Modifier.widthIn(max = 480.dp),
                 colors = toolbarColors,
             ) {
                 items.forEach { screen ->
                     val selected = isSelected(screen)
+
                     FloatingNavigationToolbarItem(
                         screen = screen,
                         selected = selected,
                         showSelectedLabel = showSelectedLabels,
                         pureBlack = pureBlack,
-                        liquidGlass = liquidGlass,
                         onClick = { onItemClick(screen, selected) },
                     )
                 }
@@ -144,25 +122,22 @@ fun FloatingNavigationToolbar(
                 floatingActionButton = {
                     FloatingToolbarFabAction(
                         pureBlack = pureBlack,
-                        liquidGlass = liquidGlass,
                         onClick = onFabClick,
                         iconRes = fabIconRes,
                         contentDescription = fabContentDescription,
                     )
                 },
-                modifier = Modifier
-                    .widthIn(max = 480.dp)
-                    .then(glassModifier),
+                modifier = Modifier.widthIn(max = 480.dp),
                 colors = toolbarColors,
             ) {
                 items.forEach { screen ->
                     val selected = isSelected(screen)
+
                     FloatingNavigationToolbarItem(
                         screen = screen,
                         selected = selected,
                         showSelectedLabel = showSelectedLabels,
                         pureBlack = pureBlack,
-                        liquidGlass = liquidGlass,
                         onClick = { onItemClick(screen, selected) },
                     )
                 }
@@ -170,19 +145,17 @@ fun FloatingNavigationToolbar(
         } else {
             HorizontalFloatingToolbar(
                 expanded = true,
-                modifier = Modifier
-                    .widthIn(max = 420.dp)
-                    .then(glassModifier),
+                modifier = Modifier.widthIn(max = 420.dp),
                 colors = toolbarColors,
             ) {
                 items.forEach { screen ->
                     val selected = isSelected(screen)
+
                     FloatingNavigationToolbarItem(
                         screen = screen,
                         selected = selected,
                         showSelectedLabel = showSelectedLabels,
                         pureBlack = pureBlack,
-                        liquidGlass = liquidGlass,
                         onClick = { onItemClick(screen, selected) },
                     )
                 }
@@ -191,82 +164,9 @@ fun FloatingNavigationToolbar(
     }
 }
 
-// ── Efecto visual Liquid Glass ───────────────────────────────────────────────
-
-/**
- * Aplica el estilo Liquid Glass al toolbar:
- * - Borde superior más brillante (simula refracción de luz en el borde del vidrio)
- * - Borde inferior más sutil (reflejo secundario)
- * - Overlay de highlight en la parte superior (brillo tipo lente)
- */
-private fun Modifier.liquidGlassStyle(
-    pureBlack: Boolean,
-    shape: Shape = RoundedCornerShape(
-        topStart = 100.dp,
-        bottomStart = 100.dp,
-        topEnd = 24.dp,
-        bottomEnd = 24.dp
-    ),
-): Modifier =
-    this
-        .clip(shape)
-        .border(
-            width = 0.8.dp,
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    Color.White.copy(alpha = if (pureBlack) 0.22f else 0.38f),
-                    Color.White.copy(alpha = if (pureBlack) 0.04f else 0.08f),
-                ),
-            ),
-            shape = shape,
-        )
-        .drawWithContent {
-            drawContent()
-
-            // 🔥 highlight horizontal (vidrio)
-            drawRoundRect(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color.Transparent,
-                        Color.White.copy(alpha = if (pureBlack) 0.10f else 0.18f),
-                        Color.Transparent,
-                    ),
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f)
-                ),
-                size = size,
-                cornerRadius = CornerRadius(
-                    x = size.height / 4f,
-                    y = size.height / 4f
-                )
-            )
-
-            // 🔥 brillo superior
-            drawRoundRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = if (pureBlack) 0.06f else 0.12f),
-                        Color.Transparent,
-                    ),
-                    startY = 0f,
-                    endY = size.height * 0.6f
-                ),
-                size = size,
-                cornerRadius = CornerRadius(
-                    x = size.height / 4f,
-                    y = size.height / 4f
-                )
-            )
-        }
-
-
-
-// ── Subcomponentes ───────────────────────────────────────────────────────────
-
 @Composable
 private fun FloatingToolbarOverflowAction(
     pureBlack: Boolean,
-    liquidGlass: Boolean,
     onShuffleClick: (() -> Unit)?,
     shuffleIconRes: Int?,
     shuffleContentDescription: String,
@@ -275,39 +175,19 @@ private fun FloatingToolbarOverflowAction(
 ) {
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
-    val fabShape = RoundedCornerShape(16.dp)
-
-    val glassModifier = if (liquidGlass) {
-        Modifier.liquidGlassStyle(
-            pureBlack = pureBlack,
-            shape = fabShape
-        )
-    } else Modifier
-
     Box {
-        // 🔥 FAB con glass consistente
-        Box(
-            modifier = glassModifier
+        FloatingToolbarDefaults.VibrantFloatingActionButton(
+            onClick = { fabMenuExpanded = !fabMenuExpanded },
+            containerColor = floatingToolbarFabContainerColor(pureBlack = pureBlack),
+            contentColor = floatingToolbarFabContentColor(pureBlack = pureBlack),
         ) {
-            FloatingToolbarDefaults.VibrantFloatingActionButton(
-                onClick = { fabMenuExpanded = !fabMenuExpanded },
-                containerColor = floatingToolbarFabContainerColor(
-                    pureBlack = pureBlack,
-                    liquidGlass = liquidGlass
-                ),
-                contentColor = floatingToolbarFabContentColor(
-                    pureBlack = pureBlack,
-                    liquidGlass = liquidGlass
-                ),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.more_horiz),
-                    contentDescription =
-                        shuffleContentDescription.ifEmpty {
-                            stringResource(R.string.more)
-                        },
-                )
-            }
+            Icon(
+                painter = painterResource(R.drawable.more_horiz),
+                contentDescription =
+                    shuffleContentDescription.ifEmpty {
+                        stringResource(R.string.more)
+                    },
+            )
         }
 
         DropdownMenu(
@@ -390,7 +270,6 @@ private fun FloatingToolbarOverflowAction(
 @Composable
 private fun FloatingToolbarFabAction(
     pureBlack: Boolean,
-    liquidGlass: Boolean,
     onClick: (() -> Unit)?,
     iconRes: Int?,
     contentDescription: String,
@@ -399,8 +278,8 @@ private fun FloatingToolbarFabAction(
 
     FloatingToolbarDefaults.VibrantFloatingActionButton(
         onClick = onClick,
-        containerColor = floatingToolbarFabContainerColor(pureBlack = pureBlack, liquidGlass = liquidGlass),
-        contentColor = floatingToolbarFabContentColor(pureBlack = pureBlack, liquidGlass = liquidGlass),
+        containerColor = floatingToolbarFabContainerColor(pureBlack = pureBlack),
+        contentColor = floatingToolbarFabContentColor(pureBlack = pureBlack),
     ) {
         Icon(
             painter = painterResource(iconRes),
@@ -418,14 +297,13 @@ private fun FloatingNavigationToolbarItem(
     selected: Boolean,
     showSelectedLabel: Boolean,
     pureBlack: Boolean,
-    liquidGlass: Boolean,
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(24.dp)
     val containerColor by animateColorAsState(
         targetValue =
             when {
-                selected -> floatingToolbarSelectedItemContainerColor(pureBlack = pureBlack, liquidGlass = liquidGlass)
+                selected -> floatingToolbarSelectedItemContainerColor(pureBlack = pureBlack)
                 else -> Color.Transparent
             },
         label = "",
@@ -433,8 +311,8 @@ private fun FloatingNavigationToolbarItem(
     val contentColor by animateColorAsState(
         targetValue =
             when {
-                selected -> floatingToolbarSelectedItemContentColor(pureBlack = pureBlack, liquidGlass = liquidGlass)
-                else -> floatingToolbarItemContentColor(pureBlack = pureBlack, liquidGlass = liquidGlass)
+                selected -> floatingToolbarSelectedItemContentColor(pureBlack = pureBlack)
+                else -> floatingToolbarItemContentColor(pureBlack = pureBlack)
             },
         label = "",
     )
@@ -491,68 +369,40 @@ private fun FloatingNavigationToolbarItem(
     }
 }
 
-// ── Color helpers ────────────────────────────────────────────────────────────
-
 @Composable
-private fun floatingToolbarContainerColor(pureBlack: Boolean, liquidGlass: Boolean): Color {
-    return when {
-        liquidGlass && pureBlack -> Color.Black.copy(alpha = 0.70f)
-        liquidGlass              -> MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.78f)
-        pureBlack                -> Color.Black
-        else                     -> MaterialTheme.colorScheme.surfaceContainer
-    }
+private fun floatingToolbarContainerColor(pureBlack: Boolean): Color {
+    return if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
 }
 
 @Composable
-private fun floatingToolbarFabContainerColor(pureBlack: Boolean, liquidGlass: Boolean): Color {
-    return when {
-        liquidGlass && pureBlack -> Color.White.copy(alpha = 0.16f)
-        liquidGlass              -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.72f)
-        pureBlack                -> Color.White.copy(alpha = 0.12f)
-        else                     -> MaterialTheme.colorScheme.tertiaryContainer
-    }
+private fun floatingToolbarFabContainerColor(pureBlack: Boolean): Color {
+    return if (pureBlack) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.tertiaryContainer
 }
 
 @Composable
-private fun floatingToolbarFabContentColor(pureBlack: Boolean, liquidGlass: Boolean): Color {
-    return when {
-        liquidGlass && pureBlack -> Color.White
-        liquidGlass              -> MaterialTheme.colorScheme.onTertiaryContainer
-        pureBlack                -> Color.White
-        else                     -> MaterialTheme.colorScheme.onTertiaryContainer
-    }
+private fun floatingToolbarFabContentColor(pureBlack: Boolean): Color {
+    return if (pureBlack) Color.White else MaterialTheme.colorScheme.onTertiaryContainer
 }
 
 @Composable
-private fun floatingToolbarSelectedItemContainerColor(pureBlack: Boolean, liquidGlass: Boolean): Color {
-    return when {
-        liquidGlass && pureBlack -> Color.White.copy(alpha = 0.18f)
-        liquidGlass              -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.70f)
-        pureBlack                -> Color.White.copy(alpha = 0.12f)
-        else                     -> MaterialTheme.colorScheme.secondaryContainer
-    }
+private fun floatingToolbarSelectedItemContainerColor(pureBlack: Boolean): Color {
+    return if (pureBlack) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.secondaryContainer
 }
 
 @Composable
-private fun floatingToolbarSelectedItemContentColor(pureBlack: Boolean, liquidGlass: Boolean): Color {
-    return when {
-        liquidGlass -> MaterialTheme.colorScheme.onSecondaryContainer  // igual en dark/light/pureBlack
-        pureBlack   -> Color.White
-        else        -> MaterialTheme.colorScheme.onSecondaryContainer
-    }
+private fun floatingToolbarSelectedItemContentColor(pureBlack: Boolean): Color {
+    return if (pureBlack) Color.White else MaterialTheme.colorScheme.onSecondaryContainer
 }
 
 @Composable
-private fun floatingToolbarItemContentColor(pureBlack: Boolean, liquidGlass: Boolean): Color {
-    return when {
-        liquidGlass && pureBlack -> Color.White.copy(alpha = 0.85f)
-        liquidGlass              -> MaterialTheme.colorScheme.onSurface  // sin alpha — máxima visibilidad
-        pureBlack                -> Color.White.copy(alpha = 0.82f)
-        else                     -> MaterialTheme.colorScheme.onSurfaceVariant
+private fun floatingToolbarItemContentColor(pureBlack: Boolean): Color {
+    return if (pureBlack) {
+        Color.White.copy(alpha = 0.82f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
     }
 }
 
-// Estas dos no cambian con liquidGlass (solo se usan en el DropdownMenu)
 @Composable
 private fun floatingToolbarMenuIconContainerColor(pureBlack: Boolean): Color {
     return if (pureBlack) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.secondaryContainer
