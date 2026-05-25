@@ -1,0 +1,167 @@
+# ───────────────────
+# Pull Request — Debug APK Build & Comment
+# Triggered on every pull request targeting any branch.
+# Cancels any in-progress run for the same PR when a new commit is pushed,
+# so only the latest commit's build result ever posts to the PR.
+# ───────────────────
+
+name: PR Debug Build test
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: ["**"]
+    paths-ignore:
+      - "assets/**"
+      - "docs/**"
+      - "fastlane/**"
+      - "**/*.md"
+      - ".github/**"
+      - "LICENSE"
+
+# One concurrent run per PR. New pushes cancel the previous run.
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build:
+    name: Android Debug Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      # Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      # Java setup
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: gradle
+
+      # Gradle permissions
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      # Extract version from build.gradle.kts
+      - name: Extract app version from build.gradle.kts
+        id: version
+        run: |
+          # Extract versionName and versionCode from app/build.gradle.kts
+          VERSION=$(grep 'versionName = ' app/build.gradle.kts | grep -oP '"[^"]+"' | head -1 | tr -d '"')
+          VERSION_CODE=$(grep 'versionCode = ' app/build.gradle.kts | grep -oP '[0-9]+' | head -1)
+          
+          # Parse major.minor.patch
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          
+          cat <<EOFOUT >> "$GITHUB_OUTPUT"
+          version=$VERSION
+          version_code=$VERSION_CODE
+          version_major=${MAJOR:-0}
+          version_minor=${MINOR:-0}
+          version_patch=${PATCH:-0}
+          EOFOUT
+
+      # Build Debug APK
+      - name: Build debug APK
+        run: |
+          set -e
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      # Rename APK for clarity
+      - name: Rename APK artifact
+        run: |
+          mkdir -p artifacts
+          APK_PATH=$(find app/build/outputs -type f -name "app-universal-debug.apk" | head -n 1)
+          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+            echo "Error: app-universal-debug.apk not found"
+            exit 1
+          fi
+          echo "Found APK: $APK_PATH"
+          cp "$APK_PATH" "artifacts/OpenTune-v${{ steps.version.outputs.version }}-debug.apk"
+
+      # Upload artifact
+      - name: Upload debug APK
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: OpenTune-v${{ steps.version.outputs.version }}-debug-PR${{ github.event.pull_request.number }}
+          path: artifacts/OpenTune-v${{ steps.version.outputs.version }}-debug.apk
+          retention-days: 60
+
+      # Post comment on PR
+      - name: Post APK download comment on PR
+        uses: actions/github-script@v9
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          RUN_NUMBER: ${{ github.run_number }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber   = context.payload.pull_request.number;
+            const version    = process.env.VERSION;
+            const runNumber  = process.env.RUN_NUMBER;
+            const runId      = context.runId;
+            const repo       = context.repo;
+            const artifactId = process.env.ARTIFACT_ID;
+            const artifactName = `OpenTune-v${version}-debug-PR${prNumber}`;
+            const downloadVersion = `${version}+${runNumber}`;
+
+            const runUrl      = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}`;
+            const artifactUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}/artifacts/${artifactId}`;
+
+            const badgeUrl   = `https://img.shields.io/badge/Download%20APK-v${downloadVersion}-4CAF50?style=for-the-badge&logo=android&logoColor=white`;
+            const commentBody = `## ✅ Debug APK Build Successful
+
+            [![Static Badge](https://img.shields.io/badge/debug_build-passing-brightgreen?style=for-the-badge&logo=android)](${runUrl})
+            
+            | Detail | Value |
+            |--------|-------|
+            | **Version** | \`v${version}\` |
+            | **Build Num** | \`#${runNumber}\` |
+            | **PR** | #${prNumber} |
+            | **Artifact** | \`${artifactName}\` |
+            | **Expires** | 60 days |
+
+            ---
+
+            ### 📲 Download
+
+            [![Download APK v${downloadVersion}](${badgeUrl})](${artifactUrl})
+
+            ---
+            <sub>🤖 This comment is auto-generated by the PR Debug APK build workflow.</sub>`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              ...repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes('Debug APK Build Successful')
+            );
+
+            if (botComment) {
+              await github.rest.issues.deleteComment({
+                ...repo,
+                comment_id: botComment.id,
+              });
+            }
+
+            await github.rest.issues.createComment({
+              ...repo,
+              issue_number: prNumber,
+              body: commentBody,
+            });
