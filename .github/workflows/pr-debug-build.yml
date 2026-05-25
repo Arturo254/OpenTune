@@ -76,7 +76,7 @@ jobs:
       - name: Build debug APK
         run: |
           set -e
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleUniversalDebug --no-daemon --stacktrace
 
       # Rename APK for clarity
       - name: Rename APK artifact
