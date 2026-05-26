@@ -124,15 +124,17 @@ constructor(
                 return@Factory dataSpec.withUri(it.first.toUri())
             }
             val playbackData = runBlocking(Dispatchers.IO) {
-                val networkMeteredPref = context.dataStore.get(NetworkMeteredKey, true)
-                YTPlayerUtils.playerResponseForPlayback(
-                    mediaId,
-                    audioQuality = audioQuality,
-                    preferredStreamClient = preferredStreamClient,
-                    connectivityManager = connectivityManager,
-                    networkMetered = networkMeteredPref,
-                    avoidCodecs = avoidStreamCodecs,
-                )
+                withTimeout(30_000L) {
+                    val networkMeteredPref = context.dataStore.get(NetworkMeteredKey, true)
+                    YTPlayerUtils.playerResponseForPlayback(
+                        mediaId,
+                        audioQuality = audioQuality,
+                        preferredStreamClient = preferredStreamClient,
+                        connectivityManager = connectivityManager,
+                        networkMetered = networkMeteredPref,
+                        avoidCodecs = avoidStreamCodecs,
+                    )
+                }
             }.getOrThrow()
             val format = playbackData.format
 

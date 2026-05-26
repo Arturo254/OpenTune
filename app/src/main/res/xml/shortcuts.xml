@@ -20,4 +20,15 @@
             android:targetClass="com.arturo254.opentune.MainActivity"
             android:targetPackage="com.arturo254.opentune" />
     </shortcut>
+    <capability android:name="actions.intent.GET_MEDIA">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.arturo254.opentune.MainActivity"
+            android:targetPackage="com.arturo254.opentune">
+            <url-template android:value="opentune://play/{MediaSearch.query}" />
+            <parameter
+                android:name="MediaSearch.query"
+                android:key="query" />
+        </intent>
+    </capability>
 </shortcuts>

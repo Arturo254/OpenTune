@@ -533,7 +533,7 @@ fun ForgottenFavoritesSection(
 ) {
     val rows = min(4, forgottenFavorites.size)
     val distinctForgottenFavorites = remember(forgottenFavorites) { forgottenFavorites.distinctBy { it.id } }
-    
+
     LazyHorizontalGrid(
         state = lazyGridState,
         rows = GridCells.Fixed(rows),

@@ -128,14 +128,14 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(forgottenFavorites) {
+        forgottenFavoritesLazyGridState.scrollToItem(0)
+    }
+
     LaunchedEffect(showHomeCategoryChips, selectedChip) {
         if (!showHomeCategoryChips && selectedChip != null) {
             viewModel.toggleChip(selectedChip)
         }
-    }
-
-    LaunchedEffect(forgottenFavorites) {
-        forgottenFavoritesLazyGridState.scrollToItem(0)
     }
 
     // Capture M3 Expressive colors from theme outside drawBehind

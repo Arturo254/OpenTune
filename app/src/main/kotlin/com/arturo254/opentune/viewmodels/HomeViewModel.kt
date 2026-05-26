@@ -127,7 +127,6 @@ class HomeViewModel @Inject constructor(
                 launch { getQuickPicks() }
                 launch { loadSpeedDialSongs() }
                 launch { forgottenFavorites.value = database.forgottenFavorites().first().shuffled().take(20) }
-                
                 launch {
                     val keepListeningSongs = database.mostPlayedSongs(fromTimeStamp, limit = 15, offset = 5)
                         .first().shuffled().take(10)

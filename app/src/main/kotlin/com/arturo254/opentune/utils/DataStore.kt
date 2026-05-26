@@ -9,7 +9,6 @@
 package com.arturo254.opentune.utils
 
 import android.content.Context
-import android.os.Looper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -29,8 +28,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.properties.ReadOnlyProperty
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -68,30 +65,12 @@ object PreferenceStore {
 
 operator fun <T> DataStore<Preferences>.get(key: Preferences.Key<T>): T? =
     PreferenceStore.get(key)
-        ?: if (Looper.getMainLooper().thread == Thread.currentThread()) {
-            null
-        } else {
-            runBlocking(Dispatchers.IO) {
-                withTimeoutOrNull(1500) {
-                    data.first()[key]
-                }
-            }
-        }
 
 fun <T> DataStore<Preferences>.get(
     key: Preferences.Key<T>,
     defaultValue: T,
 ): T =
-    PreferenceStore.get(key)
-        ?: if (Looper.getMainLooper().thread == Thread.currentThread()) {
-            defaultValue
-        } else {
-            runBlocking(Dispatchers.IO) {
-                withTimeoutOrNull(1500) {
-                    data.first()[key]
-                } ?: defaultValue
-            }
-        }
+    PreferenceStore.get(key) ?: defaultValue
 
 suspend fun <T> DataStore<Preferences>.getAsync(key: Preferences.Key<T>): T? =
     data.first()[key]

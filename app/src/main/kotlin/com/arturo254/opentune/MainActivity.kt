@@ -10,6 +10,7 @@ package com.arturo254.opentune
 
 import android.annotation.SuppressLint
 import android.Manifest
+import android.app.SearchManager
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
@@ -151,6 +152,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import com.arturo254.opentune.utils.PreferenceStore
 import kotlinx.coroutines.withContext
 import com.arturo254.opentune.constants.AppBarHeight
@@ -1721,6 +1723,40 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleDeepLinkIntent(intent: Intent, navController: NavHostController) {
+        if (intent.action == android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
+            val query = intent.getStringExtra(SearchManager.QUERY)?.trim() ?: return
+            navController.navigate("search/$query")
+            lifecycleScope.launch(Dispatchers.IO) {
+                val songs = runCatching {
+                    withTimeout(5_000L) { database.searchSongs(query, previewSize = 1).first() }
+                }.getOrNull()
+                if (!songs.isNullOrEmpty()) {
+                    pendingDeepLinkSong = PendingDeepLinkSong(songs.first().toMediaItem())
+                    startMusicServiceSafely()
+                    playPendingDeepLinkSongIfReady()
+                } else {
+                    val songItem = runCatching {
+                        withTimeout(10_000L) {
+                            YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()
+                                ?.items?.filterIsInstance<SongItem>()?.firstOrNull()
+                        }
+                    }.getOrNull()
+                    if (songItem != null) {
+                        val queued = runCatching {
+                            withTimeout(10_000L) { YouTube.queue(listOf(songItem.id)).getOrThrow() }
+                        }.getOrNull()
+                        val mediaItem = queued?.firstOrNull { it.id == songItem.id }?.toMediaItem()
+                            ?: queued?.firstOrNull()?.toMediaItem()
+                            ?: songItem.toMediaItem()
+                        pendingDeepLinkSong = PendingDeepLinkSong(mediaItem)
+                        startMusicServiceSafely()
+                        playPendingDeepLinkSongIfReady()
+                    }
+                }
+            }
+            return
+        }
+
         val uri = intent.data ?: intent.extras?.getString(Intent.EXTRA_TEXT)?.toUri() ?: return
         val coroutineScope = lifecycleScope
 
@@ -1734,6 +1770,40 @@ class MainActivity : ComponentActivity() {
 
         if (uri.scheme.equals("OpenTune", ignoreCase = true) && authority == "login") {
             navController.navigate(buildLoginRoute(uri.getQueryParameter(LOGIN_URL_ARGUMENT)))
+            return
+        }
+
+        if (uri.scheme.equals("OpenTune", ignoreCase = true) && authority == "play") {
+            val query = uri.getQueryParameter("query")?.trim() ?: return
+            navController.navigate("search/$query")
+            lifecycleScope.launch(Dispatchers.IO) {
+                val songs = runCatching {
+                    withTimeout(5_000L) { database.searchSongs(query, previewSize = 1).first() }
+                }.getOrNull()
+                if (!songs.isNullOrEmpty()) {
+                    pendingDeepLinkSong = PendingDeepLinkSong(songs.first().toMediaItem())
+                    startMusicServiceSafely()
+                    playPendingDeepLinkSongIfReady()
+                } else {
+                    val songItem = runCatching {
+                        withTimeout(10_000L) {
+                            YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()
+                                ?.items?.filterIsInstance<SongItem>()?.firstOrNull()
+                        }
+                    }.getOrNull()
+                    if (songItem != null) {
+                        val queued = runCatching {
+                            withTimeout(10_000L) { YouTube.queue(listOf(songItem.id)).getOrThrow() }
+                        }.getOrNull()
+                        val mediaItem = queued?.firstOrNull { it.id == songItem.id }?.toMediaItem()
+                            ?: queued?.firstOrNull()?.toMediaItem()
+                            ?: songItem.toMediaItem()
+                        pendingDeepLinkSong = PendingDeepLinkSong(mediaItem)
+                        startMusicServiceSafely()
+                        playPendingDeepLinkSongIfReady()
+                    }
+                }
+            }
             return
         }
 

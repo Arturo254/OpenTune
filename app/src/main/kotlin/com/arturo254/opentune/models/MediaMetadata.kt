@@ -13,10 +13,12 @@ import com.arturo254.opentune.innertube.models.SongItem
 import com.arturo254.opentune.db.entities.Song
 import com.arturo254.opentune.db.entities.SongEntity
 import com.arturo254.opentune.ui.utils.resize
-import java.io.Serializable
 import java.time.LocalDateTime
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 
 @Immutable
+@Serializable
 data class MediaMetadata(
     val id: String,
     val title: String,
@@ -27,33 +29,25 @@ data class MediaMetadata(
     val setVideoId: String? = null,
     val explicit: Boolean = false,
     val liked: Boolean = false,
-    val likedDate: LocalDateTime? = null,
-    val inLibrary: LocalDateTime? = null,
-) : Serializable {
+    @Contextual val likedDate: LocalDateTime? = null,
+    @Contextual val inLibrary: LocalDateTime? = null,
+) {
     companion object {
-        private const val serialVersionUID = 1L
-
         const val UNKNOWN_DURATION = -1
     }
 
+    @Serializable
     data class Artist(
         val id: String?,
         val name: String,
         val thumbnailUrl: String? = null,
-    ) : Serializable {
-        companion object {
-            private const val serialVersionUID = 1L
-        }
-    }
+    )
 
+    @Serializable
     data class Album(
         val id: String,
         val title: String,
-    ) : Serializable {
-        companion object {
-            private const val serialVersionUID = 1L
-        }
-    }
+    )
 
     fun toSongEntity() =
         SongEntity(
