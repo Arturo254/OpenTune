@@ -20,6 +20,7 @@
     <string name="speed_dial">Speed dial</string>
     <string name="speed_dial_random">Play random speed dial song</string>
     <string name="forgotten_favorites">Forgotten favorites</string>
+    <string name="recently_added">Recently added</string>
     <string name="keep_listening">Keep listening</string>
     <string name="your_youtube_playlists">Your YouTube playlists</string>
     <string name="similar_to">Similar to</string>
@@ -878,5 +879,48 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="playback_confirmation_required">Playback confirmation required</string>
     <string name="playback_requires_youtube_music_login_refresh">Refresh your YouTube Music login, then return to OpenTune.</string>
     <string name="error_malformed_stream">Source error</string>
+
+    <!-- Android Auto Download Manager -->
+    <string name="download_manager">Download Manager</string>
+    <string name="download_current_song">Download Current Song</string>
+    <string name="download_queue">Download Queue</string>
+    <string name="remove_download_current">Remove Download (Current Song)</string>
+
+    <!-- Android Auto Lyrics -->
+    <string name="current_lyrics">Current Lyrics</string>
+    <string name="view_lyrics">View Lyrics</string>
+    <string name="no_lyrics_available">No lyrics available</string>
+    <string name="lyrics_provider">Lyrics Provider</string>
+
+    <!-- Android Auto Car Settings -->
+    <string name="car_settings">Car Settings</string>
+    <string name="stop_on_bluetooth_disconnect">Stop on Bluetooth Disconnect</string>
+    <string name="media_button_behavior">Media Button Behavior</string>
+    <string name="notification_in_car">Notification in Car</string>
+    <string name="cancel_sleep_timer">Cancel Sleep Timer</string>
+    <string name="play_pause_only">Play/Pause Only</string>
+     <string name="all_controls">All Controls</string>
+
+     <!-- Android Auto Recent Searches & Artist Grouping -->
+     <string name="recent_searches">Recent Searches</string>
+     <string name="clear_search_history_aa">Clear Search History</string>
+     <string name="artists_a_z">Artists (A-Z)</string>
+     <string name="no_recent_searches">No recent searches</string>
+
+    <!-- Android Auto Audio & Playback Settings -->
+    <string name="auto_quality">Auto Quality</string>
+    <string name="auto_play">Auto Play</string>
+
+    <!-- Android Auto Social Integrations -->
+    <string name="social_integrations">Social Integrations</string>
+    <string name="lastfm_scrobbling">Last.fm Scrobbling</string>
+    <string name="now_scrobbling">Now scrobbling: %s</string>
+    <string name="discord_rpc">Discord RPC</string>
+    <string name="not_configured">Not configured</string>
+
+    <!-- Android Auto Shazam -->
+    <string name="shazam_current_song">Shazam Current Song</string>
+    <string name="shazam_found">Shazam found: %1$s by %2$s</string>
+    <string name="shazam_no_match">No Shazam match found</string>
 
 </resources>

@@ -62,7 +62,6 @@ class HomeViewModel @Inject constructor(
 
     val quickPicks = MutableStateFlow<List<Song>?>(null)
     val speedDialSongs = MutableStateFlow<List<Song>>(emptyList())
-    val forgottenFavorites = MutableStateFlow<List<Song>?>(null)
     val keepListening = MutableStateFlow<List<LocalItem>?>(null)
     val similarRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
     val accountPlaylists = MutableStateFlow<List<PlaylistItem>?>(null)
@@ -126,8 +125,6 @@ class HomeViewModel @Inject constructor(
 
                 launch { getQuickPicks() }
                 launch { loadSpeedDialSongs() }
-                launch { forgottenFavorites.value = database.forgottenFavorites().first().shuffled().take(20) }
-                
                 launch {
                     val keepListeningSongs = database.mostPlayedSongs(fromTimeStamp, limit = 15, offset = 5)
                         .first().shuffled().take(10)
@@ -182,7 +179,7 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
-            allLocalItems.value = (quickPicks.value.orEmpty() + forgottenFavorites.value.orEmpty() + keepListening.value.orEmpty())
+            allLocalItems.value = (quickPicks.value.orEmpty() + keepListening.value.orEmpty())
                 .filter { it is Song || it is Album }
 
             viewModelScope.launch(Dispatchers.IO) {

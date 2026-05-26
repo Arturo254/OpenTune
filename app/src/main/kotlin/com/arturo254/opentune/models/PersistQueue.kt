@@ -8,8 +8,9 @@
 
 package com.arturo254.opentune.models
 
-import java.io.Serializable
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class PersistQueue(
     val title: String?,
     val items: List<MediaMetadata>,
@@ -17,57 +18,45 @@ data class PersistQueue(
     val position: Long,
     val queueType: QueueType = QueueType.LIST,
     val queueData: QueueData? = null,
-) : Serializable {
-    companion object {
-        private const val serialVersionUID = 1L
-    }
+)
+
+@Serializable
+sealed class QueueType {
+    @Serializable
+    data object LIST : QueueType()
+
+    @Serializable
+    data object YOUTUBE : QueueType()
+
+    @Serializable
+    data object YOUTUBE_ALBUM_RADIO : QueueType()
+
+    @Serializable
+    data object LOCAL_ALBUM_RADIO : QueueType()
 }
 
-sealed class QueueType : Serializable {
-    object LIST : QueueType() {
-        private const val serialVersionUID = 1L
-    }
-    object YOUTUBE : QueueType() {
-        private const val serialVersionUID = 1L
-    }
-    object YOUTUBE_ALBUM_RADIO : QueueType() {
-        private const val serialVersionUID = 1L
-    }
-    object LOCAL_ALBUM_RADIO : QueueType() {
-        private const val serialVersionUID = 1L
-    }
-}
-
-sealed class QueueData : Serializable {
+@Serializable
+sealed class QueueData {
+    @Serializable
     data class YouTubeData(
         val endpoint: String,
         val continuation: String? = null
-    ) : QueueData() {
-        companion object {
-            private const val serialVersionUID = 1L
-        }
-    }
-    
+    ) : QueueData()
+
+    @Serializable
     data class YouTubeAlbumRadioData(
         val playlistId: String,
         val albumSongCount: Int = 0,
         val continuation: String? = null,
         val firstTimeLoaded: Boolean = false
-    ) : QueueData() {
-        companion object {
-            private const val serialVersionUID = 1L
-        }
-    }
-    
+    ) : QueueData()
+
+    @Serializable
     data class LocalAlbumRadioData(
         val albumId: String,
         val startIndex: Int = 0,
         val playlistId: String? = null,
         val continuation: String? = null,
         val firstTimeLoaded: Boolean = false
-    ) : QueueData() {
-        companion object {
-            private const val serialVersionUID = 1L
-        }
-    }
+    ) : QueueData()
 }

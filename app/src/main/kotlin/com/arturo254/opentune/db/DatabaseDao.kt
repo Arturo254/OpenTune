@@ -83,6 +83,22 @@ interface DatabaseDao {
     fun songsByCreateDateAsc(): Flow<List<Song>>
 
     @Transaction
+    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL ORDER BY inLibrary DESC")
+    fun songsByCreateDateDesc(): Flow<List<Song>>
+
+    @Transaction
+    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL ORDER BY dateDownload DESC LIMIT :limit OFFSET :offset")
+    suspend fun songsByDateDownloadDescPaged(limit: Int, offset: Int): List<Song>
+
+    @Transaction
+    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL ORDER BY inLibrary LIMIT :limit OFFSET :offset")
+    suspend fun songsByCreateDateAscPaged(limit: Int, offset: Int): List<Song>
+
+    @Transaction
+    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL ORDER BY inLibrary DESC LIMIT :limit OFFSET :offset")
+    suspend fun songsByCreateDateDescPaged(limit: Int, offset: Int): List<Song>
+
+    @Transaction
     @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL ORDER BY title")
     fun songsByNameAsc(): Flow<List<Song>>
 
@@ -194,6 +210,14 @@ interface DatabaseDao {
     @Transaction
     @Query("SELECT * FROM song WHERE liked ORDER BY likedDate, rowId")
     fun likedSongsByCreateDateAsc(): Flow<List<Song>>
+
+    @Transaction
+    @Query("SELECT * FROM song WHERE liked ORDER BY likedDate, rowId LIMIT :limit OFFSET :offset")
+    suspend fun likedSongsByCreateDateAscPaged(limit: Int, offset: Int): List<Song>
+
+    @Transaction
+    @Query("SELECT * FROM song WHERE liked = 1 AND inLibrary IS NOT NULL ORDER BY inLibrary DESC LIMIT :limit OFFSET :offset")
+    suspend fun likedSongsPaged(limit: Int, offset: Int): List<Song>
 
     @Transaction
     @Query("SELECT * FROM song WHERE liked ORDER BY title")
@@ -309,14 +333,40 @@ interface DatabaseDao {
     fun albumSongs(albumId: String): Flow<List<Song>>
 
     @Transaction
+    @Query("SELECT song.* FROM song JOIN song_album_map ON song.id = song_album_map.songId WHERE song_album_map.albumId = :albumId AND song.inLibrary IS NOT NULL ORDER BY song.inLibrary DESC LIMIT :limit OFFSET :offset")
+    suspend fun albumSongsPaged(albumId: String, limit: Int, offset: Int): List<Song>
+
+    @Transaction
     @Query("SELECT * FROM playlist_song_map WHERE playlistId = :playlistId ORDER BY position")
     fun playlistSongs(playlistId: String): Flow<List<PlaylistSong>>
+
+    @Transaction
+    @Query("SELECT * FROM playlist_song_map WHERE playlistId = :playlistId ORDER BY position LIMIT :limit OFFSET :offset")
+    suspend fun playlistSongsPaged(playlistId: String, limit: Int, offset: Int): List<PlaylistSong>
+
+    @Transaction
+    @Query(
+        "SELECT song.* FROM playlist_song_map JOIN song ON playlist_song_map.songId = song.id WHERE playlist_song_map.playlistId = :playlistId ORDER BY playlist_song_map.position LIMIT :limit OFFSET :offset",
+    )
+    suspend fun playlistSongsWithSongPaged(playlistId: String, limit: Int, offset: Int): List<Song>
 
     @Transaction
     @Query(
         "SELECT song.* FROM song_artist_map JOIN song ON song_artist_map.songId = song.id WHERE artistId = :artistId AND inLibrary IS NOT NULL ORDER BY inLibrary",
     )
     fun artistSongsByCreateDateAsc(artistId: String): Flow<List<Song>>
+
+    @Transaction
+    @Query(
+        "SELECT song.* FROM song_artist_map JOIN song ON song_artist_map.songId = song.id WHERE artistId = :artistId AND inLibrary IS NOT NULL ORDER BY inLibrary LIMIT :limit OFFSET :offset",
+    )
+    suspend fun artistSongsByCreateDateAscPaged(artistId: String, limit: Int, offset: Int): List<Song>
+
+    @Transaction
+    @Query(
+        "SELECT song.* FROM song_artist_map JOIN song ON song_artist_map.songId = song.id WHERE artistId = :artistId AND inLibrary IS NOT NULL ORDER BY inLibrary DESC LIMIT :limit OFFSET :offset",
+    )
+    suspend fun artistSongsByCreateDateDescPaged(artistId: String, limit: Int, offset: Int): List<Song>
 
     @Transaction
     @Query(
@@ -703,6 +753,21 @@ interface DatabaseDao {
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
+    @Query("SELECT *, (SELECT COUNT(1) FROM song_artist_map JOIN song ON song_artist_map.songId = song.id WHERE artistId = artist.id AND song.inLibrary IS NOT NULL) AS songCount FROM artist WHERE songCount > 0 ORDER BY rowId DESC")
+    fun artistsByCreateDateDesc(): Flow<List<Artist>>
+
+    @Transaction
+    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
+    @Query("SELECT *, (SELECT COUNT(1) FROM song_artist_map JOIN song ON song_artist_map.songId = song.id WHERE artistId = artist.id AND song.inLibrary IS NOT NULL) AS songCount FROM artist WHERE songCount > 0 ORDER BY rowId DESC LIMIT :limit OFFSET :offset")
+    suspend fun artistsByCreateDateDescPaged(limit: Int, offset: Int): List<Artist>
+
+    @Transaction
+    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
+    @Query("SELECT *, (SELECT COUNT(1) FROM song_artist_map JOIN song ON song_artist_map.songId = song.id WHERE artistId = artist.id AND song.inLibrary IS NOT NULL) AS songCount FROM artist WHERE songCount > 0 AND (UPPER(SUBSTR(name, 1, 1)) BETWEEN :startLetter AND :endLetter OR name GLOB '[0-9]*' OR name GLOB '[^a-zA-Z0-9]*') ORDER BY name LIMIT :limit OFFSET :offset")
+    suspend fun artistsByLetterRangePaged(startLetter: String, endLetter: String, limit: Int, offset: Int): List<Artist>
+
+    @Transaction
+    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
     @Query("SELECT *, (SELECT COUNT(1) FROM song_artist_map JOIN song ON song_artist_map.songId = song.id WHERE artistId = artist.id AND song.inLibrary IS NOT NULL) AS songCount FROM artist WHERE songCount > 0 ORDER BY name")
     fun artistsByNameAsc(): Flow<List<Artist>>
 
@@ -804,6 +869,16 @@ interface DatabaseDao {
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
     @Query("SELECT * FROM album WHERE EXISTS(SELECT * FROM song WHERE song.albumId = album.id AND song.inLibrary IS NOT NULL) ORDER BY rowId")
     fun albumsByCreateDateAsc(): Flow<List<Album>>
+
+    @Transaction
+    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
+    @Query("SELECT * FROM album WHERE EXISTS(SELECT * FROM song WHERE song.albumId = album.id AND song.inLibrary IS NOT NULL) ORDER BY rowId DESC")
+    fun albumsByCreateDateDesc(): Flow<List<Album>>
+
+    @Transaction
+    @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
+    @Query("SELECT * FROM album WHERE EXISTS(SELECT * FROM song WHERE song.albumId = album.id AND song.inLibrary IS NOT NULL) ORDER BY rowId DESC LIMIT :limit OFFSET :offset")
+    suspend fun albumsByCreateDateDescPaged(limit: Int, offset: Int): List<Album>
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
@@ -1014,6 +1089,14 @@ interface DatabaseDao {
     fun playlistsByCreateDateAsc(): Flow<List<Playlist>>
 
     @Transaction
+    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL ORDER BY rowId DESC")
+    fun playlistsByCreateDateDesc(): Flow<List<Playlist>>
+
+    @Transaction
+    @Query("SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL ORDER BY rowId DESC LIMIT :limit OFFSET :offset")
+    suspend fun playlistsByCreateDateDescPaged(limit: Int, offset: Int): List<Playlist>
+
+    @Transaction
     @Query(
         "SELECT *, (SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = playlist.id) AS songCount FROM playlist WHERE bookmarkedAt IS NOT NULL ORDER BY lastUpdateTime",
     )
@@ -1112,7 +1195,7 @@ interface DatabaseDao {
     @Query("SELECT * FROM song WHERE title LIKE '%' || :query || '%' AND inLibrary IS NOT NULL LIMIT :previewSize")
     fun searchSongs(
         query: String,
-        previewSize: Int = Int.MAX_VALUE,
+        previewSize: Int = 50,
     ): Flow<List<Song>>
 
     @Transaction
@@ -1122,7 +1205,7 @@ interface DatabaseDao {
     )
     fun searchArtists(
         query: String,
-        previewSize: Int = Int.MAX_VALUE,
+        previewSize: Int = 50,
     ): Flow<List<Artist>>
 
     @Transaction
@@ -1132,7 +1215,7 @@ interface DatabaseDao {
     )
     fun searchAlbums(
         query: String,
-        previewSize: Int = Int.MAX_VALUE,
+        previewSize: Int = 50,
     ): Flow<List<Album>>
 
     @Transaction
@@ -1141,7 +1224,7 @@ interface DatabaseDao {
     )
     fun searchPlaylists(
         query: String,
-        previewSize: Int = Int.MAX_VALUE,
+        previewSize: Int = 50,
     ): Flow<List<Playlist>>
 
     @Transaction

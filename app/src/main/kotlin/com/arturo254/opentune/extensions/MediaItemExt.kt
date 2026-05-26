@@ -34,12 +34,13 @@ fun Song.toMediaItem() =
         .setMediaMetadata(
             androidx.media3.common.MediaMetadata
                 .Builder()
-                .setTitle(song.title)
+                .setTitle(if (song.explicit) "${song.title} E" else song.title)
                 .setSubtitle(artists.joinToString { it.name })
                 .setArtist(artists.joinToString { it.name })
                 .setArtworkUri(song.thumbnailUrl?.toUri())
                 .setAlbumTitle(song.albumName)
                 .setMediaType(MEDIA_TYPE_MUSIC)
+                .setDurationMs((song.duration * 1000L).coerceAtLeast(0L))
                 .setExtras(Bundle().apply { putBoolean(ExtraIsMusicVideo, false) })
                 .build(),
         ).build()
@@ -54,12 +55,15 @@ fun SongItem.toMediaItem() =
         .setMediaMetadata(
             androidx.media3.common.MediaMetadata
                 .Builder()
-                .setTitle(title)
+                .setTitle(if (explicit) "$title E" else title)
                 .setSubtitle(artists.joinToString { it.name })
                 .setArtist(artists.joinToString { it.name })
                 .setArtworkUri(thumbnail.toUri())
                 .setAlbumTitle(album?.name)
+                .setIsPlayable(true)
+                .setIsBrowsable(false)
                 .setMediaType(MEDIA_TYPE_MUSIC)
+                .setDurationMs(((duration ?: 0) * 1000L).coerceAtLeast(0L))
                 .setExtras(Bundle().apply { putBoolean(ExtraIsMusicVideo, isMusicVideo()) })
                 .build(),
         ).build()
@@ -74,12 +78,13 @@ fun MediaMetadata.toMediaItem() =
         .setMediaMetadata(
             androidx.media3.common.MediaMetadata
                 .Builder()
-                .setTitle(title)
+                .setTitle(if (explicit) "$title E" else title)
                 .setSubtitle(artists.joinToString { it.name })
                 .setArtist(artists.joinToString { it.name })
                 .setArtworkUri(thumbnailUrl?.toUri())
                 .setAlbumTitle(album?.title)
                 .setMediaType(MEDIA_TYPE_MUSIC)
+                .setDurationMs((duration * 1000L).coerceAtLeast(0L))
                 .setExtras(Bundle().apply { putBoolean(ExtraIsMusicVideo, false) })
                 .build(),
         ).build()

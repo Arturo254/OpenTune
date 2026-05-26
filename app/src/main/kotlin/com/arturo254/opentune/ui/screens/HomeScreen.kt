@@ -55,7 +55,6 @@ import com.arturo254.opentune.ui.component.ChipsRow
 import com.arturo254.opentune.ui.component.LocalBottomSheetPageState
 import com.arturo254.opentune.ui.component.LocalMenuState
 import com.arturo254.opentune.ui.component.NavigationTitle
-import com.arturo254.opentune.ui.utils.SnapLayoutInfoProvider
 import com.arturo254.opentune.utils.rememberPreference
 import com.arturo254.opentune.viewmodels.HomeViewModel
 
@@ -76,7 +75,6 @@ fun HomeScreen(
 
     val quickPicks by viewModel.quickPicks.collectAsState()
     val speedDialSongs by viewModel.speedDialSongs.collectAsState()
-    val forgottenFavorites by viewModel.forgottenFavorites.collectAsState()
     val keepListening by viewModel.keepListening.collectAsState()
     val homePage by viewModel.homePage.collectAsState()
 
@@ -85,8 +83,6 @@ fun HomeScreen(
     val isLoading: Boolean by viewModel.isLoading.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val pullRefreshState = rememberPullToRefreshState()
-
-    val forgottenFavoritesLazyGridState = rememberLazyGridState()
 
     val accountName by viewModel.accountName.collectAsState()
     val accountImageUrl by viewModel.accountImageUrl.collectAsState()
@@ -132,10 +128,6 @@ fun HomeScreen(
         if (!showHomeCategoryChips && selectedChip != null) {
             viewModel.toggleChip(selectedChip)
         }
-    }
-
-    LaunchedEffect(forgottenFavorites) {
-        forgottenFavoritesLazyGridState.scrollToItem(0)
     }
 
     // Capture M3 Expressive colors from theme outside drawBehind
@@ -263,14 +255,6 @@ fun HomeScreen(
         ) {
             val horizontalLazyGridItemWidthFactor = if (maxWidth * 0.475f >= 320.dp) 0.475f else 0.9f
             val horizontalLazyGridItemWidth = maxWidth * horizontalLazyGridItemWidthFactor
-            val forgottenFavoritesSnapLayoutInfoProvider = remember(forgottenFavoritesLazyGridState) {
-                SnapLayoutInfoProvider(
-                    lazyGridState = forgottenFavoritesLazyGridState,
-                    positionInLayout = { layoutSize, itemSize ->
-                        (layoutSize * horizontalLazyGridItemWidthFactor / 2f - itemSize / 2f)
-                    }
-                )
-            }
 
             LazyColumn(
                 state = lazylistState,
@@ -366,30 +350,6 @@ fun HomeScreen(
                 haptic = haptic,
                 scope = scope
             )
-
-            forgottenFavorites?.takeIf { it.isNotEmpty() }?.let { favorites ->
-                item {
-                    NavigationTitle(
-                        title = stringResource(R.string.forgotten_favorites),
-                        modifier = Modifier.animateItem()
-                    )
-                }
-
-                item {
-                    ForgottenFavoritesSection(
-                        forgottenFavorites = favorites,
-                        mediaMetadata = mediaMetadata,
-                        isPlaying = isPlaying,
-                        horizontalLazyGridItemWidth = horizontalLazyGridItemWidth,
-                        lazyGridState = forgottenFavoritesLazyGridState,
-                        snapLayoutInfoProvider = forgottenFavoritesSnapLayoutInfoProvider,
-                        navController = navController,
-                        playerConnection = playerConnection,
-                        menuState = menuState,
-                        haptic = haptic
-                    )
-                }
-            }
 
             SimilarRecommendationsContainer(
                 viewModel = viewModel,

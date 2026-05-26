@@ -8,6 +8,7 @@
 
  package com.arturo254.opentune.utils
 
+import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -57,6 +58,16 @@ class CoilBitmapLoader(
             val density = context.resources.displayMetrics.density
             val maxIconSizePx = (density * 128f).roundToInt().coerceIn(128, 512)
             val attempts = 3
+
+            if (uri.scheme == ContentResolver.SCHEME_ANDROID_RESOURCE) {
+                try {
+                    val bitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(uri))
+                    if (bitmap != null) return@future bitmap.copy(Bitmap.Config.ARGB_8888, false)
+                } catch (e: Exception) {
+                    reportException(e)
+                }
+            }
+
             for (attempt in 1..attempts) {
                 try {
                     val request = ImageRequest.Builder(context)

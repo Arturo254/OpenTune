@@ -8,8 +8,9 @@
 
 package com.arturo254.opentune.models
 
-import java.io.Serializable
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class PersistPlayerState(
     val playWhenReady: Boolean,
     val repeatMode: Int,
@@ -19,8 +20,4 @@ data class PersistPlayerState(
     val currentMediaItemIndex: Int,
     val playbackState: Int,
     val timestamp: Long = System.currentTimeMillis()
-) : Serializable {
-    companion object {
-        private const val serialVersionUID = 1L
-    }
-}
+)
