@@ -75,6 +75,7 @@ fun HomeScreen(
 
     val quickPicks by viewModel.quickPicks.collectAsState()
     val speedDialSongs by viewModel.speedDialSongs.collectAsState()
+    val forgottenFavorites by viewModel.forgottenFavorites.collectAsState()
     val keepListening by viewModel.keepListening.collectAsState()
     val homePage by viewModel.homePage.collectAsState()
 
@@ -83,6 +84,8 @@ fun HomeScreen(
     val isLoading: Boolean by viewModel.isLoading.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val pullRefreshState = rememberPullToRefreshState()
+
+    val forgottenFavoritesLazyGridState = rememberLazyGridState()
 
     val accountName by viewModel.accountName.collectAsState()
     val accountImageUrl by viewModel.accountImageUrl.collectAsState()
