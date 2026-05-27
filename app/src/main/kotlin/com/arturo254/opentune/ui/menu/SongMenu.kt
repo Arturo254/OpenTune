@@ -702,7 +702,7 @@ fun SongMenu(
                         )
                     }
 
-                    when (download?.state) {
+                    when (downloadState) {
                         Download.STATE_COMPLETED -> {
                             ListItem(
                                 headlineContent = {
