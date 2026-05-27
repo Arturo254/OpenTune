@@ -31,8 +31,11 @@ import com.arturo254.opentune.constants.YtmSyncKey
 import com.arturo254.opentune.db.MusicDatabase
 import com.arturo254.opentune.db.entities.*
 import com.arturo254.opentune.extensions.toEnum
+import com.arturo254.opentune.models.ItemMetadata
 import com.arturo254.opentune.models.SimilarRecommendation
+import com.arturo254.opentune.playback.DownloadUtil
 import com.arturo254.opentune.utils.dataStore
+import com.arturo254.opentune.constants.PlaylistSortType
 import com.arturo254.opentune.utils.get
 import com.arturo254.opentune.utils.getAsync
 import com.arturo254.opentune.utils.SyncUtils
@@ -51,6 +54,7 @@ class HomeViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val database: MusicDatabase,
     val syncUtils: SyncUtils,
+    val downloadUtil: DownloadUtil,
 ) : ViewModel() {
     val isRefreshing = MutableStateFlow(false)
     val isLoading = MutableStateFlow(false)
@@ -74,8 +78,53 @@ class HomeViewModel @Inject constructor(
     val recentActivity = MutableStateFlow<List<YTItem>?>(null)
     val recentPlaylistsDb = MutableStateFlow<List<Playlist>?>(null)
 
-    val allLocalItems = MutableStateFlow<List<LocalItem>>(emptyList())
-    val allYtItems = MutableStateFlow<List<YTItem>>(emptyList())
+    val allLocalItems = combine(
+        quickPicks,
+        forgottenFavorites,
+        keepListening
+    ) { quickPicks, forgottenFavorites, keepListening ->
+        (quickPicks.orEmpty() + forgottenFavorites.orEmpty() + keepListening.orEmpty())
+            .filter { it is Song || it is Album }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allYtItems = combine(
+        similarRecommendations,
+        homePage
+    ) { similarRecommendations, homePage ->
+        similarRecommendations?.flatMap { it.items }.orEmpty() +
+                homePage?.sections?.flatMap { it.items }.orEmpty()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allItemsMetadata = combine(
+        database.allSongs(),
+        database.allArtistsByPlayTime(),
+        database.playlists(PlaylistSortType.CREATE_DATE, true),
+        downloadUtil.downloads
+    ) { songs, artists, playlists, downloads ->
+        val metadataMap = mutableMapOf<String, ItemMetadata>()
+
+        songs.forEach { song ->
+            metadataMap[song.id] = ItemMetadata(
+                isLiked = song.song.liked,
+                isInLibrary = song.song.inLibrary != null,
+                downloadState = downloads[song.id]?.state
+            )
+        }
+
+        artists.forEach { artist ->
+            if (artist.artist.bookmarkedAt != null) {
+                metadataMap[artist.id] = ItemMetadata(isLiked = true)
+            }
+        }
+
+        playlists.forEach { playlist ->
+            if (playlist.playlist.bookmarkedAt != null) {
+                metadataMap[playlist.id] = ItemMetadata(isLiked = true)
+            }
+        }
+
+        metadataMap
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     // Account display info
     val accountName = MutableStateFlow("Guest")
@@ -182,15 +231,9 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
-            allLocalItems.value = (quickPicks.value.orEmpty() + forgottenFavorites.value.orEmpty() + keepListening.value.orEmpty())
-                .filter { it is Song || it is Album }
-
             viewModelScope.launch(Dispatchers.IO) {
                 loadSimilarRecommendations()
             }
-
-            allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
-                    homePage.value?.sections?.flatMap { it.items }.orEmpty()
                     
             isInitialLoadComplete.value = true
         } catch (e: Exception) {
@@ -240,9 +283,6 @@ class HomeViewModel @Inject constructor(
             }
 
         similarRecommendations.value = (artistRecommendations + songRecommendations).shuffled()
-        
-        allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
-                homePage.value?.sections?.flatMap { it.items }.orEmpty()
     }
 
     private suspend fun songLoad() {

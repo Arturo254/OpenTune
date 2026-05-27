@@ -96,6 +96,7 @@ import com.arturo254.opentune.ui.component.NewAction
 import com.arturo254.opentune.ui.component.NewActionGrid
 import com.arturo254.opentune.ui.component.SongListItem
 import com.arturo254.opentune.ui.component.TextFieldDialog
+import com.arturo254.opentune.models.ItemMetadata
 import com.arturo254.opentune.ui.utils.ShowMediaInfo
 import com.arturo254.opentune.utils.rememberPreference
 import com.arturo254.opentune.viewmodels.CachePlaylistViewModel
@@ -112,6 +113,7 @@ fun SongMenu(
     playlistBrowseId: String? = null,
     onDismiss: () -> Unit,
     isFromCache: Boolean = false,
+    metadata: ItemMetadata? = null,
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
@@ -120,6 +122,7 @@ fun SongMenu(
     val song = songState.value ?: originalSong
     val download by LocalDownloadUtil.current.getDownload(originalSong.id)
         .collectAsState(initial = null)
+    val downloadState = metadata?.downloadState ?: download?.state
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
     var refetchIconDegree by remember { mutableFloatStateOf(0f) }
