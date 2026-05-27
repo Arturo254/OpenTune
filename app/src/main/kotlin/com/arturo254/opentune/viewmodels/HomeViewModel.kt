@@ -95,19 +95,17 @@ class HomeViewModel @Inject constructor(
                 homePage?.sections?.flatMap { it.items }.orEmpty()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val allItemsMetadata = combine(
+    private val libraryMetadata = combine(
         database.allSongs(),
         database.allArtistsByPlayTime(),
         database.playlists(PlaylistSortType.CREATE_DATE, true),
-        downloadUtil.downloads
-    ) { songs, artists, playlists, downloads ->
+    ) { songs, artists, playlists ->
         val metadataMap = mutableMapOf<String, ItemMetadata>()
 
         songs.forEach { song ->
             metadataMap[song.id] = ItemMetadata(
                 isLiked = song.song.liked,
-                isInLibrary = song.song.inLibrary != null,
-                downloadState = downloads[song.id]?.state
+                isInLibrary = song.song.inLibrary != null
             )
         }
 
@@ -123,6 +121,20 @@ class HomeViewModel @Inject constructor(
             }
         }
 
+        metadataMap
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    val allItemsMetadata = combine(
+        libraryMetadata,
+        downloadUtil.downloads
+    ) { libraryMeta, downloads ->
+        if (downloads.isEmpty()) return@combine libraryMeta
+
+        val metadataMap = libraryMeta.toMutableMap()
+        downloads.forEach { (id, download) ->
+            val current = metadataMap[id] ?: ItemMetadata()
+            metadataMap[id] = current.copy(downloadState = download.state)
+        }
         metadataMap
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
