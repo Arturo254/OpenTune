@@ -76,11 +76,11 @@ fun ChangelogScreen(
     // Función para cargar el contenido según el canal
     suspend fun loadContent() {
         if (updateChannel == UpdateChannel.NIGHTLY) {
-            // Usar el método existente de Updater para obtener nightly info
+            // Solo para NIGHTLY usar getLatestReleaseInfo
             Updater.getLatestReleaseInfo().onSuccess { releaseInfo ->
                 nightlyInfo = NightlyInfo(
                     versionName = releaseInfo.tagName,
-                    apkUrl = "", // No necesitamos la URL aquí
+                    apkUrl = "",
                     changelog = releaseInfo.body,
                     publishedAt = releaseInfo.publishedAt
                 )
@@ -90,18 +90,20 @@ fun ChangelogScreen(
                     error = e.message ?: "Error loading nightly info"
                 }
             }
+            isLoading = false
         } else {
-            // Cargar releases estables
+            // Para STABLE, NO usar getLatestReleaseInfo, solo getAllReleases
             Updater.getAllReleases(forceRefresh = true).onSuccess { result ->
                 releases = result
                 error = null
+                isLoading = false
             }.onFailure { e ->
                 if (releases.isEmpty()) {
                     error = e.message ?: "Error loading releases"
                 }
+                isLoading = false
             }
         }
-        isLoading = false
     }
 
     // Cargar datos iniciales cuando el canal cambie
