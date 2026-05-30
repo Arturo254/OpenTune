@@ -609,6 +609,13 @@ enum class AodArtShape {
     PETAL,
 }
 
+enum class AodControlStyle {
+    ROUNDED,
+    SQUARE,
+    ACCENT,
+    MINIMAL_FLAT,
+}
+
 val AodStyleKey = stringPreferencesKey("aod_style")
 val AodArtShapeKey = stringPreferencesKey("aod_art_shape")
 
@@ -626,3 +633,24 @@ val AodAutoActivationKey = intPreferencesKey("aod_auto_activation_seconds")
 
 // AOD Fullscreen mode (hide system UI)
 val AodFullscreenKey = booleanPreferencesKey("aod_fullscreen_mode")
+
+/** Intensidad del spotlight (0.0 – 1.0) */
+val AodSpotlightIntensityKey = floatPreferencesKey("aod_spotlight_intensity")
+
+/** Pulso / breathing del spotlight */
+val AodSpotlightPulseKey = booleanPreferencesKey("aod_spotlight_pulse")
+
+/** Duración de las transiciones entre canciones en ms */
+val AodTransitionDurationKey = intPreferencesKey("aod_transition_duration")
+
+/** Estilo visual de los botones de control */
+val AodControlStyleKey = stringPreferencesKey("aod_control_style")
+
+/** Escala de texto global (0.8 – 1.4) */
+val AodTextScaleKey = floatPreferencesKey("aod_text_scale")
+
+/** Mostrar reloj del sistema en el AOD */
+val AodShowClockKey = booleanPreferencesKey("aod_show_clock")
+
+/** Formato de 24h para el reloj (true = 24h, false = 12h AM/PM) */
+val AodClockFormatKey = booleanPreferencesKey("aod_clock_24h")

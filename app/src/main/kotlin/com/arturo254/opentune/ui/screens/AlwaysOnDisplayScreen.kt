@@ -8,15 +8,25 @@
 
 package com.arturo254.opentune.ui.screens
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -63,11 +73,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -79,20 +93,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.C
 import androidx.media3.common.Player.STATE_READY
 import androidx.navigation.NavController
+import androidx.palette.graphics.Palette
 import coil3.compose.AsyncImage
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.constants.AodArtShape
 import com.arturo254.opentune.constants.AodArtShapeKey
 import com.arturo254.opentune.constants.AodArtSizeKey
-import com.arturo254.opentune.constants.AodAutoActivationKey
 import com.arturo254.opentune.constants.AodDarknessKey
 import com.arturo254.opentune.constants.AodFullscreenKey
 import com.arturo254.opentune.constants.AodShowArtistKey
@@ -102,6 +119,14 @@ import com.arturo254.opentune.constants.AodShowTimeKey
 import com.arturo254.opentune.constants.AodShowTitleKey
 import com.arturo254.opentune.constants.AodStyle
 import com.arturo254.opentune.constants.AodStyleKey
+import com.arturo254.opentune.constants.AodSpotlightIntensityKey
+import com.arturo254.opentune.constants.AodSpotlightPulseKey
+import com.arturo254.opentune.constants.AodTransitionDurationKey
+import com.arturo254.opentune.constants.AodControlStyleKey
+import com.arturo254.opentune.constants.AodControlStyle
+import com.arturo254.opentune.constants.AodTextScaleKey
+import com.arturo254.opentune.constants.AodClockFormatKey
+import com.arturo254.opentune.constants.AodShowClockKey
 import com.arturo254.opentune.extensions.togglePlayPause
 import com.arturo254.opentune.ui.screens.settings.toShape
 import com.arturo254.opentune.utils.makeTimeString
@@ -110,7 +135,59 @@ import com.skydoves.cloudy.cloudy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import me.saket.squiggles.SquigglySlider
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.abs
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Utilidad: extrae el color dominante de la portada vía Palette API
+// ═══════════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun rememberDominantColor(thumbnailUrl: String?): Color {
+    val context = LocalContext.current
+    var dominantColor by remember(thumbnailUrl) { mutableStateOf(Color.White) }
+
+    LaunchedEffect(thumbnailUrl) {
+        if (thumbnailUrl == null) {
+            dominantColor = Color.White
+            return@LaunchedEffect
+        }
+        runCatching {
+            val req = ImageRequest.Builder(context)
+                .data(thumbnailUrl)
+                .allowHardware(false)   // Palette necesita bitmap de software
+                .size(128, 128)         // Tamaño pequeño es suficiente y más rápido
+                .build()
+            val result = context.imageLoader.execute(req)
+            if (result is SuccessResult) {
+                val bmp: Bitmap = (result.image as? coil3.BitmapImage)?.bitmap
+                    ?: return@LaunchedEffect
+                Palette.from(bmp).generate { palette ->
+                    val swatch = palette?.vibrantSwatch
+                        ?: palette?.dominantSwatch
+                        ?: palette?.lightVibrantSwatch
+                    swatch?.rgb?.let { rgb ->
+                        dominantColor = Color(rgb)
+                    }
+                }
+            }
+        }
+    }
+    return dominantColor
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Estado compartido entre transiciones — clave de sincronización
+// ═══════════════════════════════════════════════════════════════════════════
+
+private data class AodMediaState(
+    val id: String?,
+    val thumbnailUrl: String?,
+    val title: String,
+    val artist: String,
+)
 
 @RequiresApi(Build.VERSION_CODES.R)
 @Composable
@@ -132,12 +209,9 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
 
         if (fullscreenMode && window != null) {
             WindowCompat.setDecorFitsSystemWindows(window, false)
-
             val insetsController = WindowInsetsControllerCompat(window, view)
             insetsController.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-
-            // 3. Ocultar todo en una sola llamada (evita race condition)
             insetsController.hide(WindowInsetsCompat.Type.systemBars())
         }
 
@@ -151,6 +225,7 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
         }
     }
 
+    // ── Preferencias ────────────────────────────────────────────────────
     val (rawStyle) = rememberPreference(AodStyleKey, AodStyle.CLASSIC.name)
     val (rawShape) = rememberPreference(AodArtShapeKey, AodArtShape.ROUNDED.name)
     val (darkness) = rememberPreference(AodDarknessKey, 0.55f)
@@ -160,10 +235,23 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
     val (showTime) = rememberPreference(AodShowTimeKey, true)
     val (showProgress) = rememberPreference(AodShowProgressKey, true)
     val (showControls) = rememberPreference(AodShowControlsKey, true)
+    val (spotlightIntensity) = rememberPreference(AodSpotlightIntensityKey, 0.75f)
+    val (spotlightPulse) = rememberPreference(AodSpotlightPulseKey, true)
+    val (transitionDuration) = rememberPreference(AodTransitionDurationKey, 700)
+    val (rawControlStyle) = rememberPreference(AodControlStyleKey, AodControlStyle.ROUNDED.name)
+    val (textScale) = rememberPreference(AodTextScaleKey, 1.0f)
+    val (showClock) = rememberPreference(AodShowClockKey, false)
+    val (clockFormat24h) = rememberPreference(AodClockFormatKey, true)
 
-    val aodStyle = remember(rawStyle) { runCatching { AodStyle.valueOf(rawStyle) }.getOrDefault(AodStyle.CLASSIC) }
-    val artShape = remember(rawShape) { runCatching { AodArtShape.valueOf(rawShape) }.getOrDefault(AodArtShape.ROUNDED) }
+    val aodStyle =
+        remember(rawStyle) { runCatching { AodStyle.valueOf(rawStyle) }.getOrDefault(AodStyle.CLASSIC) }
+    val artShape =
+        remember(rawShape) { runCatching { AodArtShape.valueOf(rawShape) }.getOrDefault(AodArtShape.ROUNDED) }
+    val controlStyle = remember(rawControlStyle) {
+        runCatching { AodControlStyle.valueOf(rawControlStyle) }.getOrDefault(AodControlStyle.ROUNDED)
+    }
 
+    // ── Player state ─────────────────────────────────────────────────────
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val playbackState by playerConnection.playbackState.collectAsState()
@@ -180,13 +268,13 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
                 delay(200L)
                 position = playerConnection.player.currentPosition
                 duration = playerConnection.player.duration
-                sliderPosition?.let { if (abs(playerConnection.player.currentPosition - it) <= 1_500L) sliderPosition = null }
+                sliderPosition?.let {
+                    if (abs(playerConnection.player.currentPosition - it) <= 1_500L) sliderPosition =
+                        null
+                }
             }
         }
     }
-
-
-
 
     val displayPosition = sliderPosition ?: position
     val progressFraction = remember(displayPosition, duration) {
@@ -197,12 +285,25 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
         mediaMetadata?.artists?.joinToString(", ") { it.name }.orEmpty()
     }
 
+    // ── Estado sincronizado para transiciones ────────────────────────────
+    val mediaState = remember(mediaMetadata?.id) {
+        AodMediaState(
+            id = mediaMetadata?.id,
+            thumbnailUrl = mediaMetadata?.thumbnailUrl,
+            title = mediaMetadata?.title.orEmpty(),
+            artist = artistText,
+        )
+    }
+
+    // ── Color dominante (se comparte entre layouts) ───────────────────────
+    val dominantColor = rememberDominantColor(mediaState.thumbnailUrl)
+
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val screenWidthDp = configuration.screenWidthDp.dp
     val artSizeDp: Dp = remember(artSizeFrac, screenWidthDp, isLandscape) {
-        val baseSize = if (isLandscape) screenWidthDp * 0.35f else screenWidthDp * artSizeFrac
-        (baseSize).coerceIn(100.dp, screenWidthDp)
+        val base = if (isLandscape) screenWidthDp * 0.35f else screenWidthDp * artSizeFrac
+        base.coerceIn(100.dp, screenWidthDp)
     }
 
     val onSeekChange: (Float) -> Unit = { f ->
@@ -214,275 +315,213 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
         sliderPosition = null
     }
 
-    val contentModifier = if (fullscreenMode) {
-        Modifier.fillMaxSize()
-    } else {
-        Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
+    val contentModifier = if (fullscreenMode) Modifier.fillMaxSize()
+    else Modifier
+        .fillMaxSize()
+        .statusBarsPadding()
+        .navigationBarsPadding()
+
+    // ── Reloj del sistema (opcional) ─────────────────────────────────────
+    var clockText by remember { mutableStateOf("") }
+    val clockPattern = if (clockFormat24h) "HH:mm" else "hh:mm a"
+    LaunchedEffect(showClock) {
+        if (showClock) {
+            while (isActive) {
+                clockText = SimpleDateFormat(clockPattern, Locale.getDefault()).format(Date())
+                delay(10_000L)
+            }
+        }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    // ── Parámetros unificados pasados a todos los layouts ─────────────────
+    val commonParams = AodCommonParams(
+        mediaState = mediaState,
+        dominantColor = dominantColor,
+        progressFraction = progressFraction,
+        displayPosition = displayPosition,
+        duration = duration,
+        isPlaying = isPlaying,
+        canSkipPrev = canSkipPrev,
+        canSkipNext = canSkipNext,
+        showTitle = showTitle,
+        showArtist = showArtist,
+        showTime = showTime,
+        showProgress = showProgress,
+        showControls = showControls,
+        showClock = showClock,
+        clockText = clockText,
+        textScale = textScale,
+        controlStyle = controlStyle,
+        transitionDuration = transitionDuration,
+        onSeekChange = onSeekChange,
+        onSeekFinished = onSeekFinished,
+        onSkipPrev = { playerConnection.seekToPrevious() },
+        onPlayPause = { playerConnection.player.togglePlayPause() },
+        onSkipNext = { playerConnection.seekToNext() },
+        onCollapse = { navController.navigateUp() },
+        isLandscape = isLandscape,
+        fullscreen = fullscreenMode,
+        contentModifier = contentModifier,
+    )
+
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.Black)) {
         when (aodStyle) {
             AodStyle.BACKGROUND -> BackgroundAodLayout(
-                thumbnailUrl = mediaMetadata?.thumbnailUrl, darkness = darkness,
-                artSizeDp = artSizeDp, artShape = artShape,
-                title = mediaMetadata?.title.orEmpty(), artist = artistText,
-                progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                showTitle = showTitle, showArtist = showArtist, showTime = showTime,
-                showProgress = showProgress, showControls = showControls,
-                onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                onSkipPrev = { playerConnection.seekToPrevious() },
-                onPlayPause = { playerConnection.player.togglePlayPause() },
-                onSkipNext = { playerConnection.seekToNext() },
-                onCollapse = { navController.navigateUp() },
-                isLandscape = isLandscape,
-                fullscreen = fullscreenMode,
-                contentModifier = contentModifier
+                params = commonParams,
+                artSizeDp = artSizeDp,
+                artShape = artShape,
+                darkness = darkness,
             )
-            AodStyle.MINIMAL -> MinimalAodLayout(
-                title = mediaMetadata?.title.orEmpty(), artist = artistText,
-                progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                showTitle = showTitle, showArtist = showArtist, showTime = showTime,
-                showProgress = showProgress, showControls = showControls,
-                onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                onSkipPrev = { playerConnection.seekToPrevious() },
-                onPlayPause = { playerConnection.player.togglePlayPause() },
-                onSkipNext = { playerConnection.seekToNext() },
-                onCollapse = { navController.navigateUp() },
-                isLandscape = isLandscape,
-                fullscreen = fullscreenMode,
-                contentModifier = contentModifier
-            )
+
+            AodStyle.MINIMAL -> MinimalAodLayout(params = commonParams)
             AodStyle.SPOTLIGHT -> SpotlightAodLayout(
-                thumbnailUrl = mediaMetadata?.thumbnailUrl, artSizeDp = artSizeDp,
-                artShape = artShape, darkness = darkness,
-                title = mediaMetadata?.title.orEmpty(), artist = artistText,
-                progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                showTitle = showTitle, showArtist = showArtist, showTime = showTime,
-                showProgress = showProgress, showControls = showControls,
-                onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                onSkipPrev = { playerConnection.seekToPrevious() },
-                onPlayPause = { playerConnection.player.togglePlayPause() },
-                onSkipNext = { playerConnection.seekToNext() },
-                onCollapse = { navController.navigateUp() },
-                isLandscape = isLandscape,
-                fullscreen = fullscreenMode,
-                contentModifier = contentModifier
+                params = commonParams,
+                artSizeDp = artSizeDp,
+                artShape = artShape,
+                darkness = darkness,
+                spotlightIntensity = spotlightIntensity,
+                spotlightPulse = spotlightPulse,
             )
             AodStyle.LARGE -> LargeAodLayout(
-                thumbnailUrl = mediaMetadata?.thumbnailUrl, artShape = artShape,
-                title = mediaMetadata?.title.orEmpty(), artist = artistText,
-                progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                showTitle = showTitle, showArtist = showArtist, showTime = showTime,
-                showProgress = showProgress, showControls = showControls,
-                onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                onSkipPrev = { playerConnection.seekToPrevious() },
-                onPlayPause = { playerConnection.player.togglePlayPause() },
-                onSkipNext = { playerConnection.seekToNext() },
-                onCollapse = { navController.navigateUp() },
-                isLandscape = isLandscape,
-                fullscreen = fullscreenMode,
-                contentModifier = contentModifier
+                params = commonParams,
+                artShape = artShape,
             )
             AodStyle.CLASSIC -> ClassicAodLayout(
-                thumbnailUrl = mediaMetadata?.thumbnailUrl, artSizeDp = artSizeDp, artShape = artShape,
-                title = mediaMetadata?.title.orEmpty(), artist = artistText,
-                progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                showTitle = showTitle, showArtist = showArtist, showTime = showTime,
-                showProgress = showProgress, showControls = showControls,
-                onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                onSkipPrev = { playerConnection.seekToPrevious() },
-                onPlayPause = { playerConnection.player.togglePlayPause() },
-                onSkipNext = { playerConnection.seekToNext() },
-                onCollapse = { navController.navigateUp() },
-                isLandscape = isLandscape,
-                fullscreen = fullscreenMode,
-                contentModifier = contentModifier
+                params = commonParams,
+                artSizeDp = artSizeDp,
+                artShape = artShape,
             )
         }
     }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  CLASSIC — fondo negro, portada centrada con halo ambiente
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//  Datos compartidos — evita param explosion
+// ═══════════════════════════════════════════════════════════════════════════
+
+private data class AodCommonParams(
+    val mediaState: AodMediaState,
+    val dominantColor: Color,
+    val progressFraction: Float,
+    val displayPosition: Long,
+    val duration: Long,
+    val isPlaying: Boolean,
+    val canSkipPrev: Boolean,
+    val canSkipNext: Boolean,
+    val showTitle: Boolean,
+    val showArtist: Boolean,
+    val showTime: Boolean,
+    val showProgress: Boolean,
+    val showControls: Boolean,
+    val showClock: Boolean,
+    val clockText: String,
+    val textScale: Float,
+    val controlStyle: AodControlStyle,
+    val transitionDuration: Int,
+    val onSeekChange: (Float) -> Unit,
+    val onSeekFinished: () -> Unit,
+    val onSkipPrev: () -> Unit,
+    val onPlayPause: () -> Unit,
+    val onSkipNext: () -> Unit,
+    val onCollapse: () -> Unit,
+    val isLandscape: Boolean,
+    val fullscreen: Boolean,
+    val contentModifier: Modifier,
+)
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CLASSIC
+// ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun ClassicAodLayout(
-    thumbnailUrl: String?, artSizeDp: Dp, artShape: AodArtShape,
-    title: String, artist: String,
-    progressFraction: Float, displayPosition: Long, duration: Long,
-    isPlaying: Boolean, canSkipPrev: Boolean, canSkipNext: Boolean,
-    showTitle: Boolean, showArtist: Boolean, showTime: Boolean,
-    showProgress: Boolean, showControls: Boolean,
-    onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
-    onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
-    onCollapse: () -> Unit,
-    isLandscape: Boolean,
-    fullscreen: Boolean,
-    contentModifier: Modifier = Modifier
+    params: AodCommonParams,
+    artSizeDp: Dp,
+    artShape: AodArtShape,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        if (!fullscreen) {
+        if (!params.fullscreen) {
             CollapseButton(
-                onClick = onCollapse,
-                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
+                onClick = params.onCollapse,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(14.dp)
             )
         }
 
-        if (isLandscape) {
-            LandscapeClassicLayout(
-                thumbnailUrl = thumbnailUrl,
-                artSizeDp = artSizeDp,
-                artShape = artShape,
-                title = title,
-                artist = artist,
-                progressFraction = progressFraction,
-                displayPosition = displayPosition,
-                duration = duration,
-                isPlaying = isPlaying,
-                canSkipPrev = canSkipPrev,
-                canSkipNext = canSkipNext,
-                showTitle = showTitle,
-                showArtist = showArtist,
-                showTime = showTime,
-                showProgress = showProgress,
-                showControls = showControls,
-                onSeekChange = onSeekChange,
-                onSeekFinished = onSeekFinished,
-                onSkipPrev = onSkipPrev,
-                onPlayPause = onPlayPause,
-                onSkipNext = onSkipNext
-            )
-        } else {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = contentModifier.padding(horizontal = 36.dp)
+        if (params.isLandscape) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 48.dp)
             ) {
-                Spacer(Modifier.weight(1f))
-
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(artSizeDp * 1.28f)
                 ) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.055f),
-                                    Color.White.copy(alpha = 0.018f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
-                    }
-                    ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
+                    AmbientHalo(color = params.dominantColor)
+                    SyncedArtImage(
+                        mediaState = params.mediaState,
+                        sizeDp = artSizeDp,
+                        shape = artShape,
+                        duration = params.transitionDuration
+                    )
                 }
-
+                Spacer(Modifier.width(32.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    AodMetaAndControls(params = params, isLandscape = true)
+                }
+            }
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = params.contentModifier.padding(horizontal = 36.dp)
+            ) {
+                Spacer(Modifier.weight(1f))
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(artSizeDp * 1.28f)
+                ) {
+                    AmbientHalo(color = params.dominantColor)
+                    SyncedArtImage(
+                        mediaState = params.mediaState,
+                        sizeDp = artSizeDp,
+                        shape = artShape,
+                        duration = params.transitionDuration
+                    )
+                }
                 Spacer(Modifier.height(28.dp))
-
-                AodMetaAndControls(
-                    title = title, artist = artist,
-                    progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                    isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                    showTitle = showTitle, showArtist = showArtist,
-                    showTime = showTime, showProgress = showProgress, showControls = showControls,
-                    onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                    onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
-                )
-
+                AodMetaAndControls(params = params)
                 Spacer(Modifier.weight(1f))
             }
         }
     }
 }
 
-@Composable
-private fun LandscapeClassicLayout(
-    thumbnailUrl: String?, artSizeDp: Dp, artShape: AodArtShape,
-    title: String, artist: String,
-    progressFraction: Float, displayPosition: Long, duration: Long,
-    isPlaying: Boolean, canSkipPrev: Boolean, canSkipNext: Boolean,
-    showTitle: Boolean, showArtist: Boolean, showTime: Boolean,
-    showProgress: Boolean, showControls: Boolean,
-    onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
-    onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)
-    ) {
-        // Art on the left
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.size(artSizeDp * 1.28f)
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.055f),
-                            Color.White.copy(alpha = 0.018f),
-                            Color.Transparent
-                        )
-                    )
-                )
-            }
-            ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
-        }
-
-        Spacer(Modifier.width(32.dp))
-
-        // Controls on the right
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(1f)
-        ) {
-            AodMetaAndControls(
-                title = title, artist = artist,
-                progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                showTitle = showTitle, showArtist = showArtist,
-                showTime = showTime, showProgress = showProgress, showControls = showControls,
-                onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
-                isLandscape = true
-            )
-        }
-    }
-}
-
-// ═════════════════════════════════════════════════════════════════════════════
-//  BACKGROUND / AMBIENT — arte difuminado de fondo, dual vignette
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//  BACKGROUND / AMBIENT
+// ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun BackgroundAodLayout(
-    thumbnailUrl: String?, darkness: Float, artSizeDp: Dp, artShape: AodArtShape,
-    title: String, artist: String,
-    progressFraction: Float, displayPosition: Long, duration: Long,
-    isPlaying: Boolean, canSkipPrev: Boolean, canSkipNext: Boolean,
-    showTitle: Boolean, showArtist: Boolean, showTime: Boolean,
-    showProgress: Boolean, showControls: Boolean,
-    onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
-    onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
-    onCollapse: () -> Unit,
-    isLandscape: Boolean,
-    fullscreen: Boolean,
-    contentModifier: Modifier = Modifier
+    params: AodCommonParams,
+    artSizeDp: Dp,
+    artShape: AodArtShape,
+    darkness: Float,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
+        // Fondo borroso sincronizado
         AnimatedContent(
-            targetState = thumbnailUrl,
-            transitionSpec = { fadeIn(tween(1000)) togetherWith fadeOut(tween(800)) },
+            targetState = params.mediaState.thumbnailUrl,
+            transitionSpec = { fadeIn(tween(params.transitionDuration)) togetherWith fadeOut(tween((params.transitionDuration * 0.85f).toInt())) },
             label = "aod_bg"
         ) { url ->
             if (url != null) {
@@ -494,173 +533,192 @@ private fun BackgroundAodLayout(
                         .graphicsLayer { scaleX = 1.10f; scaleY = 1.10f }
                 )
             } else {
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black))
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black))
             }
         }
-
+        // Oscurecimiento
         Box(
-            modifier = Modifier.fillMaxSize()
-                .background(Color.Black.copy(alpha = (0.28f + darkness * 0.62f).coerceIn(0.22f, 0.92f)))
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Color.Black.copy(
+                        alpha = (0.28f + darkness * 0.62f).coerceIn(
+                            0.22f,
+                            0.92f
+                        )
+                    )
+                )
+        )
+        // Viñetas
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.28f)
+                .align(Alignment.TopCenter)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.Black.copy(0.82f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.38f)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color.Black.copy(0.72f)
+                        )
+                    )
+                )
         )
 
-        Box(
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.28f).align(Alignment.TopCenter)
-                .background(Brush.verticalGradient(listOf(Color.Black.copy(0.82f), Color.Transparent)))
-        )
-
-        Box(
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.38f).align(Alignment.BottomCenter)
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(0.72f))))
-        )
-
-        if (!fullscreen) {
+        if (!params.fullscreen) {
             CollapseButton(
-                onClick = onCollapse,
-                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
+                onClick = params.onCollapse,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(14.dp)
             )
         }
 
-        if (isLandscape) {
+        if (params.isLandscape) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly,
-                modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 48.dp)
             ) {
-                ArtImage(
-                    url = thumbnailUrl,
+                SyncedArtImage(
+                    mediaState = params.mediaState,
                     sizeDp = (artSizeDp * 0.72f).coerceAtLeast(100.dp),
-                    shape = artShape
+                    shape = artShape,
+                    duration = params.transitionDuration
                 )
                 Spacer(Modifier.width(32.dp))
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
-                    AodMetaAndControls(
-                        title = title, artist = artist,
-                        progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                        isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                        showTitle = showTitle, showArtist = showArtist,
-                        showTime = showTime, showProgress = showProgress, showControls = showControls,
-                        onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                        onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
-                        isLandscape = true
-                    )
+                    AodMetaAndControls(params = params, isLandscape = true)
                 }
             }
         } else {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = contentModifier.padding(horizontal = 36.dp)
+                modifier = params.contentModifier.padding(horizontal = 36.dp)
             ) {
                 Spacer(Modifier.weight(1f))
-                ArtImage(
-                    url = thumbnailUrl,
+                SyncedArtImage(
+                    mediaState = params.mediaState,
                     sizeDp = (artSizeDp * 0.72f).coerceAtLeast(100.dp),
-                    shape = artShape
+                    shape = artShape,
+                    duration = params.transitionDuration
                 )
                 Spacer(Modifier.height(24.dp))
-                AodMetaAndControls(
-                    title = title, artist = artist,
-                    progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                    isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                    showTitle = showTitle, showArtist = showArtist,
-                    showTime = showTime, showProgress = showProgress, showControls = showControls,
-                    onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                    onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
-                )
+                AodMetaAndControls(params = params)
                 Spacer(Modifier.weight(1f))
             }
         }
     }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  MINIMAL — watch-like, ultra clean, zero art
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//  MINIMAL
+// ═══════════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MinimalAodLayout(
-    title: String, artist: String,
-    progressFraction: Float, displayPosition: Long, duration: Long,
-    isPlaying: Boolean, canSkipPrev: Boolean, canSkipNext: Boolean,
-    showTitle: Boolean, showArtist: Boolean, showTime: Boolean,
-    showProgress: Boolean, showControls: Boolean,
-    onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
-    onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
-    onCollapse: () -> Unit,
-    isLandscape: Boolean,
-    fullscreen: Boolean,
-    contentModifier: Modifier = Modifier
-) {
+private fun MinimalAodLayout(params: AodCommonParams) {
     Box(modifier = Modifier.fillMaxSize()) {
-        if (!fullscreen) {
+        if (!params.fullscreen) {
             CollapseButton(
-                onClick = onCollapse,
-                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
+                onClick = params.onCollapse,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(14.dp)
             )
         }
-
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = contentModifier.padding(horizontal = if (isLandscape) 80.dp else 48.dp)
+            modifier = params.contentModifier.padding(horizontal = if (params.isLandscape) 80.dp else 48.dp)
         ) {
-            AnimatedVisibility(visible = showArtist, enter = fadeIn(), exit = fadeOut()) {
-                Text(
-                    text = artist.uppercase(),
-                    color = Color.White.copy(alpha = 0.40f),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontSize = if (isLandscape) 12.sp else 10.sp,
-                    letterSpacing = 2.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().basicMarquee()
-                )
+            if (params.showClock && params.clockText.isNotEmpty()) {
+                SyncedText(key = params.clockText, duration = 400) {
+                    Text(
+                        text = params.clockText,
+                        color = Color.White.copy(alpha = 0.80f),
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Light,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
             }
 
-            if (showArtist && showTitle) Spacer(Modifier.height(10.dp))
-
-            if (showTitle && showArtist) {
+            AnimatedVisibility(visible = params.showArtist, enter = fadeIn(), exit = fadeOut()) {
+                SyncedText(key = params.mediaState.artist, duration = params.transitionDuration) {
+                    Text(
+                        text = params.mediaState.artist.uppercase(),
+                        color = Color.White.copy(alpha = 0.40f),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = ((if (params.isLandscape) 12f else 10f) * params.textScale).sp,
+                        letterSpacing = 2.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .basicMarquee()
+                    )
+                }
+            }
+            if (params.showArtist && params.showTitle) Spacer(Modifier.height(10.dp))
+            if (params.showTitle && params.showArtist) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.20f).height(0.8.dp)
+                        .fillMaxWidth(0.20f)
+                        .height(0.8.dp)
                         .background(Color.White.copy(alpha = 0.18f))
                 )
                 Spacer(Modifier.height(10.dp))
             }
-
-            AnimatedVisibility(visible = showTitle, enter = fadeIn(), exit = fadeOut()) {
-                AnimatedContent(
-                    targetState = title,
-                    transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(400)) },
-                    label = "min_title"
-                ) { t ->
+            AnimatedVisibility(visible = params.showTitle, enter = fadeIn(), exit = fadeOut()) {
+                SyncedText(key = params.mediaState.title, duration = params.transitionDuration) {
                     Text(
-                        text = t,
+                        text = params.mediaState.title,
                         color = Color.White,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        maxLines = if (isLandscape) 1 else 2,
+                        maxLines = if (params.isLandscape) 1 else 2,
                         overflow = TextOverflow.Ellipsis,
                         textAlign = TextAlign.Center,
-                        fontSize = if (isLandscape) 28.sp else 24.sp,
+                        fontSize = ((if (params.isLandscape) 28f else 24f) * params.textScale).sp,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
+            if ((params.showTitle || params.showArtist) && (params.showProgress || params.showControls || params.showTime))
+                Spacer(Modifier.height(if (params.isLandscape) 24.dp else 36.dp))
 
-            if ((showTitle || showArtist) && (showProgress || showControls || showTime)) {
-                Spacer(Modifier.height(if (isLandscape) 24.dp else 36.dp))
-            }
-
-            AnimatedVisibility(visible = showProgress, enter = fadeIn(), exit = fadeOut()) {
+            AnimatedVisibility(visible = params.showProgress, enter = fadeIn(), exit = fadeOut()) {
                 SquigglySlider(
-                    value = progressFraction,
-                    onValueChange = onSeekChange,
-                    onValueChangeFinished = onSeekFinished,
+                    value = params.progressFraction,
+                    onValueChange = params.onSeekChange,
+                    onValueChangeFinished = params.onSeekFinished,
                     modifier = Modifier.fillMaxWidth(),
                     colors = SliderDefaults.colors(
                         thumbColor = Color.White,
@@ -671,204 +729,68 @@ private fun MinimalAodLayout(
                     )
                 )
             }
-
-            AnimatedVisibility(visible = showTime, enter = fadeIn(), exit = fadeOut()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = makeTimeString(displayPosition),
-                        color = Color.White.copy(alpha = 0.38f),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = if (isLandscape) 12.sp else 10.sp
-                    )
-                    if (duration > 0L && duration != C.TIME_UNSET) {
-                        Text(
-                            text = makeTimeString(duration),
-                            color = Color.White.copy(alpha = 0.38f),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontSize = if (isLandscape) 12.sp else 10.sp
-                        )
-                    }
-                }
+            AnimatedVisibility(visible = params.showTime, enter = fadeIn(), exit = fadeOut()) {
+                TimeRow(
+                    displayPosition = params.displayPosition, duration = params.duration,
+                    textScale = params.textScale, isLandscape = params.isLandscape
+                )
             }
-
-            if ((showProgress || showTime) && showControls) Spacer(Modifier.height(if (isLandscape) 24.dp else 32.dp))
-
-            AnimatedVisibility(visible = showControls, enter = fadeIn(), exit = fadeOut()) {
-                MinimalConnectedControlButtons(
-                    isPlaying = isPlaying,
-                    canSkipPrev = canSkipPrev,
-                    canSkipNext = canSkipNext,
-                    onSkipPrev = onSkipPrev,
-                    onPlayPause = onPlayPause,
-                    onSkipNext = onSkipNext,
-                    isLandscape = isLandscape
+            if ((params.showProgress || params.showTime) && params.showControls)
+                Spacer(Modifier.height(if (params.isLandscape) 24.dp else 32.dp))
+            AnimatedVisibility(visible = params.showControls, enter = fadeIn(), exit = fadeOut()) {
+                AodControlButtons(
+                    isPlaying = params.isPlaying,
+                    canSkipPrev = params.canSkipPrev,
+                    canSkipNext = params.canSkipNext,
+                    onSkipPrev = params.onSkipPrev,
+                    onPlayPause = params.onPlayPause,
+                    onSkipNext = params.onSkipNext,
+                    controlStyle = params.controlStyle,
+                    accentColor = params.dominantColor,
+                    isLandscape = params.isLandscape,
+                    minimal = true,
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MinimalConnectedControlButtons(
-    isPlaying: Boolean,
-    canSkipPrev: Boolean,
-    canSkipNext: Boolean,
-    onSkipPrev: () -> Unit,
-    onPlayPause: () -> Unit,
-    onSkipNext: () -> Unit,
-    isLandscape: Boolean = false
-) {
-    val buttonSize = if (isLandscape) 56.dp else 48.dp
-    val playButtonSize = if (isLandscape) 72.dp else 62.dp
-    val iconSize = if (isLandscape) 26.dp else 22.dp
-    val playIconSize = if (isLandscape) 32.dp else 26.dp
+// ═══════════════════════════════════════════════════════════════════════════
+//  LARGE
+// ═══════════════════════════════════════════════════════════════════════════
 
-    var expandedButton by remember { mutableStateOf<Int?>(null) }
-    val animateDuration = 150
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(if (isLandscape) 8.dp else 6.dp, Alignment.CenterHorizontally),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        // Botón Skip Previous
-        MinimalAnimatedButton(
-            iconRes = R.drawable.skip_previous,
-            enabled = canSkipPrev,
-            baseSize = buttonSize,
-            iconSize = iconSize,
-            isExpanded = expandedButton == 0,
-            onClick = {
-                expandedButton = 0
-                onSkipPrev()
-            },
-            onAnimationEnd = { expandedButton = null },
-            animateDuration = animateDuration,
-            modifier = Modifier.weight(if (expandedButton == 0) 1.25f else 1f)
-        )
-
-        // Botón Play/Pause
-        MinimalAnimatedButton(
-            iconRes = if (isPlaying) R.drawable.pause else R.drawable.play,
-            enabled = true,
-            baseSize = playButtonSize,
-            iconSize = playIconSize,
-            isExpanded = expandedButton == 1,
-            isPlayButton = true,
-            onClick = {
-                expandedButton = 1
-                onPlayPause()
-            },
-            onAnimationEnd = { expandedButton = null },
-            animateDuration = animateDuration,
-            modifier = Modifier.weight(if (expandedButton == 1) 1.25f else 1f)
-        )
-
-        // Botón Skip Next
-        MinimalAnimatedButton(
-            iconRes = R.drawable.skip_next,
-            enabled = canSkipNext,
-            baseSize = buttonSize,
-            iconSize = iconSize,
-            isExpanded = expandedButton == 2,
-            onClick = {
-                expandedButton = 2
-                onSkipNext()
-            },
-            onAnimationEnd = { expandedButton = null },
-            animateDuration = animateDuration,
-            modifier = Modifier.weight(if (expandedButton == 2) 1.25f else 1f)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MinimalAnimatedButton(
-    iconRes: Int,
-    enabled: Boolean,
-    baseSize: Dp,
-    iconSize: Dp,
-    isExpanded: Boolean,
-    onClick: () -> Unit,
-    onAnimationEnd: () -> Unit = {},
-    animateDuration: Int = 150,
-    isPlayButton: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    val animatedSize by animateDpAsState(
-        targetValue = if (isExpanded) baseSize * 1.2f else baseSize,
-        animationSpec = tween(durationMillis = animateDuration, easing = LinearEasing),
-        finishedListener = { onAnimationEnd() }
-    )
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .size(animatedSize)
-            .clip(CircleShape)
-            .background(
-                if (isPlayButton) Color.White
-                else Color.White.copy(if (enabled) 0.10f else 0.04f)
-            )
-            .clickable(
-                enabled = enabled,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = if (isPlayButton) Color.Black else Color.White.copy(if (enabled) 0.92f else 0.28f),
-            modifier = Modifier.size(iconSize)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LargeAodLayout(
-    thumbnailUrl: String?, artShape: AodArtShape,
-    title: String, artist: String,
-    progressFraction: Float, displayPosition: Long, duration: Long,
-    isPlaying: Boolean, canSkipPrev: Boolean, canSkipNext: Boolean,
-    showTitle: Boolean, showArtist: Boolean, showTime: Boolean,
-    showProgress: Boolean, showControls: Boolean,
-    onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
-    onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
-    onCollapse: () -> Unit,
-    isLandscape: Boolean,
-    fullscreen: Boolean,
-    contentModifier: Modifier = Modifier
+    params: AodCommonParams,
+    artShape: AodArtShape,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
+        // Arte a pantalla completa con fade-out inferior
         AnimatedContent(
-            targetState = thumbnailUrl,
-            transitionSpec = { fadeIn(tween(700)) togetherWith fadeOut(tween(700)) },
+            targetState = params.mediaState.thumbnailUrl,
+            transitionSpec = {
+                fadeIn(tween(params.transitionDuration)) togetherWith fadeOut(
+                    tween(
+                        params.transitionDuration
+                    )
+                )
+            },
             label = "large_art"
         ) { url ->
             Box(modifier = Modifier.fillMaxSize()) {
                 val screenWidth = LocalConfiguration.current.screenWidthDp.dp
                 val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-
                 AsyncImage(
                     model = url, contentDescription = null, contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(if (isLandscape) screenHeight else screenWidth)
+                        .size(if (params.isLandscape) screenHeight else screenWidth)
                         .clip(artShape.toShape())
                         .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                         .drawWithCache {
-                            val fadeStart = 0.18f
                             val gradient = Brush.verticalGradient(
                                 colorStops = arrayOf(
                                     0f to Color.Black,
-                                    fadeStart to Color.Black,
+                                    0.18f to Color.Black,
                                     1f to Color.Transparent
                                 )
                             )
@@ -878,7 +800,6 @@ private fun LargeAodLayout(
                             }
                         }
                 )
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -886,10 +807,10 @@ private fun LargeAodLayout(
                         .align(Alignment.BottomCenter)
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(
+                                listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = 0.7f),
-                                    Color.Black.copy(alpha = 0.92f)
+                                    Color.Black.copy(0.7f),
+                                    Color.Black.copy(0.92f)
                                 )
                             )
                         )
@@ -897,9 +818,9 @@ private fun LargeAodLayout(
             }
         }
 
-        if (!fullscreen) {
+        if (!params.fullscreen) {
             CollapseButton(
-                onClick = onCollapse,
+                onClick = params.onCollapse,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .statusBarsPadding()
@@ -912,389 +833,503 @@ private fun LargeAodLayout(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .then(if (!fullscreen) Modifier.navigationBarsPadding() else Modifier)
-                .padding(horizontal = if (isLandscape) 48.dp else 36.dp)
-                .padding(bottom = if (isLandscape) 32.dp else 28.dp)
+                .then(if (!params.fullscreen) Modifier.navigationBarsPadding() else Modifier)
+                .padding(horizontal = if (params.isLandscape) 48.dp else 36.dp)
+                .padding(bottom = if (params.isLandscape) 32.dp else 28.dp)
         ) {
-            AnimatedVisibility(visible = showTitle, enter = fadeIn(), exit = fadeOut()) {
+            if (params.showClock && params.clockText.isNotEmpty()) {
                 Text(
-                    text = title,
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    fontSize = if (isLandscape) 28.sp else 24.sp,
-                    modifier = Modifier.fillMaxWidth().basicMarquee()
+                    text = params.clockText, color = Color.White.copy(0.70f),
+                    style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Light,
+                    textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
                 )
+                Spacer(Modifier.height(8.dp))
             }
-
-            if (showTitle && showArtist) Spacer(Modifier.height(4.dp))
-
-            AnimatedVisibility(visible = showArtist, enter = fadeIn(), exit = fadeOut()) {
-                Text(
-                    text = artist,
-                    color = Color.White.copy(alpha = 0.75f),
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    fontSize = if (isLandscape) 18.sp else 16.sp,
-                    modifier = Modifier.fillMaxWidth().basicMarquee()
-                )
-            }
-
-            if ((showTitle || showArtist) && (showProgress || showControls)) Spacer(Modifier.height(20.dp))
-
-            if (showProgress) {
-                SquigglySlider(
-                    value = progressFraction,
-                    onValueChange = onSeekChange,
-                    onValueChangeFinished = onSeekFinished,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color.White,
-                        activeTrackColor = Color.White,
-                        inactiveTrackColor = Color.White.copy(0.22f),
-                        activeTickColor = Color.Transparent,
-                        inactiveTickColor = Color.Transparent,
-                    )
-                )
-            }
-
-            if (showTime) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        makeTimeString(displayPosition),
-                        color = Color.White.copy(0.65f),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontSize = if (isLandscape) 14.sp else 12.sp
-                    )
-                    if (duration > 0L && duration != C.TIME_UNSET)
-                        Text(
-                            makeTimeString(duration),
-                            color = Color.White.copy(0.65f),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontSize = if (isLandscape) 14.sp else 12.sp
-                        )
-                }
-            }
-
-            if ((showProgress || showTime) && showControls) Spacer(Modifier.height(if (isLandscape) 20.dp else 28.dp))
-
-            if (showControls) {
-                ConnectedControlButtons(
-                    isPlaying = isPlaying,
-                    canSkipPrev = canSkipPrev,
-                    canSkipNext = canSkipNext,
-                    onSkipPrev = onSkipPrev,
-                    onPlayPause = onPlayPause,
-                    onSkipNext = onSkipNext,
-                    isLandscape = isLandscape
-                )
-            }
+            AodMetaAndControls(params = params, isLandscape = params.isLandscape)
         }
     }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  SPOTLIGHT — anillos concéntricos + halo suave + portada centrada
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//  SPOTLIGHT ★ — halo real con color extraído de la portada
+// ═══════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun SpotlightAodLayout(
-    thumbnailUrl: String?, artSizeDp: Dp, artShape: AodArtShape, darkness: Float,
-    title: String, artist: String,
-    progressFraction: Float, displayPosition: Long, duration: Long,
-    isPlaying: Boolean, canSkipPrev: Boolean, canSkipNext: Boolean,
-    showTitle: Boolean, showArtist: Boolean, showTime: Boolean,
-    showProgress: Boolean, showControls: Boolean,
-    onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
-    onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
-    onCollapse: () -> Unit,
-    isLandscape: Boolean,
-    fullscreen: Boolean,
-    contentModifier: Modifier = Modifier
+    params: AodCommonParams,
+    artSizeDp: Dp,
+    artShape: AodArtShape,
+    darkness: Float,
+    spotlightIntensity: Float,
+    spotlightPulse: Boolean,
 ) {
+    // Color del halo con animación suave al cambiar de canción
+    val animatedHaloColor by animateColorAsState(
+        targetValue = params.dominantColor,
+        animationSpec = tween(params.transitionDuration + 200),
+        label = "spotlight_color"
+    )
+
+    // Pulso animado (breathing effect)
+    val infiniteTransition = rememberInfiniteTransition(label = "spotlight_pulse")
+    val pulseScale by if (spotlightPulse) {
+        infiniteTransition.animateFloat(
+            initialValue = 0.92f,
+            targetValue = 1.08f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2800, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "pulse_scale"
+        )
+    } else {
+        remember { mutableStateOf(1.0f) }
+    }
+
+    val pulseAlpha by if (spotlightPulse) {
+        infiniteTransition.animateFloat(
+            initialValue = 0.85f,
+            targetValue = 1.0f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2800, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "pulse_alpha"
+        )
+    } else {
+        remember { mutableStateOf(1.0f) }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
+
+        // ── Capas de brillo del spotlight ───────────────────────────────
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val glowAlpha = (0.22f - darkness * 0.14f).coerceIn(0.04f, 0.24f)
             val artApproxRadius = artSizeDp.toPx() / 2f
             val cx = size.width / 2f
-            val cy = if (isLandscape) size.height / 2f else size.height * 0.40f
+            val cy = if (params.isLandscape) size.height / 2f else size.height * 0.38f
             val center = Offset(cx, cy)
 
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color.White.copy(glowAlpha * 0.28f), Color.Transparent),
-                    center = center, radius = artApproxRadius * 2.2f
-                ),
-                center = center, radius = artApproxRadius * 2.2f
-            )
-            drawCircle(
-                color = Color.White.copy(alpha = glowAlpha * 0.35f),
-                center = center,
-                radius = artApproxRadius * 1.48f,
-                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 0.6.dp.toPx())
-            )
+            // Máxima intensidad configurada por el usuario
+            val maxAlpha = spotlightIntensity.coerceIn(0.10f, 1.0f)
+
+            // ① Glow exterior difuso — radio muy amplio, muy translúcido
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        Color.White.copy(glowAlpha * 1.0f),
-                        Color.White.copy(glowAlpha * 0.5f),
+                        animatedHaloColor.copy(alpha = maxAlpha * 0.22f * pulseAlpha),
+                        animatedHaloColor.copy(alpha = maxAlpha * 0.08f * pulseAlpha),
                         Color.Transparent
                     ),
-                    center = center, radius = artApproxRadius * 1.22f
+                    center = center,
+                    radius = artApproxRadius * 3.6f * pulseScale
                 ),
-                center = center, radius = artApproxRadius * 1.22f
+                center = center,
+                radius = artApproxRadius * 3.6f * pulseScale
+            )
+
+            // ② Halo medio — define el "cono" de luz
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        animatedHaloColor.copy(alpha = maxAlpha * 0.55f * pulseAlpha),
+                        animatedHaloColor.copy(alpha = maxAlpha * 0.18f * pulseAlpha),
+                        Color.Transparent
+                    ),
+                    center = center,
+                    radius = artApproxRadius * 1.9f * pulseScale
+                ),
+                center = center,
+                radius = artApproxRadius * 1.9f * pulseScale
+            )
+
+            // ③ Corona interior brillante — justo alrededor de la portada
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = maxAlpha * 0.45f * pulseAlpha),
+                        animatedHaloColor.copy(alpha = maxAlpha * 0.75f * pulseAlpha),
+                        animatedHaloColor.copy(alpha = maxAlpha * 0.20f * pulseAlpha),
+                        Color.Transparent
+                    ),
+                    center = center,
+                    radius = artApproxRadius * 1.28f * pulseScale
+                ),
+                center = center,
+                radius = artApproxRadius * 1.28f * pulseScale
+            )
+
+            // ④ Anillo de borde — contorno sutil con color dominante
+            drawCircle(
+                color = animatedHaloColor.copy(alpha = maxAlpha * 0.38f * pulseAlpha),
+                center = center,
+                radius = artApproxRadius * 1.14f,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 1.5.dp.toPx()
+                )
+            )
+
+            // ⑤ Anillo exterior decorativo
+            drawCircle(
+                color = animatedHaloColor.copy(alpha = maxAlpha * 0.12f * pulseAlpha),
+                center = center,
+                radius = artApproxRadius * 1.60f,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 0.8.dp.toPx()
+                )
+            )
+
+            // ⑥ Oscurecimiento del fondo lejos del centro
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color.Black.copy(alpha = darkness * 0.5f)
+                    ),
+                    center = center,
+                    radius = size.maxDimension * 0.75f
+                ),
+                center = center,
+                radius = size.maxDimension * 0.75f
             )
         }
 
-        if (!fullscreen) {
+        if (!params.fullscreen) {
             CollapseButton(
-                onClick = onCollapse,
-                modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(14.dp)
+                onClick = params.onCollapse,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(14.dp)
             )
         }
 
-        if (isLandscape) {
+        if (params.isLandscape) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly,
-                modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 48.dp)
             ) {
-                ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
+                SyncedArtImage(
+                    mediaState = params.mediaState,
+                    sizeDp = artSizeDp,
+                    shape = artShape,
+                    duration = params.transitionDuration
+                )
                 Spacer(Modifier.width(32.dp))
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
-                    AodMetaAndControls(
-                        title = title, artist = artist,
-                        progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                        isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                        showTitle = showTitle, showArtist = showArtist,
-                        showTime = showTime, showProgress = showProgress, showControls = showControls,
-                        onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                        onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
-                        isLandscape = true
-                    )
+                    AodMetaAndControls(params = params, isLandscape = true)
                 }
             }
         } else {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = contentModifier.padding(horizontal = 36.dp)
+                modifier = params.contentModifier.padding(horizontal = 36.dp)
             ) {
                 Spacer(Modifier.weight(1f))
-                ArtImage(url = thumbnailUrl, sizeDp = artSizeDp, shape = artShape)
-                Spacer(Modifier.height(32.dp))
-                AodMetaAndControls(
-                    title = title, artist = artist,
-                    progressFraction = progressFraction, displayPosition = displayPosition, duration = duration,
-                    isPlaying = isPlaying, canSkipPrev = canSkipPrev, canSkipNext = canSkipNext,
-                    showTitle = showTitle, showArtist = showArtist,
-                    showTime = showTime, showProgress = showProgress, showControls = showControls,
-                    onSeekChange = onSeekChange, onSeekFinished = onSeekFinished,
-                    onSkipPrev = onSkipPrev, onPlayPause = onPlayPause, onSkipNext = onSkipNext,
+                SyncedArtImage(
+                    mediaState = params.mediaState,
+                    sizeDp = artSizeDp,
+                    shape = artShape,
+                    duration = params.transitionDuration
                 )
+                Spacer(Modifier.height(32.dp))
+                AodMetaAndControls(params = params)
                 Spacer(Modifier.weight(1f))
             }
         }
     }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
 //  Shared composables
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Imagen de portada con transición sincronizada al [mediaState].
+ * Todos los layouts usan este composable → fade del arte ocurre al mismo tiempo
+ */
+@Composable
+private fun SyncedArtImage(
+    mediaState: AodMediaState,
+    sizeDp: Dp,
+    shape: AodArtShape,
+    duration: Int,
+    modifier: Modifier = Modifier
+) {
+    AnimatedContent(
+        targetState = mediaState,       // ← sincronizado con title + artist
+        transitionSpec = {
+            fadeIn(tween(duration)) togetherWith fadeOut(tween((duration * 0.85f).toInt()))
+        },
+        label = "aod_art_synced"
+    ) { state ->
+        AsyncImage(
+            model = state.thumbnailUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+                .size(sizeDp)
+                .clip(shape.toShape())
+        )
+    }
+}
+
+/**
+ * Halo ambiente con gradiente radial colorido, reemplaza el Canvas blanco del classic.
+ */
+@Composable
+private fun AmbientHalo(color: Color, modifier: Modifier = Modifier) {
+    val animatedColor by animateColorAsState(
+        targetValue = color,
+        animationSpec = tween(800),
+        label = "ambient_halo_color"
+    )
+    Canvas(modifier = modifier.fillMaxSize()) {
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    animatedColor.copy(alpha = 0.22f),
+                    animatedColor.copy(alpha = 0.07f),
+                    Color.Transparent
+                )
+            )
+        )
+    }
+}
+
+/**
+ * Wrapper que sincroniza el crossfade de texto con la misma key del mediaState.
+ */
+@SuppressLint("UnusedContentLambdaTargetStateParameter")
+@Composable
+private fun SyncedText(
+    key: String,
+    duration: Int,
+    content: @Composable () -> Unit
+) {
+    AnimatedContent(
+        targetState = key,
+        transitionSpec = { fadeIn(tween(duration)) togetherWith fadeOut(tween((duration * 0.75f).toInt())) },
+        label = "synced_text_$key"
+    ) {
+        content()
+    }
+}
 
 @Composable
-private fun ArtImage(url: String?, sizeDp: Dp, shape: AodArtShape, modifier: Modifier = Modifier) {
-    AnimatedContent(
-        targetState = url,
-        transitionSpec = { fadeIn(tween(700)) togetherWith fadeOut(tween(700)) },
-        label = "aod_art"
-    ) { thumbUrl ->
-        AsyncImage(
-            model = thumbUrl, contentDescription = null, contentScale = ContentScale.Crop,
-            modifier = modifier.size(sizeDp).clip(shape.toShape())
+private fun TimeRow(
+    displayPosition: Long,
+    duration: Long,
+    textScale: Float,
+    isLandscape: Boolean,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            makeTimeString(displayPosition), color = Color.White.copy(0.38f),
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = ((if (isLandscape) 12f else 10f) * textScale).sp
         )
+        if (duration > 0L && duration != C.TIME_UNSET)
+            Text(
+                makeTimeString(duration), color = Color.White.copy(0.38f),
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = ((if (isLandscape) 12f else 10f) * textScale).sp
+            )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AodMetaAndControls(
-    title: String, artist: String,
-    progressFraction: Float, displayPosition: Long, duration: Long,
-    isPlaying: Boolean, canSkipPrev: Boolean, canSkipNext: Boolean,
-    showTitle: Boolean, showArtist: Boolean, showTime: Boolean,
-    showProgress: Boolean, showControls: Boolean,
-    onSeekChange: (Float) -> Unit, onSeekFinished: () -> Unit,
-    onSkipPrev: () -> Unit, onPlayPause: () -> Unit, onSkipNext: () -> Unit,
-    isLandscape: Boolean = false
+    params: AodCommonParams,
+    isLandscape: Boolean = false,
 ) {
-    if (showTitle) {
-        AnimatedContent(
-            targetState = title,
-            transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(400)) },
-            label = "meta_title"
-        ) { t ->
+    if (params.showClock && params.clockText.isNotEmpty() && params.mediaState.id != null) {
+        Text(
+            text = params.clockText,
+            color = Color.White.copy(0.60f),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Light,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
+    }
+
+    if (params.showTitle) {
+        SyncedText(key = params.mediaState.title, duration = params.transitionDuration) {
             Text(
-                text = t, color = Color.White,
-                style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
-                maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
-                fontSize = if (isLandscape) 28.sp else 24.sp,
-                modifier = Modifier.fillMaxWidth().basicMarquee()
+                text = params.mediaState.title,
+                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                fontSize = ((if (isLandscape) 28f else 24f) * params.textScale).sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .basicMarquee()
             )
         }
         Spacer(Modifier.height(if (isLandscape) 6.dp else 4.dp))
     }
 
-    if (showArtist) {
-        AnimatedContent(
-            targetState = artist,
-            transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(400)) },
-            label = "meta_artist"
-        ) { a ->
+    if (params.showArtist) {
+        SyncedText(key = params.mediaState.artist, duration = params.transitionDuration) {
             Text(
-                text = a, color = Color.White.copy(alpha = 0.55f),
+                text = params.mediaState.artist,
+                color = Color.White.copy(alpha = 0.55f),
                 style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
-                fontSize = if (isLandscape) 18.sp else 16.sp,
-                modifier = Modifier.fillMaxWidth().basicMarquee()
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                fontSize = ((if (isLandscape) 18f else 16f) * params.textScale).sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .basicMarquee()
             )
         }
     }
 
-    if ((showTitle || showArtist) && (showProgress || showControls)) Spacer(Modifier.height(if (isLandscape) 20.dp else 30.dp))
+    if ((params.showTitle || params.showArtist) && (params.showProgress || params.showControls))
+        Spacer(Modifier.height(if (isLandscape) 20.dp else 30.dp))
 
-    if (showProgress) {
+    if (params.showProgress) {
         SquigglySlider(
-            value = progressFraction, onValueChange = onSeekChange,
-            onValueChangeFinished = onSeekFinished,
+            value = params.progressFraction,
+            onValueChange = params.onSeekChange,
+            onValueChangeFinished = params.onSeekFinished,
             modifier = Modifier.fillMaxWidth(),
             colors = SliderDefaults.colors(
-                thumbColor = Color.White, activeTrackColor = Color.White,
+                thumbColor = Color.White,
+                activeTrackColor = Color.White,
                 inactiveTrackColor = Color.White.copy(0.22f),
-                activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
             )
         )
     }
 
-    if (showTime) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(makeTimeString(displayPosition), color = Color.White.copy(0.45f),
-                style = MaterialTheme.typography.labelMedium,
-                fontSize = if (isLandscape) 14.sp else 12.sp)
-            if (duration > 0L && duration != C.TIME_UNSET)
-                Text(makeTimeString(duration), color = Color.White.copy(0.45f),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontSize = if (isLandscape) 14.sp else 12.sp)
-        }
+    if (params.showTime) {
+        TimeRow(
+            displayPosition = params.displayPosition, duration = params.duration,
+            textScale = params.textScale, isLandscape = isLandscape
+        )
     }
 
-    if ((showProgress || showTime) && showControls) Spacer(Modifier.height(if (isLandscape) 24.dp else 34.dp))
+    if ((params.showProgress || params.showTime) && params.showControls)
+        Spacer(Modifier.height(if (isLandscape) 24.dp else 34.dp))
 
-    if (showControls) {
-        ConnectedControlButtons(
-            isPlaying = isPlaying,
-            canSkipPrev = canSkipPrev,
-            canSkipNext = canSkipNext,
-            onSkipPrev = onSkipPrev,
-            onPlayPause = onPlayPause,
-            onSkipNext = onSkipNext,
-            isLandscape = isLandscape
+    if (params.showControls) {
+        AodControlButtons(
+            isPlaying = params.isPlaying,
+            canSkipPrev = params.canSkipPrev,
+            canSkipNext = params.canSkipNext,
+            onSkipPrev = params.onSkipPrev,
+            onPlayPause = params.onPlayPause,
+            onSkipNext = params.onSkipNext,
+            controlStyle = params.controlStyle,
+            accentColor = params.dominantColor,
+            isLandscape = isLandscape,
         )
     }
 }
 
-@Composable
-// ═════════════════════════════════════════════════════════════════════════════
-//  CONNECTED ANIMATED BUTTONS - Reemplaza a ButtonGroup
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//  BOTONES DE CONTROL — soportan AodControlStyle
+// ═══════════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class)
-private fun ConnectedControlButtons(
+@Composable
+private fun AodControlButtons(
     isPlaying: Boolean,
     canSkipPrev: Boolean,
     canSkipNext: Boolean,
     onSkipPrev: () -> Unit,
     onPlayPause: () -> Unit,
     onSkipNext: () -> Unit,
-    isLandscape: Boolean = false
+    controlStyle: AodControlStyle,
+    accentColor: Color,
+    isLandscape: Boolean = false,
+    minimal: Boolean = false,
 ) {
-    val buttonSize = if (isLandscape) 64.dp else 56.dp
-    val playButtonSize = if (isLandscape) 84.dp else 74.dp
-    val iconSize = if (isLandscape) 32.dp else 28.dp
-    val playIconSize = if (isLandscape) 38.dp else 32.dp
-    val spacing = if (isLandscape) 4.dp else 2.dp  // Espacio mínimo entre botones
+    val buttonSize =
+        if (isLandscape) (if (minimal) 56.dp else 64.dp) else (if (minimal) 48.dp else 56.dp)
+    val playButtonSize =
+        if (isLandscape) (if (minimal) 72.dp else 84.dp) else (if (minimal) 62.dp else 74.dp)
+    val iconSize =
+        if (isLandscape) (if (minimal) 26.dp else 32.dp) else (if (minimal) 22.dp else 28.dp)
+    val playIconSize =
+        if (isLandscape) (if (minimal) 32.dp else 38.dp) else (if (minimal) 26.dp else 32.dp)
+
+    val playBg = when (controlStyle) {
+        AodControlStyle.ROUNDED, AodControlStyle.SQUARE -> Color.White
+        AodControlStyle.ACCENT -> accentColor.copy(alpha = 0.90f)
+        AodControlStyle.MINIMAL_FLAT -> Color.White.copy(0.08f)
+    }
+    val playTint = when (controlStyle) {
+        AodControlStyle.ACCENT -> Color.White
+        AodControlStyle.MINIMAL_FLAT -> Color.White.copy(0.90f)
+        else -> Color.Black
+    }
 
     var expandedButton by remember { mutableStateOf<Int?>(null) }
-    val animateDuration = 150
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Botón Skip Previous
-        AnimatedButton(
+        AodButton(
             iconRes = R.drawable.skip_previous,
             enabled = canSkipPrev,
             baseSize = buttonSize,
             iconSize = iconSize,
             isExpanded = expandedButton == 0,
-            onClick = {
-                expandedButton = 0
-                onSkipPrev()
-            },
-            onAnimationEnd = { expandedButton = null },
-            animateDuration = animateDuration,
+            controlStyle = controlStyle,
+            accentColor = accentColor,
+            onClick = { expandedButton = 0; onSkipPrev() },
+            onAnimEnd = { expandedButton = null },
             modifier = Modifier.weight(if (expandedButton == 0) 1.3f else 1f)
         )
-
-        Spacer(modifier = Modifier.width(spacing))
-
-        // Botón Play/Pause (central)
-        AnimatedButton(
+        Spacer(Modifier.width(2.dp))
+        AodButton(
             iconRes = if (isPlaying) R.drawable.pause else R.drawable.play,
             enabled = true,
             baseSize = playButtonSize,
             iconSize = playIconSize,
             isExpanded = expandedButton == 1,
+            controlStyle = controlStyle,
+            accentColor = accentColor,
             isPlayButton = true,
-            onClick = {
-                expandedButton = 1
-                onPlayPause()
-            },
-            onAnimationEnd = { expandedButton = null },
-            animateDuration = animateDuration,
+            playBg = playBg,
+            playTint = playTint,
+            onClick = { expandedButton = 1; onPlayPause() },
+            onAnimEnd = { expandedButton = null },
             modifier = Modifier.weight(if (expandedButton == 1) 1.3f else 1f)
         )
-
-        Spacer(modifier = Modifier.width(spacing))
-
-        // Botón Skip Next
-        AnimatedButton(
+        Spacer(Modifier.width(2.dp))
+        AodButton(
             iconRes = R.drawable.skip_next,
             enabled = canSkipNext,
             baseSize = buttonSize,
             iconSize = iconSize,
             isExpanded = expandedButton == 2,
-            onClick = {
-                expandedButton = 2
-                onSkipNext()
-            },
-            onAnimationEnd = { expandedButton = null },
-            animateDuration = animateDuration,
+            controlStyle = controlStyle,
+            accentColor = accentColor,
+            onClick = { expandedButton = 2; onSkipNext() },
+            onAnimEnd = { expandedButton = null },
             modifier = Modifier.weight(if (expandedButton == 2) 1.3f else 1f)
         )
     }
@@ -1302,39 +1337,55 @@ private fun ConnectedControlButtons(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AnimatedButton(
+private fun AodButton(
     iconRes: Int,
     enabled: Boolean,
     baseSize: Dp,
     iconSize: Dp,
     isExpanded: Boolean,
-    onClick: () -> Unit,
-    onAnimationEnd: () -> Unit = {},
-    animateDuration: Int = 150,
+    controlStyle: AodControlStyle,
+    accentColor: Color,
     isPlayButton: Boolean = false,
-    modifier: Modifier = Modifier
+    playBg: Color = Color.White,
+    playTint: Color = Color.Black,
+    onClick: () -> Unit,
+    onAnimEnd: () -> Unit = {},
+    modifier: Modifier = Modifier,
 ) {
     val animatedSize by animateDpAsState(
         targetValue = if (isExpanded) baseSize * 1.2f else baseSize,
-        animationSpec = tween(durationMillis = animateDuration, easing = LinearEasing),
-        finishedListener = { onAnimationEnd() }
+        animationSpec = tween(150, easing = LinearEasing),
+        finishedListener = { onAnimEnd() },
+        label = "btn_size"
     )
 
-    val animatedPadding by animateDpAsState(
-        targetValue = if (isExpanded) 4.dp else 0.dp,
-        animationSpec = tween(durationMillis = animateDuration, easing = LinearEasing)
-    )
+    val buttonShape = when (controlStyle) {
+        AodControlStyle.SQUARE -> androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+        else -> CircleShape
+    }
+
+    val bg = when {
+        isPlayButton -> playBg
+        controlStyle == AodControlStyle.ACCENT ->
+            accentColor.copy(alpha = if (enabled) 0.22f else 0.06f)
+
+        else -> Color.White.copy(if (enabled) 0.10f else 0.04f)
+    }
+    val tint = when {
+        isPlayButton -> playTint
+        controlStyle == AodControlStyle.ACCENT && enabled ->
+            accentColor.copy(alpha = 0.95f)
+
+        else -> Color.White.copy(if (enabled) 0.92f else 0.28f)
+    }
+
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .padding(horizontal = animatedPadding)
             .size(animatedSize)
-            .clip(CircleShape)
-            .background(
-                if (isPlayButton) Color.White
-                else Color.White.copy(if (enabled) 0.10f else 0.04f)
-            )
+            .clip(buttonShape)
+            .background(bg)
             .clickable(
                 enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
@@ -1345,7 +1396,7 @@ private fun AnimatedButton(
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            tint = if (isPlayButton) Color.Black else Color.White.copy(if (enabled) 0.92f else 0.28f),
+            tint = tint,
             modifier = Modifier
                 .size(iconSize)
                 .animateContentSize()
@@ -1357,12 +1408,19 @@ private fun AnimatedButton(
 private fun CollapseButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier.size(44.dp).clip(CircleShape)
+        modifier = modifier
+            .size(44.dp)
+            .clip(CircleShape)
             .background(Color.White.copy(0.09f))
-            .clickable(interactionSource = remember { MutableInteractionSource() },
-                indication = null, onClick = onClick)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Icon(painterResource(R.drawable.expand_more), null,
-            tint = Color.White.copy(0.70f), modifier = Modifier.size(26.dp))
+            tint = Color.White.copy(0.70f),
+            modifier = Modifier.size(26.dp)
+        )
     }
 }
