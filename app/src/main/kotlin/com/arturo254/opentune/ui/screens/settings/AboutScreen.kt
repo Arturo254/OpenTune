@@ -227,7 +227,7 @@ fun AboutScreen(
                 item {
                     ErrorCard(
                         message = error ?: "Unknown error",
-                        onRetry = { /* TODO: implement retry */ }
+                        onRetry = { viewModel.fetchContributorsFromGitHub() }
                     )
                 }
             } else if (contributors.isNotEmpty()) {
@@ -685,6 +685,14 @@ private fun ErrorCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            FilledTonalButton(
+                onClick = onRetry,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Text(text = stringResource(R.string.retry))
+            }
         }
     }
 }
