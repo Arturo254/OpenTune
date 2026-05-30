@@ -9,6 +9,7 @@
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.arturo254.opentune.viewmodels
+import kotlinx.coroutines.flow.combine
 
 import android.content.Context
 import androidx.compose.runtime.MutableState
@@ -105,43 +106,30 @@ constructor(
                     SongFilter.LIBRARY -> database.songs(sortType, descending, hideVideo).map { it.filterExplicit(hideExplicit) }
                     SongFilter.LIKED -> database.likedSongs(sortType, descending, hideVideo).map { it.filterExplicit(hideExplicit) }
                     SongFilter.DOWNLOADED ->
-                        downloadUtil.downloads.flatMapLatest { downloads ->
-                            database
-                                .allSongs()
-                                .flowOn(Dispatchers.IO)
-                                .map { songs ->
-                                    songs.filter { song: Song ->
-                                        downloads[song.id]?.state == Download.STATE_COMPLETED
+                        combine(
+                            database.allSongs().flowOn(Dispatchers.IO),
+                            downloadUtil.downloads
+                        ) { songs, downloads ->
+                            songs.filter {
+                                downloads[it.id]?.state == Download.STATE_COMPLETED
+                            }.let { filteredSongs ->
+                                when (sortType) {
+                                    SongSortType.CREATE_DATE -> filteredSongs.sortedBy {
+                                        downloads[it.id]?.updateTimeMs ?: 0L
                                     }
-                                }.map { songs ->
-                                    when (sortType) {
-                                        SongSortType.CREATE_DATE -> songs.sortedBy { song: Song ->
-                                            downloads[song.id]?.updateTimeMs ?: 0L
-                                        }
-
-                                        SongSortType.NAME -> songs.sortedBy { song: Song -> song.song.title }
-                                        SongSortType.ARTIST -> {
-                                            val collator =
-                                                Collator.getInstance(Locale.getDefault())
-                                            collator.strength = Collator.PRIMARY
-                                            songs
-                                                .sortedWith(
-                                                    compareBy(collator) { song: Song ->
-                                                        song.artists.joinToString("") { artist -> artist.name }
-                                                    },
-                                                ).groupBy { it.album?.title }
-                                                .flatMap { (_, songsByAlbum) ->
-                                                    songsByAlbum.sortedBy { album ->
-                                                        album.artists.joinToString(
-                                                            "",
-                                                        ) { artist -> artist.name }
-                                                    }
-                                                }
-                                        }
-
-                                        SongSortType.PLAY_TIME -> songs.sortedBy { song: Song -> song.song.totalPlayTime }
-                                    }.reversed(descending).filterExplicit(hideExplicit)
-                                }
+                                    SongSortType.NAME -> filteredSongs.sortedBy { it.song.title }
+                                    SongSortType.ARTIST -> {
+                                        val collator = Collator.getInstance(Locale.getDefault())
+                                        collator.strength = Collator.PRIMARY
+                                        filteredSongs.sortedWith(
+                                            compareBy(collator) { song ->
+                                                song.artists.joinToString("") { it.name }
+                                            }
+                                        )
+                                    }
+                                    SongSortType.PLAY_TIME -> filteredSongs.sortedBy { it.song.totalPlayTime }
+                                }.reversed(descending).filterExplicit(hideExplicit)
+                            }
                         }
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -269,41 +257,36 @@ constructor(
                 val (filter, sortType, descending) = filterSort
                 when (filter) {
                     AlbumFilter.DOWNLOADED ->
-                        downloadUtil.downloads.flatMapLatest { downloads ->
-                            database.allSongs()
-                                .flowOn(Dispatchers.IO)
-                                .map { songs ->
-                                    songs
-                                        .filter { song -> downloads[song.id]?.state == Download.STATE_COMPLETED }
-                                        .mapNotNull { it.song.albumId }
-                                        .toSet()
-                                }.flatMapLatest { downloadedAlbumIds ->
-                                    database.albumsByIds(downloadedAlbumIds, sortType, descending)
-                                        .map { albums -> albums.filterExplicitAlbums(hideExplicit) }
-                                }
+                        combine(
+                            database.allSongs().flowOn(Dispatchers.IO),
+                            downloadUtil.downloads
+                        ) { songs, downloads ->
+                            songs.filter { downloads[it.id]?.state == Download.STATE_COMPLETED }
+                                .mapNotNull { it.song.albumId }.toSet()
+                        }.flatMapLatest { downloadedAlbumIds ->
+                            database.albumsByIds(downloadedAlbumIds, sortType, descending)
+                                .map { albums -> albums.filterExplicitAlbums(hideExplicit) }
                         }
                     
                         AlbumFilter.DOWNLOADED_FULL ->
-                            downloadUtil.downloads.flatMapLatest { downloads ->
-                                database.allSongs()
-                                    .flowOn(Dispatchers.IO)
-                                    .map { songs ->
-                                        songs
-                                            .filter { song -> downloads[song.id]?.state == Download.STATE_COMPLETED }
-                                            .mapNotNull { song -> song.song.albumId?.let { albumId -> albumId to song } }
-                                            .groupBy({ it.first }, { it.second })
-                                            .mapValues { (_, songList) -> songList.size }
-                                    }.flatMapLatest { downloadedCountByAlbum ->
-                                        database.albumsByIds(downloadedCountByAlbum.keys, sortType, descending)
-                                            .map { albums ->
-                                                albums.filter { album ->
-                                                    val totalSongsInAlbum = album.album.songCount
-                                                    val downloadedSongsCount = downloadedCountByAlbum[album.album.id] ?: 0
-                                                    totalSongsInAlbum > 0 && downloadedSongsCount >= totalSongsInAlbum
-                                                }.filterExplicitAlbums(hideExplicit)
-                                            }
-                                    }
-                            }
+                        combine(
+                            database.allSongs().flowOn(Dispatchers.IO),
+                            downloadUtil.downloads
+                        ) { songs, downloads ->
+                            songs.filter { downloads[it.id]?.state == Download.STATE_COMPLETED }
+                                .mapNotNull { song -> song.song.albumId?.let { it to song } }
+                                .groupBy({ it.first }, { it.second })
+                                .mapValues { it.value.size }
+                        }.flatMapLatest { downloadedCountByAlbum ->
+                            database.albumsByIds(downloadedCountByAlbum.keys, sortType, descending)
+                                .map { albums ->
+                                    albums.filter { album ->
+                                        val totalSongsInAlbum = album.album.songCount
+                                        val downloadedSongsCount = downloadedCountByAlbum[album.album.id] ?: 0
+                                        totalSongsInAlbum > 0 && downloadedSongsCount >= totalSongsInAlbum
+                                    }.filterExplicitAlbums(hideExplicit)
+                                }
+                        }
                     AlbumFilter.LIBRARY -> database.albums(sortType, descending).map { it.filterExplicitAlbums(hideExplicit) }
                     AlbumFilter.LIKED -> database.albumsLiked(sortType, descending).map { it.filterExplicitAlbums(hideExplicit) }
                 }

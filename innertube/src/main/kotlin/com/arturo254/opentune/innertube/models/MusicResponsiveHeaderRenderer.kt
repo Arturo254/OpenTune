@@ -15,6 +15,7 @@ data class MusicResponsiveHeaderRenderer(
     val thumbnail: ThumbnailRenderer?,
     val buttons: List<Button>,
     val title: Runs,
+    val badges: List<Badges>? = null,
     val subtitle: Runs,
     val secondSubtitle: Runs?,
     val straplineTextOne: Runs?

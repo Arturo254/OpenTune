@@ -131,41 +131,22 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
         view.keepScreenOn = true
 
         if (fullscreenMode && window != null) {
-            // Método principal
             WindowCompat.setDecorFitsSystemWindows(window, false)
 
-            val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+            val insetsController = WindowInsetsControllerCompat(window, view)
+            insetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
-            // Ocultar todo - usando el método correcto
-            insetsController.hide(WindowInsetsCompat.Type.statusBars())
-            insetsController.hide(WindowInsetsCompat.Type.navigationBars())
-
-            // También ocultar la barra de gestos
-            if (android.os.Build.VERSION.SDK_INT >= 30) {
-                insetsController.hide(WindowInsetsCompat.Type.systemBars())
-            }
-
-            // Comportamiento: swipe muestra temporalmente
-            insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-
-            // Forzar layout en toda la pantalla
-            // Forzar layout en toda la pantalla - Versión corregida
-            window.decorView.setOnApplyWindowInsetsListener { _, insets ->
-                // Crear WindowInsets desde WindowInsetsCompat
-                androidx.core.view.WindowInsetsCompat.Builder()
-                    .setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.of(0, 0, 0, 0))
-                    .build()
-                    .toWindowInsets() ?: insets
-            }
+            // 3. Ocultar todo en una sola llamada (evita race condition)
+            insetsController.hide(WindowInsetsCompat.Type.systemBars())
         }
 
         onDispose {
             view.keepScreenOn = false
             if (window != null) {
-                val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+                val insetsController = WindowInsetsControllerCompat(window, view)
                 insetsController.show(WindowInsetsCompat.Type.systemBars())
                 WindowCompat.setDecorFitsSystemWindows(window, true)
-                window.decorView.setOnApplyWindowInsetsListener(null)
             }
         }
     }

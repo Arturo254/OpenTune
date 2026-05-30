@@ -79,6 +79,7 @@ fun HomeScreen(
     val forgottenFavorites by viewModel.forgottenFavorites.collectAsState()
     val keepListening by viewModel.keepListening.collectAsState()
     val homePage by viewModel.homePage.collectAsState()
+    val allItemsMetadata by viewModel.allItemsMetadata.collectAsState()
 
     val selectedChip by viewModel.selectedChip.collectAsState()
 
@@ -306,7 +307,8 @@ fun HomeScreen(
                         navController = navController,
                         playerConnection = playerConnection,
                         menuState = menuState,
-                        haptic = haptic
+                        haptic = haptic,
+                        metadataMap = allItemsMetadata
                     )
                 }
             }
@@ -327,7 +329,8 @@ fun HomeScreen(
                         navController = navController,
                         playerConnection = playerConnection,
                         menuState = menuState,
-                        haptic = haptic
+                        haptic = haptic,
+                        metadataMap = allItemsMetadata
                     )
                 }
             }
@@ -349,7 +352,8 @@ fun HomeScreen(
                         playerConnection = playerConnection,
                         menuState = menuState,
                         haptic = haptic,
-                        scope = scope
+                        scope = scope,
+                        metadataMap = allItemsMetadata
                     )
                 }
             }
@@ -386,7 +390,8 @@ fun HomeScreen(
                         navController = navController,
                         playerConnection = playerConnection,
                         menuState = menuState,
-                        haptic = haptic
+                        haptic = haptic,
+                        metadataMap = allItemsMetadata
                     )
                 }
             }
@@ -420,7 +425,8 @@ fun HomeScreen(
                         playerConnection = playerConnection,
                         menuState = menuState,
                         haptic = haptic,
-                        scope = scope
+                        scope = scope,
+                        metadataMap = allItemsMetadata
                     )
                 }
             }

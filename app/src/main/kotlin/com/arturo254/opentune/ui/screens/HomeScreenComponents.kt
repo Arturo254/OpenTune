@@ -91,6 +91,7 @@ import com.arturo254.opentune.innertube.models.SongItem
 import com.arturo254.opentune.innertube.models.WatchEndpoint
 import com.arturo254.opentune.innertube.models.YTItem
 import com.arturo254.opentune.innertube.pages.HomePage
+import com.arturo254.opentune.models.ItemMetadata
 import com.arturo254.opentune.models.MediaMetadata
 import com.arturo254.opentune.models.toMediaMetadata
 import com.arturo254.opentune.playback.PlayerConnection
@@ -137,6 +138,7 @@ fun QuickPicksSection(
     playerConnection: PlayerConnection,
     menuState: MenuState,
     haptic: HapticFeedback,
+    metadataMap: Map<String, ItemMetadata> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     val distinctQuickPicks = remember(quickPicks) { quickPicks.distinctBy { it.id } }
@@ -175,6 +177,7 @@ fun QuickPicksSection(
                             SongMenu(
                                 originalSong = song,
                                 navController = navController,
+                        metadata = metadataMap[song.id],
                                 onDismiss = menuState::dismiss
                             )
                         }
@@ -260,6 +263,7 @@ fun SpeedDialSection(
     playerConnection: PlayerConnection,
     menuState: MenuState,
     haptic: HapticFeedback,
+    metadataMap: Map<String, ItemMetadata> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -346,6 +350,7 @@ fun SpeedDialSection(
                                     SongMenu(
                                         originalSong = song,
                                         navController = navController,
+                                        metadata = metadataMap[song.id],
                                         onDismiss = menuState::dismiss
                                     )
                                 }
@@ -473,6 +478,7 @@ fun KeepListeningSection(
     menuState: MenuState,
     haptic: HapticFeedback,
     scope: CoroutineScope,
+    metadataMap: Map<String, ItemMetadata> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     val rows = if (keepListening.size > 6) 2 else 1
@@ -499,6 +505,12 @@ fun KeepListeningSection(
                 }
             }
         ) { item ->
+            val itemId = when (item) {
+                is Song -> item.id
+                is Album -> item.id
+                is Artist -> item.id
+                is Playlist -> item.id
+            }
             LocalGridItem(
                 item = item,
                 mediaMetadata = mediaMetadata,
@@ -507,7 +519,8 @@ fun KeepListeningSection(
                 playerConnection = playerConnection,
                 menuState = menuState,
                 haptic = haptic,
-                scope = scope
+                scope = scope,
+                metadata = metadataMap[itemId]
             )
         }
     }
@@ -529,6 +542,7 @@ fun ForgottenFavoritesSection(
     playerConnection: PlayerConnection,
     menuState: MenuState,
     haptic: HapticFeedback,
+    metadataMap: Map<String, ItemMetadata> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     val rows = min(4, forgottenFavorites.size)
@@ -555,6 +569,7 @@ fun ForgottenFavoritesSection(
                 isActive = song.id == mediaMetadata?.id,
                 isPlaying = isPlaying,
                 isSwipeable = false,
+                metadata = metadataMap[song.id],
                 trailingContent = {
                     IconButton(
                         onClick = {
@@ -563,6 +578,7 @@ fun ForgottenFavoritesSection(
                                 SongMenu(
                                     originalSong = song,
                                     navController = navController,
+                                    metadata = metadataMap[song.id],
                                     onDismiss = menuState::dismiss
                                 )
                             }
@@ -590,6 +606,7 @@ fun ForgottenFavoritesSection(
                                 SongMenu(
                                     originalSong = song,
                                     navController = navController,
+                                    metadata = metadataMap[song.id],
                                     onDismiss = menuState::dismiss
                                 )
                             }
@@ -616,6 +633,7 @@ fun AccountPlaylistsSection(
     menuState: MenuState,
     haptic: HapticFeedback,
     scope: CoroutineScope,
+    metadataMap: Map<String, ItemMetadata> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     val distinctPlaylists = remember(accountPlaylists) { accountPlaylists.distinctBy { it.id } }
@@ -638,7 +656,8 @@ fun AccountPlaylistsSection(
                 playerConnection = playerConnection,
                 menuState = menuState,
                 haptic = haptic,
-                scope = scope
+                scope = scope,
+                metadata = metadataMap[item.id]
             )
         }
     }
@@ -658,6 +677,7 @@ fun SimilarRecommendationsSection(
     menuState: MenuState,
     haptic: HapticFeedback,
     scope: CoroutineScope,
+    metadataMap: Map<String, ItemMetadata> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     LazyRow(
@@ -678,7 +698,8 @@ fun SimilarRecommendationsSection(
                 playerConnection = playerConnection,
                 menuState = menuState,
                 haptic = haptic,
-                scope = scope
+                scope = scope,
+                metadata = metadataMap[item.id]
             )
         }
     }
@@ -698,6 +719,7 @@ fun HomePageSectionContent(
     menuState: MenuState,
     haptic: HapticFeedback,
     scope: CoroutineScope,
+    metadataMap: Map<String, ItemMetadata> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     LazyRow(
@@ -718,7 +740,8 @@ fun HomePageSectionContent(
                 playerConnection = playerConnection,
                 menuState = menuState,
                 haptic = haptic,
-                scope = scope
+                scope = scope,
+                metadata = metadataMap[item.id]
             )
         }
     }
@@ -760,6 +783,7 @@ private fun YouTubeGridItemWrapper(
     menuState: MenuState,
     haptic: HapticFeedback,
     scope: CoroutineScope,
+    metadata: ItemMetadata? = null,
     modifier: Modifier = Modifier
 ) {
     YouTubeGridItem(
@@ -768,6 +792,7 @@ private fun YouTubeGridItemWrapper(
         isPlaying = isPlaying,
         coroutineScope = scope,
         thumbnailRatio = 1f,
+        metadata = metadata,
         modifier = modifier.combinedClickable(
             onClick = {
                 when (item) {
@@ -826,11 +851,13 @@ private fun LocalGridItem(
     menuState: MenuState,
     haptic: HapticFeedback,
     scope: CoroutineScope,
+    metadata: ItemMetadata? = null,
     modifier: Modifier = Modifier
 ) {
     when (item) {
         is Song -> SongGridItem(
             song = item,
+            metadata = metadata,
             modifier = modifier
                 .fillMaxWidth()
                 .combinedClickable(
@@ -847,6 +874,7 @@ private fun LocalGridItem(
                             SongMenu(
                                 originalSong = item,
                                 navController = navController,
+                                    metadata = metadata,
                                 onDismiss = menuState::dismiss
                             )
                         }
@@ -861,6 +889,7 @@ private fun LocalGridItem(
             isActive = item.id == mediaMetadata?.album?.id,
             isPlaying = isPlaying,
             coroutineScope = scope,
+            metadata = metadata,
             modifier = modifier
                 .fillMaxWidth()
                 .combinedClickable(
@@ -880,6 +909,7 @@ private fun LocalGridItem(
 
         is Artist -> ArtistGridItem(
             artist = item,
+            metadata = metadata,
             modifier = modifier
                 .fillMaxWidth()
                 .combinedClickable(
@@ -1033,6 +1063,7 @@ fun LazyListScope.AccountPlaylistsContainer(
 ) {
     item {
         val accountPlaylists by viewModel.accountPlaylists.collectAsState()
+        val allItemsMetadata by viewModel.allItemsMetadata.collectAsState()
         
         // Check if list is not null and not empty
         val currentPlaylists = accountPlaylists
@@ -1054,7 +1085,8 @@ fun LazyListScope.AccountPlaylistsContainer(
                     playerConnection = playerConnection,
                     menuState = menuState,
                     haptic = haptic,
-                    scope = scope
+                    scope = scope,
+                    metadataMap = allItemsMetadata
                 )
             }
         }
@@ -1074,6 +1106,7 @@ fun LazyListScope.SimilarRecommendationsContainer(
 ) {
      item {
         val similarRecommendations by viewModel.similarRecommendations.collectAsState()
+        val allItemsMetadata by viewModel.allItemsMetadata.collectAsState()
         
         Column {
             similarRecommendations?.forEach { recommendation ->
@@ -1090,7 +1123,8 @@ fun LazyListScope.SimilarRecommendationsContainer(
                     playerConnection = playerConnection,
                     menuState = menuState,
                     haptic = haptic,
-                    scope = scope
+                    scope = scope,
+                    metadataMap = allItemsMetadata
                 )
             }
         }
