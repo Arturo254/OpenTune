@@ -61,6 +61,12 @@ fun buildIntegrationActions(
 ): List<SettingsIntegrationAction> =
     listOf(
         SettingsIntegrationAction(
+            icon = painterResource(R.drawable.bedtime),
+            label = stringResource(R.string.AOD),
+            onClick = { resetSearch(); navController.navigate("settings/appearance/always_on_display") },
+            accentColor = Color(0xFFE3F2FD),
+        ),
+        SettingsIntegrationAction(
             icon = painterResource(R.drawable.discord),
             label = stringResource(R.string.discord),
             onClick = { resetSearch(); navController.navigate("settings/discord") },
