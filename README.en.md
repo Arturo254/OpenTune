@@ -9,8 +9,8 @@
   [![License](https://img.shields.io/github/license/Arturo254/OpenTune?style=flat-square&logo=gnu&color=2B3137&labelColor=161B22)](https://github.com/Arturo254/OpenTune/blob/main/LICENSE)
   [![Translation Status](https://badges.crowdin.net/opentune/localized.svg)](https://crowdin.com/project/opentune)
   [![Android](https://img.shields.io/badge/Platform-Android%206.0+-3DDC84.svg?style=flat-square&logo=android&logoColor=white&labelColor=161B22)](https://www.android.com)
-  [![Stars](https://img.shields.io/github/stars/Arturo254/OpenTune?style=flat-square&logo=github&color=yellow&labelColor=161B22)](https://github.com/Arturo254/OpenTune/stargazers)
-  [![Forks](https://img.shields.io/github/forks/Arturo254/OpenTune?style=flat-square&logo=github&color=blue&labelColor=161B22)](https://github.com/Arturo254/OpenTune/network/members)
+  [![Stars](https://img.shields.io/github/stars/Arturo254/OpenTune?style=flat-square&logo=github&color=yellow&labelColor=161B22&cacheSeconds=21600)](https://github.com/Arturo254/OpenTune/stargazers)
+  [![Forks](https://img.shields.io/github/forks/Arturo254/OpenTune?style=flat-square&logo=github&color=blue&labelColor=161B22&cacheSeconds=21600)](https://github.com/Arturo254/OpenTune/network/members)
 </div>
 
 ---
@@ -190,7 +190,7 @@ For detailed information about configuration, advanced features, and usage guide
 
 <div align="center">
   
-[![F-Droid](https://img.shields.io/badge/F--Droid-1976D2?style=for-the-badge&logo=f-droid&logoColor=white)](https://f-droid.org/es/packages/com.Arturo254.opentune/)
+[<img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/es/packages/com.Arturo254.opentune)
 
 </div>
 
@@ -198,7 +198,7 @@ For detailed information about configuration, advanced features, and usage guide
 
 <div align="center">
   
-[![OpenApk](https://img.shields.io/badge/OpenApk-FF6B35?style=for-the-badge&logo=android&logoColor=white)](https://www.openapk.net/opentune/com.Arturo254.opentune/)
+[<img src="https://www.openapk.net/images/openapk-badge.png" alt="Get it on OpenApk" height="80">](https://www.openapk.net/opentune/com.Arturo254.opentune/)
 
 </div>
 
