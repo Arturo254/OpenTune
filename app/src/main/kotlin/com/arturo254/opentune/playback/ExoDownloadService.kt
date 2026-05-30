@@ -67,7 +67,7 @@ class ExoDownloadService : DownloadService(
         ).addAction(
             Notification.Action.Builder(
                 Icon.createWithResource(this, R.drawable.close),
-                getString(android.R.string.cancel),
+                getString(R.string.action_cancel_all),
                 PendingIntent.getService(
                     this,
                     0,
