@@ -220,7 +220,7 @@ fun AODSettings(
     val (showProgress, setShowProgress) = rememberPreference(AodShowProgressKey, true)
     val (showControls, setShowControls) = rememberPreference(AodShowControlsKey, true)
     val (fullscreen, setFullscreen) = rememberPreference(AodFullscreenKey, true)
-    val (autoTimeoutSecs, setAutoTimeoutSecs) = rememberPreference(AodAutoActivationKey, 30)
+    val (autoTimeoutSecs, setAutoTimeoutSecs) = rememberPreference(AodAutoActivationKey, 0)
     val (spotlightInt, setSpotlightInt) = rememberPreference(AodSpotlightIntensityKey, 0.75f)
     val (spotlightPulse, setSpotlightPulse) = rememberPreference(AodSpotlightPulseKey, true)
     val (transitionDur, setTransitionDur) = rememberPreference(AodTransitionDurationKey, 700)

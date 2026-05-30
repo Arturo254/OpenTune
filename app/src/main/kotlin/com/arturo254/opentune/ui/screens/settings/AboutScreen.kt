@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
@@ -46,6 +47,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,6 +63,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.arturo254.opentune.BuildConfig
@@ -68,6 +71,8 @@ import com.arturo254.opentune.LocalPlayerAwareWindowInsets
 import com.arturo254.opentune.R
 import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.utils.backToMain
+import com.arturo254.opentune.viewmodels.AboutViewModel
+import com.arturo254.opentune.viewmodels.Contributor
 
 // ── Shimmer brush (reused from original, kept as-is) ──────────────────────
 
@@ -97,56 +102,10 @@ fun shimmerEffect(): Brush {
 
 // ── Data ───────────────────────────────────────────────────────────────────
 
-private data class Contributor(
-    val avatarUrl: String,
-    val name: String,
-    val role: String,
-    val profileUrl: String,
-)
-
 private data class SocialLink(
     val iconRes: Int,
     val url: String,
     val label: String,
-)
-
-private val contributors = listOf(
-    Contributor(
-        avatarUrl = "https://avatars.githubusercontent.com/u/87346871?v=4",
-        name = "亗 Arturo254",
-        role = "Lead Developer",
-        profileUrl = "https://github.com/Arturo254",
-    ),
-    Contributor(
-        avatarUrl = "https://avatars.githubusercontent.com/u/138934847?v=4",
-        name = "\uD81A\uDD10 Fabito02",
-        role = "Translator (PT_BR) · Icon designer",
-        profileUrl = "https://github.com/Fabito02/",
-    ),
-    Contributor(
-        avatarUrl = "https://avatars.githubusercontent.com/u/205341163?v=4",
-        name = "ϟ Xamax-code",
-        role = "Code Refactor",
-        profileUrl = "https://github.com/xamax-code",
-    ),
-    Contributor(
-        avatarUrl = "https://avatars.githubusercontent.com/u/106829560?v=4",
-        name = "ϟ Derpachi",
-        role = "Translator (RU_RU)",
-        profileUrl = "https://github.com/Derpachi",
-    ),
-    Contributor(
-        avatarUrl = "https://avatars.githubusercontent.com/u/147309938?v=4",
-        name = "「★」 RightSideUpCak3",
-        role = "Language selector",
-        profileUrl = "https://github.com/RightSideUpCak3",
-    ),
-    Contributor(
-        avatarUrl = "https://avatars.githubusercontent.com/gorupa?v=4",
-        name = "⟡ gorupa",
-        role = "Hindi Translator · Bug Fixes",
-        profileUrl = "https://github.com/gorupa",
-    ),
 )
 
 // ── Main screen ────────────────────────────────────────────────────────────
@@ -156,8 +115,12 @@ private val contributors = listOf(
 fun AboutScreen(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
+    viewModel: AboutViewModel = viewModel()
 ) {
     val uriHandler = LocalUriHandler.current
+    val contributors by viewModel.contributors.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Scaffold(
         topBar = {
@@ -256,26 +219,39 @@ fun AboutScreen(
             }
 
             // ── Contributors card ─────────────────────────────────────────
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                ) {
-                    Column {
-                        contributors.forEachIndexed { index, contributor ->
-                            ContributorRow(
-                                contributor = contributor,
-                                onClick = { uriHandler.openUri(contributor.profileUrl) },
-                            )
-                            if (index < contributors.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(start = 72.dp, end = 16.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+            if (isLoading) {
+                item {
+                    ContributorShimmer()
+                }
+            } else if (error != null) {
+                item {
+                    ErrorCard(
+                        message = error ?: "Unknown error",
+                        onRetry = { /* TODO: implement retry */ }
+                    )
+                }
+            } else if (contributors.isNotEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    ) {
+                        Column {
+                            contributors.forEachIndexed { index, contributor ->
+                                ContributorRow(
+                                    contributor = contributor,
+                                    onClick = { uriHandler.openUri(contributor.profileUrl) },
                                 )
+                                if (index < contributors.lastIndex) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 72.dp, end = 16.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                                    )
+                                }
                             }
                         }
                     }
@@ -403,7 +379,7 @@ private fun HeroCard(shimmerBrush: Brush) {
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        text = "GPL-3.0 License",
+                        text = "Remember: Jesus Christ loves you",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -604,6 +580,110 @@ private fun LicenseFooter(onLicenseClick: () -> Unit) {
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier.size(18.dp),
+            )
+        }
+    }
+}
+
+// ── Loading shimmer for contributors ───────────────────────────────────────
+
+@Composable
+private fun ContributorShimmer() {
+    val shimmer = shimmerEffect()
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column {
+            repeat(4) { index ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                        .background(shimmer),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.size(44.dp),
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize())
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.6f)
+                                .height(20.dp)
+                                .background(shimmer, RoundedCornerShape(4.dp))
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.4f)
+                                .height(14.dp)
+                                .background(shimmer, RoundedCornerShape(4.dp))
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .background(shimmer, CircleShape)
+                    )
+                }
+                if (index < 3) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 72.dp, end = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ── Error card ─────────────────────────────────────────────────────────────
+
+@Composable
+private fun ErrorCard(
+    message: String,
+    onRetry: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.policy),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(48.dp),
+            )
+            Text(
+                text = "Could not load contributors",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
