@@ -281,7 +281,7 @@ object YouTube {
                 artists = albumArtists,
                 year = albumYear,
                 thumbnail = albumThumbnail,
-                explicit = false, // TODO: Extract explicit badge for albums from YouTube response
+                explicit = header.badges?.any { it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE" } == true,
             ),
             songs = if (withSongs) albumSongs(playlistId, AlbumItem(
                 browseId = browseId,

@@ -112,6 +112,7 @@ import com.arturo254.opentune.innertube.models.ArtistItem
 import com.arturo254.opentune.innertube.models.PlaylistItem
 import com.arturo254.opentune.innertube.models.SongItem
 import com.arturo254.opentune.innertube.models.YTItem
+import com.arturo254.opentune.models.ItemMetadata
 import com.arturo254.opentune.models.MediaMetadata
 import com.arturo254.opentune.playback.queues.LocalAlbumRadio
 import com.arturo254.opentune.ui.utils.resize
@@ -555,23 +556,31 @@ fun SongListItem(
     modifier: Modifier = Modifier,
     albumIndex: Int? = null,
     viewCountText: String? = null,
+    metadata: ItemMetadata? = null,
     showLikedIcon: Boolean = true,
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
-        if (showLikedIcon && song.song.liked) {
-            Icon.Favorite()
-        }
-        if (song.song.explicit) {
-            Icon.Explicit()
-        }
-        if (showInLibraryIcon && song.song.inLibrary != null) {
-            Icon.Library()
-        }
-        if (showDownloadIcon) {
-            val download by LocalDownloadUtil.current.getDownload(song.id)
-                .collectAsState(initial = null)
-            Icon.Download(download?.state)
+        if (metadata != null) {
+            if (showLikedIcon && metadata.isLiked) Icon.Favorite()
+            if (song.song.explicit) Icon.Explicit()
+            if (showInLibraryIcon && metadata.isInLibrary) Icon.Library()
+            if (showDownloadIcon) Icon.Download(metadata.downloadState)
+        } else {
+            if (showLikedIcon && song.song.liked) {
+                Icon.Favorite()
+            }
+            if (song.song.explicit) {
+                Icon.Explicit()
+            }
+            if (showInLibraryIcon && song.song.inLibrary != null) {
+                Icon.Library()
+            }
+            if (showDownloadIcon) {
+                val download by LocalDownloadUtil.current.getDownload(song.id)
+                    .collectAsState(initial = null)
+                Icon.Download(download?.state)
+            }
         }
     },
     isSelected: Boolean = false,
@@ -626,19 +635,26 @@ fun SongListItem(
 fun SongGridItem(
     song: Song,
     modifier: Modifier = Modifier,
+    metadata: ItemMetadata? = null,
     showLikedIcon: Boolean = true,
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
-        if (showLikedIcon && song.song.liked) {
-            Icon.Favorite()
-        }
-        if (showInLibraryIcon && song.song.inLibrary != null) {
-            Icon.Library()
-        }
-        if (showDownloadIcon) {
-            val download by LocalDownloadUtil.current.getDownload(song.id).collectAsState(initial = null)
-            Icon.Download(download?.state)
+        if (metadata != null) {
+            if (showLikedIcon && metadata.isLiked) Icon.Favorite()
+            if (showInLibraryIcon && metadata.isInLibrary) Icon.Library()
+            if (showDownloadIcon) Icon.Download(metadata.downloadState)
+        } else {
+            if (showLikedIcon && song.song.liked) {
+                Icon.Favorite()
+            }
+            if (showInLibraryIcon && song.song.inLibrary != null) {
+                Icon.Library()
+            }
+            if (showDownloadIcon) {
+                val download by LocalDownloadUtil.current.getDownload(song.id).collectAsState(initial = null)
+                Icon.Download(download?.state)
+            }
         }
     },
     isActive: Boolean = false,
@@ -690,8 +706,11 @@ fun SongGridItem(
 fun ArtistListItem(
     artist: Artist,
     modifier: Modifier = Modifier,
+    metadata: ItemMetadata? = null,
     badges: @Composable RowScope.() -> Unit = {
-        if (artist.artist.bookmarkedAt != null) {
+        if (metadata != null) {
+            if (metadata.isLiked) Icon.Favorite()
+        } else if (artist.artist.bookmarkedAt != null) {
             Icon(
                 painter = painterResource(R.drawable.favorite),
                 contentDescription = null,
@@ -724,8 +743,11 @@ fun ArtistListItem(
 fun ArtistGridItem(
     artist: Artist,
     modifier: Modifier = Modifier,
+    metadata: ItemMetadata? = null,
     badges: @Composable RowScope.() -> Unit = {
-        if (artist.artist.bookmarkedAt != null) {
+        if (metadata != null) {
+            if (metadata.isLiked) Icon.Favorite()
+        } else if (artist.artist.bookmarkedAt != null) {
             Icon.Favorite()
         }
     },
@@ -752,42 +774,49 @@ fun ArtistGridItem(
 fun AlbumListItem(
     album: Album,
     modifier: Modifier = Modifier,
+    metadata: ItemMetadata? = null,
     showLikedIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
-        val database = LocalDatabase.current
-        val downloadUtil = LocalDownloadUtil.current
-        var songs by remember {
-            mutableStateOf(emptyList<Song>())
-        }
-
-        LaunchedEffect(Unit) {
-            database.albumSongs(album.id).collect {
-                songs = it
+        if (metadata != null) {
+            if (showLikedIcon && metadata.isLiked) Icon.Favorite()
+            if (album.album.explicit) Icon.Explicit()
+            Icon.Download(metadata.downloadState)
+        } else {
+            val database = LocalDatabase.current
+            val downloadUtil = LocalDownloadUtil.current
+            var songs by remember {
+                mutableStateOf(emptyList<Song>())
             }
-        }
 
-        var downloadState by remember {
-            mutableStateOf(Download.STATE_STOPPED)
-        }
-
-        LaunchedEffect(songs) {
-            if (songs.isEmpty()) return@LaunchedEffect
-            downloadUtil.downloads.collect { downloads ->
-                downloadState = when {
-                    songs.all { downloads[it.id]?.state == STATE_COMPLETED } -> STATE_COMPLETED
-                    songs.all { downloads[it.id]?.state in listOf(STATE_QUEUED, STATE_DOWNLOADING, STATE_COMPLETED) } -> STATE_DOWNLOADING
-                    else -> Download.STATE_STOPPED
+            LaunchedEffect(Unit) {
+                database.albumSongs(album.id).collect {
+                    songs = it
                 }
             }
-        }
 
-        if (showLikedIcon && album.album.bookmarkedAt != null) {
-            Icon.Favorite()
+            var downloadState by remember {
+                mutableStateOf(Download.STATE_STOPPED)
+            }
+
+            LaunchedEffect(songs) {
+                if (songs.isEmpty()) return@LaunchedEffect
+                downloadUtil.downloads.collect { downloads ->
+                    downloadState = when {
+                        songs.all { downloads[it.id]?.state == STATE_COMPLETED } -> STATE_COMPLETED
+                        songs.all { downloads[it.id]?.state in listOf(STATE_QUEUED, STATE_DOWNLOADING, STATE_COMPLETED) } -> STATE_DOWNLOADING
+                        else -> Download.STATE_STOPPED
+                    }
+                }
+            }
+
+            if (showLikedIcon && album.album.bookmarkedAt != null) {
+                Icon.Favorite()
+            }
+            if (album.album.explicit) {
+                Icon.Explicit()
+            }
+            Icon.Download(downloadState)
         }
-        if (album.album.explicit) {
-            Icon.Explicit()
-        }
-        Icon.Download(downloadState)
     },
     isActive: Boolean = false,
     isPlaying: Boolean = false,
@@ -818,35 +847,42 @@ fun AlbumGridItem(
     album: Album,
     modifier: Modifier = Modifier,
     coroutineScope: CoroutineScope,
+    metadata: ItemMetadata? = null,
     badges: @Composable RowScope.() -> Unit = {
-        val database = LocalDatabase.current
-        val downloadUtil = LocalDownloadUtil.current
-        var songs by remember { mutableStateOf(emptyList<Song>()) }
+        if (metadata != null) {
+            if (metadata.isLiked) Icon.Favorite()
+            if (album.album.explicit) Icon.Explicit()
+            Icon.Download(metadata.downloadState)
+        } else {
+            val database = LocalDatabase.current
+            val downloadUtil = LocalDownloadUtil.current
+            var songs by remember { mutableStateOf(emptyList<Song>()) }
 
-        LaunchedEffect(Unit) {
-            database.albumSongs(album.id).collect { songs = it }
-        }
+            LaunchedEffect(Unit) {
+                database.albumSongs(album.id).collect { songs = it }
+            }
 
-        var downloadState by remember { mutableStateOf(Download.STATE_STOPPED) }
+            var downloadState by remember { mutableStateOf(Download.STATE_STOPPED) }
 
-        LaunchedEffect(songs) {
-            if (songs.isEmpty()) return@LaunchedEffect
-            downloadUtil.downloads.collect { downloads ->
-                downloadState = when {
-                    songs.all { downloads[it.id]?.state == STATE_COMPLETED } -> STATE_COMPLETED
-                    songs.all { downloads[it.id]?.state in listOf(STATE_QUEUED, STATE_DOWNLOADING, STATE_COMPLETED) } -> STATE_DOWNLOADING
-                    else -> Download.STATE_STOPPED
+            LaunchedEffect(songs) {
+                if (songs.isEmpty()) return@LaunchedEffect
+                downloadUtil.downloads.collect { downloads ->
+                    downloadState = when {
+                        songs.all { downloads[it.id]?.state == STATE_COMPLETED } -> STATE_COMPLETED
+                        songs.all { downloads[it.id]?.state in listOf(STATE_QUEUED, STATE_DOWNLOADING, STATE_COMPLETED) } -> STATE_DOWNLOADING
+                        else -> Download.STATE_STOPPED
+                    }
                 }
             }
-        }
 
-        if (album.album.bookmarkedAt != null) {
-            Icon.Favorite()
+            if (album.album.bookmarkedAt != null) {
+                Icon.Favorite()
+            }
+            if (album.album.explicit) {
+                Icon.Explicit()
+            }
+            Icon.Download(downloadState)
         }
-        if (album.album.explicit) {
-            Icon.Explicit()
-        }
-        Icon.Download(downloadState)
     },
     isActive: Boolean = false,
     isPlaying: Boolean = false,
@@ -903,7 +939,12 @@ fun PlaylistListItem(
     playlist: Playlist,
     modifier: Modifier = Modifier,
     autoPlaylist: Boolean = false,
-    badges: @Composable RowScope.() -> Unit = {},
+    metadata: ItemMetadata? = null,
+    badges: @Composable RowScope.() -> Unit = {
+        if (metadata != null) {
+            if (metadata.isLiked) Icon.Favorite()
+        }
+    },
     trailingContent: @Composable RowScope.() -> Unit = {}
 ) = ListItem(
     title = playlist.playlist.name,
@@ -1074,7 +1115,12 @@ fun PlaylistGridItem(
     playlist: Playlist,
     modifier: Modifier = Modifier,
     autoPlaylist: Boolean = false,
-    badges: @Composable RowScope.() -> Unit = {},
+    metadata: ItemMetadata? = null,
+    badges: @Composable RowScope.() -> Unit = {
+        if (metadata != null) {
+            if (metadata.isLiked) Icon.Favorite()
+        }
+    },
     fillMaxWidth: Boolean = false,
 ) = GridItem(
     title = {
@@ -1186,28 +1232,36 @@ fun YouTubeListItem(
     modifier: Modifier = Modifier,
     albumIndex: Int? = null,
     viewCountText: String? = null,
+    metadata: ItemMetadata? = null,
     isSelected: Boolean = false,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     isSwipeable: Boolean = true,
     trailingContent: @Composable RowScope.() -> Unit = {},
     badges: @Composable RowScope.() -> Unit = {
-        val database = LocalDatabase.current
-        val song by database.song(item.id).collectAsState(initial = null)
-        val album by database.album(item.id).collectAsState(initial = null)
+        if (metadata != null) {
+            if (metadata.isLiked) Icon.Favorite()
+            if (item.explicit) Icon.Explicit()
+            if (metadata.isInLibrary) Icon.Library()
+            if (item is SongItem) Icon.Download(metadata.downloadState)
+        } else {
+            val database = LocalDatabase.current
+            val song by database.song(item.id).collectAsState(initial = null)
+            val album by database.album(item.id).collectAsState(initial = null)
 
-        if ((item is SongItem && song?.song?.liked == true) ||
-            (item is AlbumItem && album?.album?.bookmarkedAt != null)
-        ) {
-            Icon.Favorite()
-        }
-        if (item.explicit) Icon.Explicit()
-        if (item is SongItem && song?.song?.inLibrary != null) {
-            Icon.Library()
-        }
-        if (item is SongItem) {
-            val downloads by LocalDownloadUtil.current.downloads.collectAsState()
-            Icon.Download(downloads[item.id]?.state)
+            if ((item is SongItem && song?.song?.liked == true) ||
+                (item is AlbumItem && album?.album?.bookmarkedAt != null)
+            ) {
+                Icon.Favorite()
+            }
+            if (item.explicit) Icon.Explicit()
+            if (item is SongItem && song?.song?.inLibrary != null) {
+                Icon.Library()
+            }
+            if (item is SongItem) {
+                val downloads by LocalDownloadUtil.current.downloads.collectAsState()
+                Icon.Download(downloads[item.id]?.state)
+            }
         }
     },
 ) {
@@ -1261,21 +1315,29 @@ fun YouTubeGridItem(
     item: YTItem,
     modifier: Modifier = Modifier,
     coroutineScope: CoroutineScope? = null,
+    metadata: ItemMetadata? = null,
     badges: @Composable RowScope.() -> Unit = {
-        val database = LocalDatabase.current
-        val song by database.song(item.id).collectAsState(initial = null)
-        val album by database.album(item.id).collectAsState(initial = null)
+        if (metadata != null) {
+            if (metadata.isLiked) Icon.Favorite()
+            if (item.explicit) Icon.Explicit()
+            if (metadata.isInLibrary) Icon.Library()
+            if (item is SongItem) Icon.Download(metadata.downloadState)
+        } else {
+            val database = LocalDatabase.current
+            val song by database.song(item.id).collectAsState(initial = null)
+            val album by database.album(item.id).collectAsState(initial = null)
 
-        if (item is SongItem && song?.song?.liked == true ||
-            item is AlbumItem && album?.album?.bookmarkedAt != null
-        ) {
-            Icon.Favorite()
-        }
-        if (item.explicit) Icon.Explicit()
-        if (item is SongItem && song?.song?.inLibrary != null) Icon.Library()
-        if (item is SongItem) {
-            val downloads by LocalDownloadUtil.current.downloads.collectAsState()
-            Icon.Download(downloads[item.id]?.state)
+            if (item is SongItem && song?.song?.liked == true ||
+                item is AlbumItem && album?.album?.bookmarkedAt != null
+            ) {
+                Icon.Favorite()
+            }
+            if (item.explicit) Icon.Explicit()
+            if (item is SongItem && song?.song?.inLibrary != null) Icon.Library()
+            if (item is SongItem) {
+                val downloads by LocalDownloadUtil.current.downloads.collectAsState()
+                Icon.Download(downloads[item.id]?.state)
+            }
         }
     },
     thumbnailRatio: Float = if (item is SongItem) 16f / 9 else 1f,

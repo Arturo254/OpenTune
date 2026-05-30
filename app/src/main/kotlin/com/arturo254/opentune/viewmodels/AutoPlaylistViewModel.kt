@@ -7,6 +7,7 @@
 
 
 package com.arturo254.opentune.viewmodels
+import kotlinx.coroutines.flow.combine
 
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
@@ -84,30 +85,25 @@ constructor(
                 val songSortType = sortType.toSongSortType()
                 when (playlist) {
                     "liked" -> database.likedSongs(songSortType, descending, hideVideo).map { it.filterExplicit(hideExplicit) }
-                    "downloaded" -> downloadUtil.downloads.flatMapLatest { downloads ->
-                        database.allSongs()
-                            .flowOn(Dispatchers.IO)
-                            .map { songs ->
-                                songs.filter {
-                                    downloads[it.id]?.state == Download.STATE_COMPLETED
+                    "downloaded" -> combine(
+                        database.allSongs().flowOn(Dispatchers.IO),
+                        downloadUtil.downloads
+                    ) { songs, downloads ->
+                        songs.filter {
+                            downloads[it.id]?.state == Download.STATE_COMPLETED
+                        }.let { filteredSongs ->
+                            when (songSortType) {
+                                SongSortType.CREATE_DATE -> filteredSongs.sortedBy {
+                                    downloads[it.id]?.updateTimeMs ?: 0L
                                 }
-                            }
-                            .map { songs ->
-                                when (songSortType) {
-                                    SongSortType.CREATE_DATE -> songs.sortedBy {
-                                        downloads[it.id]?.updateTimeMs ?: 0L
-                                    }
-
-                                    SongSortType.NAME -> songs.sortedBy { it.song.title }
-                                    SongSortType.ARTIST -> songs.sortedBy { song ->
-                                        song.artists.joinToString(separator = "") { artist -> artist.name }
-                                    }
-
-                                    SongSortType.PLAY_TIME -> songs.sortedBy { it.song.totalPlayTime }
-                                }.reversed(descending).filterExplicit(hideExplicit)
-                            }
+                                SongSortType.NAME -> filteredSongs.sortedBy { it.song.title }
+                                SongSortType.ARTIST -> filteredSongs.sortedBy { song ->
+                                    song.artists.joinToString(separator = "") { it.name }
+                                }
+                                SongSortType.PLAY_TIME -> filteredSongs.sortedBy { it.song.totalPlayTime }
+                            }.reversed(descending).filterExplicit(hideExplicit)
+                        }
                     }
-
                     else -> MutableStateFlow(emptyList())
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
