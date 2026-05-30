@@ -379,7 +379,7 @@ private fun HeroCard(shimmerBrush: Brush) {
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        text = "GPL-3.0 License",
+                        text = "Remember: Jesus Christ loves you",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
