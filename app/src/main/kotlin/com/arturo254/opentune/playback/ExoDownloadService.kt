@@ -34,6 +34,30 @@ class ExoDownloadService : DownloadService(
     @Inject
     lateinit var downloadUtil: DownloadUtil
 
+    private val notificationUpdateListener = object : DownloadManager.Listener {
+        override fun onDownloadsPausedChanged(downloadManager: DownloadManager, downloadsPaused: Boolean) {
+            updateNotification()
+        }
+
+        override fun onDownloadChanged(downloadManager: DownloadManager, download: Download, finalException: Exception?) {
+            updateNotification()
+        }
+
+        override fun onIdle(downloadManager: DownloadManager) {
+            updateNotification()
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        downloadManager.addListener(notificationUpdateListener)
+    }
+
+    override fun onDestroy() {
+        downloadManager.removeListener(notificationUpdateListener)
+        super.onDestroy()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             REMOVE_ALL_PENDING_DOWNLOADS -> {
@@ -48,9 +72,11 @@ class ExoDownloadService : DownloadService(
             }
             PAUSE_DOWNLOADS -> {
                 downloadManager.pauseDownloads()
+                updateNotification()
             }
             RESUME_DOWNLOADS -> {
                 downloadManager.resumeDownloads()
+                updateNotification()
             }
         }
         return super.onStartCommand(intent, flags, startId)
@@ -65,13 +91,18 @@ class ExoDownloadService : DownloadService(
         notMetRequirements: Int
     ): Notification {
         val notificationHelper = downloadUtil.downloadNotificationHelper
-        val firstDownload = downloads.firstOrNull()
 
-        val title = if (downloads.size == 1 && firstDownload != null) {
-            Util.fromUtf8Bytes(firstDownload.request.data)
-        } else {
-            resources.getQuantityString(R.plurals.n_song, downloads.size, downloads.size)
-        }
+        val activeDownload = downloads.find { it.state == Download.STATE_DOWNLOADING || it.state == Download.STATE_RESTARTING }
+            ?: downloads.firstOrNull()
+
+        val title = activeDownload?.let {
+            val songName = Util.fromUtf8Bytes(it.request.data)
+            if (downloads.size > 1) {
+                "$songName (+${downloads.size - 1})"
+            } else {
+                songName
+            }
+        } ?: resources.getString(R.string.downloading)
 
         val builder = Notification.Builder.recoverBuilder(
             this, notificationHelper.buildProgressNotification(
@@ -85,7 +116,7 @@ class ExoDownloadService : DownloadService(
         )
 
         // 1. Pause/Resume Button
-        val isPaused = downloads.all { it.state == Download.STATE_QUEUED || it.state == Download.STATE_RESTARTING } || downloadManager.downloadsPaused
+        val isPaused = downloadManager.downloadsPaused || downloads.all { it.state == Download.STATE_QUEUED || it.state == Download.STATE_RESTARTING }
         val pauseResumeAction = if (isPaused) {
             Notification.Action.Builder(
                 Icon.createWithResource(this, R.drawable.play),
@@ -109,7 +140,7 @@ class ExoDownloadService : DownloadService(
         }
 
         // 2. Cancel Button (Current/First)
-        val cancelAction = firstDownload?.let { download ->
+        val cancelAction = activeDownload?.let { download ->
             Notification.Action.Builder(
                 Icon.createWithResource(this, R.drawable.close),
                 getString(R.string.action_cancel),
@@ -139,6 +170,14 @@ class ExoDownloadService : DownloadService(
         builder.addAction(cancelAllAction)
 
         return builder.build()
+    }
+
+    private fun updateNotification() {
+        val downloads = downloadManager.currentDownloads
+        if (downloads.isNotEmpty()) {
+            val notification = getForegroundNotification(downloads.toMutableList(), 0)
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
 
     /**
