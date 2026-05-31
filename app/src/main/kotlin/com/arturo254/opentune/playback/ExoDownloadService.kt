@@ -42,6 +42,10 @@ class ExoDownloadService : DownloadService(
         override fun onDownloadChanged(downloadManager: DownloadManager, download: Download, finalException: Exception?) {
             updateNotification()
         }
+
+        override fun onIdle(downloadManager: DownloadManager) {
+            updateNotification()
+        }
     }
 
     override fun onCreate() {
@@ -68,9 +72,11 @@ class ExoDownloadService : DownloadService(
             }
             PAUSE_DOWNLOADS -> {
                 downloadManager.pauseDownloads()
+                updateNotification()
             }
             RESUME_DOWNLOADS -> {
                 downloadManager.resumeDownloads()
+                updateNotification()
             }
         }
         return super.onStartCommand(intent, flags, startId)
