@@ -14,6 +14,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.arturo254.opentune.betterlyrics.TTMLParser
 
+
+data class LyricsRomanizationPreferences(
+    val romanizeJapanese: Boolean,
+    val romanizeKorean: Boolean,
+
+    ) {
+    val isEnabled: Boolean
+        get() = romanizeJapanese || romanizeKorean
+}
+
 @Suppress("RegExpRedundantEscape")
 object LyricsUtils {
     val LINE_REGEX = "((\\[\\d\\d:\\d\\d\\.\\d{2,3}\\] ?)+)(.+)".toRegex()

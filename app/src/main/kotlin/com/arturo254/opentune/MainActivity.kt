@@ -166,6 +166,7 @@ import com.arturo254.opentune.constants.FloatingToolbarHorizontalPadding
 import com.arturo254.opentune.constants.HasPressedStarKey
 import com.arturo254.opentune.constants.LaunchCountKey
 import com.arturo254.opentune.constants.LiquidGlassNavBarKey
+import com.arturo254.opentune.constants.LyricsSyncOffsetKey
 import com.arturo254.opentune.constants.MiniPlayerBottomSpacing
 import com.arturo254.opentune.constants.MiniPlayerHeight
 import com.arturo254.opentune.constants.MiniPlayerLastAnchorKey
@@ -512,7 +513,8 @@ class MainActivity : ComponentActivity() {
                         Markdown(
                             content = notes,
                             modifier = Modifier
-                                .fillMaxWidth().padding(end = 8.dp)
+                                .fillMaxWidth()
+                                .padding(end = 8.dp)
                         )
                     } else {
                         Text(
@@ -553,6 +555,7 @@ class MainActivity : ComponentActivity() {
             val customThemeColorValue by rememberPreference(CustomThemeColorKey, defaultValue = "default")
             val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
             val useSystemFont by rememberPreference(UseSystemFontKey, defaultValue = false)
+            val lyricsSyncOffset by rememberPreference(LyricsSyncOffsetKey, defaultValue = 0)
             val isSystemInDarkTheme = isSystemInDarkTheme()
             val useDarkTheme =
                 remember(darkTheme, isSystemInDarkTheme) {
@@ -649,7 +652,7 @@ class MainActivity : ComponentActivity() {
                         Modifier
                             .fillMaxSize()
                             .background(
-                                if(pureBlack) Color.Black else MaterialTheme.colorScheme.surface
+                                if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface
                             )
                 ) {
                     val focusManager = LocalFocusManager.current
@@ -1172,7 +1175,9 @@ class MainActivity : ComponentActivity() {
                                                     modifier = Modifier
                                                         .fillMaxWidth()
                                                         .height(AppBarHeight + with(LocalDensity.current) {
-                                                            WindowInsets.systemBars.getTop(LocalDensity.current).toDp()
+                                                            WindowInsets.systemBars.getTop(
+                                                                LocalDensity.current
+                                                            ).toDp()
                                                         })
                                                         .background(
                                                             Brush.verticalGradient(
@@ -1390,7 +1395,7 @@ class MainActivity : ComponentActivity() {
                                                 modifier =
                                                     Modifier
                                                         .fillMaxSize()
-                                                        .padding(bottom = if(!playerBottomSheetState.isDismissed) MiniPlayerHeight else 0.dp)
+                                                        .padding(bottom = if (!playerBottomSheetState.isDismissed) MiniPlayerHeight else 0.dp)
                                                         .navigationBarsPadding(),
                                             ) { searchSource ->
                                                 when (searchSource) {
@@ -1435,7 +1440,8 @@ class MainActivity : ComponentActivity() {
                                         BottomSheetPlayer(
                                             state = playerBottomSheetState,
                                             navController = navController,
-                                            pureBlack = pureBlack
+                                            pureBlack = pureBlack,
+                                            lyricsSyncOffset = lyricsSyncOffset,
                                         )
 
                                         if(useRail) return@Box
@@ -1463,7 +1469,9 @@ class MainActivity : ComponentActivity() {
                                                                         )
                                                             val hideOffset =
                                                                 navSlideDistance *
-                                                                        (1 - bottomNavigationBarHeight.coerceAtMost(navVisibleHeight) / navVisibleHeight)
+                                                                        (1 - bottomNavigationBarHeight.coerceAtMost(
+                                                                            navVisibleHeight
+                                                                        ) / navVisibleHeight)
                                                             IntOffset(
                                                                 x = 0,
                                                                 y = (slideOffset + hideOffset).roundToPx(),

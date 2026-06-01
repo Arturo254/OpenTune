@@ -654,3 +654,7 @@ val AodShowClockKey = booleanPreferencesKey("aod_show_clock")
 
 /** Formato de 24h para el reloj (true = 24h, false = 12h AM/PM) */
 val AodClockFormatKey = booleanPreferencesKey("aod_clock_24h")
+
+val LyricsLineBlurKey = booleanPreferencesKey("lyricsLineBlur")
+
+val LyricsSyncOffsetKey = intPreferencesKey("lyrics_sync_offset")
