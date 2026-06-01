@@ -22,6 +22,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
+import androidx.media3.exoplayer.offline.DownloadManager
 import javax.inject.Inject
 
 data class DownloadItem(
@@ -51,10 +54,19 @@ class DownloadQueueViewModel @Inject constructor(
                     title = Util.fromUtf8Bytes(download.request.data)
                 )
             }
-            .sortedByDescending { it.download.startTimeMs }
+            .sortedBy { it.download.startTimeMs }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val downloadsPaused = downloadUtil.downloadManager.downloadsPaused
+    val downloadsPaused = callbackFlow {
+        val listener = object : DownloadManager.Listener {
+            override fun onDownloadsPausedChanged(downloadManager: DownloadManager, downloadsPaused: Boolean) {
+                trySend(downloadsPaused)
+            }
+        }
+        downloadUtil.downloadManager.addListener(listener)
+        trySend(downloadUtil.downloadManager.downloadsPaused)
+        awaitClose { downloadUtil.downloadManager.removeListener(listener) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), downloadUtil.downloadManager.downloadsPaused)
 
     fun pauseAll() {
         val intent = Intent(context, ExoDownloadService::class.java).setAction(ExoDownloadService.PAUSE_DOWNLOADS)

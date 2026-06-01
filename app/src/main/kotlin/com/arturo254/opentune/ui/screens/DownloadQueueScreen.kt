@@ -38,7 +38,7 @@ fun DownloadQueueScreen(
     viewModel: DownloadQueueViewModel = hiltViewModel(),
 ) {
     val downloads by viewModel.downloads.collectAsState()
-    val isPaused = viewModel.downloadsPaused
+    val isPaused by viewModel.downloadsPaused.collectAsState()
 
     Scaffold(
         topBar = {

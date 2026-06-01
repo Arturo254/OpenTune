@@ -1745,6 +1745,11 @@ class MainActivity : ComponentActivity() {
             return
         }
 
+        if (intent.action == ACTION_DOWNLOAD_QUEUE) {
+            navController.navigate(Screens.DownloadQueue.route)
+            return
+        }
+
         when (val path = uri.pathSegments.firstOrNull()) {
             "playlist" -> uri.getQueryParameter("list")?.let { playlistId ->
                 if (playlistId.startsWith("OLAK5uy_")) {
@@ -1832,6 +1837,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val ACTION_SEARCH = "com.arturo254.opentune.action.SEARCH"
         const val ACTION_LIBRARY = "com.arturo254.opentune.action.LIBRARY"
+        const val ACTION_DOWNLOAD_QUEUE = "com.arturo254.opentune.action.DOWNLOAD_QUEUE"
     }
 }
 
