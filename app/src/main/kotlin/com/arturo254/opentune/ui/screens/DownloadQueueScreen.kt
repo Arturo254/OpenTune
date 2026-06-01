@@ -1,6 +1,10 @@
 /*
  * OpenTune Project Original (2026)
  * Arturo254 (github.com/Arturo254)
+ *
+ * DownloadQueueScreen author:
+ * RajnishKMehta (github.com/RajnishKMehta)
+ *
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
