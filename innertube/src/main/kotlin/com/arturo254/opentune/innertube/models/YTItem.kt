@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models
 
 import com.arturo254.opentune.innertube.models.WatchEndpoint.WatchEndpointMusicSupportedConfigs.WatchEndpointMusicConfig.Companion.MUSIC_VIDEO_TYPE_OMV
@@ -28,6 +26,12 @@ data class Album(
     val name: String,
     val id: String,
 )
+
+enum class AlbumType {
+    ALBUM,      // Álbum completo / LP
+    SINGLE,     // Single (1-3 canciones)
+    EP          // Extended Play (4-6 canciones)
+}
 
 data class SongItem(
     override val id: String,
@@ -55,9 +59,31 @@ data class AlbumItem(
     val year: Int? = null,
     override val thumbnail: String,
     override val explicit: Boolean = false,
+    val type: AlbumType? = null,  // Nuevo campo para clasificar el tipo de lanzamiento
 ) : YTItem() {
     override val shareLink: String
         get() = "https://music.youtube.com/playlist?list=$playlistId"
+
+    /**
+     * Determina el tipo de álbum basado en el título o metadata
+     * Útil cuando el campo type no viene en la respuesta de YouTube
+     */
+    fun inferType(): AlbumType {
+        return type ?: when {
+            title.contains("(Single)", ignoreCase = true) -> AlbumType.SINGLE
+            title.contains(" - Single", ignoreCase = true) -> AlbumType.SINGLE
+            title.contains("(EP)", ignoreCase = true) -> AlbumType.EP
+            title.contains(" - EP", ignoreCase = true) -> AlbumType.EP
+            title.contains("(Remix)", ignoreCase = true) -> AlbumType.SINGLE
+            else -> AlbumType.ALBUM
+        }
+    }
+
+    fun isSingle(): Boolean = inferType() == AlbumType.SINGLE
+
+    fun isEp(): Boolean = inferType() == AlbumType.EP
+
+    fun isAlbum(): Boolean = inferType() == AlbumType.ALBUM
 }
 
 data class PlaylistItem(

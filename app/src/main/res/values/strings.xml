@@ -906,5 +906,15 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="aod_control_style_accent">Accent</string>
     <string name="aod_control_style_minimal_flat">Flat</string>
     <string name="AOD">AOD</string>
+    <string name="new_releases">New Releases</string>
+    <string name="singles">Singles</string>
+    <string name="ep">EP</string>
+    <string name="total_releases">Total releases</string>
+    <string name="n_releases">%d releases</string>
+    <string name="loading_new_releases">Loading new releases…</string>
+    <string name="new_releases_error_title">New releases unavailable</string>
+    <string name="new_releases_error_desc">OpenTune could not load this YouTube Music section. Try again later.</string>
+    <string name="no_releases_found">No releases found</string>
+    <string name="new_releases_empty_desc">No new releases found at the moment.</string>
 
 </resources>

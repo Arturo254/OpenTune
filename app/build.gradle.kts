@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
+import java.io.ByteArrayOutputStream
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,13 +10,26 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+fun fetchGitCommitHash(): String {
+    return try {
+        val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+            .redirectErrorStream(true)
+            .start()
+        val output = process.inputStream.bufferedReader().readText().trim()
+        process.waitFor()
+        output.ifEmpty { "unknown" }
+    } catch (e: Exception) {
+        "unknown"
+    }
+}
+
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localProperties.load(localPropertiesFile.inputStream())
 }
 
-val vBuild = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
+val gitCommit = fetchGitCommitHash()
 
 android {
     namespace = "com.arturo254.opentune"
@@ -47,6 +61,8 @@ android {
                 ?: System.getenv("TOGETHER_BEARER_TOKEN")
                 ?: ""
         buildConfigField("String", "TOGETHER_BEARER_TOKEN", "\"$togetherBearerToken\"")
+
+        buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
     }
 
     flavorDimensions += "abi"
@@ -100,7 +116,7 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
-            versionNameSuffix = ".$vBuild-debug"
+            versionNameSuffix = ".$gitCommit-debug"
             isDebuggable = true
         }
     }
@@ -187,7 +203,6 @@ dependencies {
     implementation(libs.viewmodel)
     implementation(libs.viewmodel.compose)
 
-
     implementation("io.ktor:ktor-client-content-negotiation:3.0.3")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
@@ -245,7 +260,6 @@ dependencies {
 
     implementation(libs.timber)
     testImplementation(libs.junit)
-    // Ensure ProcessLifecycleOwner is available for the presence manager and CI unit tests
     implementation("com.github.therealbush:translator:1.1.1")
     implementation("androidx.lifecycle:lifecycle-process:2.10.0")
     implementation("androidx.compose.material3.adaptive:adaptive:1.2.0")
@@ -259,7 +273,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
             "-opt-in=kotlin.RequiresOptIn",
             "-Xcontext-parameters"
         )
-        // Suppress warnings
         suppressWarnings.set(true)
     }
 }

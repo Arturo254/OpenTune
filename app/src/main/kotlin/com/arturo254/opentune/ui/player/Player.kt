@@ -155,6 +155,7 @@ import coil3.compose.AsyncImage
 import com.arturo254.opentune.constants.AodAutoActivationKey
 import com.arturo254.opentune.constants.AodFullscreenKey
 import com.arturo254.opentune.constants.BlurRadiusKey
+import com.arturo254.opentune.constants.SeekExtraSeconds
 import com.arturo254.opentune.ui.component.COLLAPSED_ANCHOR
 import com.skydoves.cloudy.cloudy
 import kotlinx.coroutines.Dispatchers
@@ -174,6 +175,7 @@ private const val V7BackdropBlurHeightFraction = 0.54f // The height of the blur
 fun BottomSheetPlayer(
     state: BottomSheetState,
     navController: NavController,
+    lyricsSyncOffset: Int,
     modifier: Modifier = Modifier,
     pureBlack: Boolean,
 ) {
@@ -204,7 +206,7 @@ fun BottomSheetPlayer(
     val (disableBlur) = rememberPreference(DisableBlurKey, false)
     val (blurRadius) = rememberPreference(BlurRadiusKey, 36f)
     val (showCodecOnPlayer) = rememberPreference(booleanPreferencesKey("show_codec_on_player"), false)
-    val (incrementalSeekSkipEnabled) = rememberPreference(com.arturo254.opentune.constants.SeekExtraSeconds, defaultValue = false)
+    val (incrementalSeekSkipEnabled) = rememberPreference(SeekExtraSeconds, defaultValue = false)
     var keyboardSkipMultiplier by remember { mutableStateOf(1) }
     var lastKeyboardTapTime by remember { mutableLongStateOf(0L) }
 
@@ -523,6 +525,7 @@ fun BottomSheetPlayer(
         mutableStateOf(false)
     }
 
+
     LaunchedEffect(mediaMetadata?.id, playbackState) {
         val startTime = SystemClock.elapsedRealtime()
         if (playbackState == STATE_READY) {
@@ -639,9 +642,14 @@ fun BottomSheetPlayer(
                         }
                         lastKeyboardTapTime = now
                         val skipAmount = 5000L * keyboardSkipMultiplier
-                        playerConnection.player.seekTo((playerConnection.player.currentPosition - skipAmount).coerceAtLeast(0))
+                        playerConnection.player.seekTo(
+                            (playerConnection.player.currentPosition - skipAmount).coerceAtLeast(
+                                0
+                            )
+                        )
                         true
                     }
+
                     Key.DirectionRight -> {
                         val now = SystemClock.uptimeMillis()
                         if (incrementalSeekSkipEnabled && now - lastKeyboardTapTime < 1000) {
@@ -651,37 +659,50 @@ fun BottomSheetPlayer(
                         }
                         lastKeyboardTapTime = now
                         val skipAmount = 5000L * keyboardSkipMultiplier
-                        playerConnection.player.seekTo((playerConnection.player.currentPosition + skipAmount).coerceAtMost(playerConnection.player.duration))
+                        playerConnection.player.seekTo(
+                            (playerConnection.player.currentPosition + skipAmount).coerceAtMost(
+                                playerConnection.player.duration
+                            )
+                        )
                         true
                     }
+
                     Key.DirectionUp -> {
-                        playerConnection.service.playerVolume.value = (playerConnection.service.playerVolume.value + 0.05f).coerceAtMost(1f)
+                        playerConnection.service.playerVolume.value =
+                            (playerConnection.service.playerVolume.value + 0.05f).coerceAtMost(1f)
                         true
                     }
+
                     Key.DirectionDown -> {
-                        playerConnection.service.playerVolume.value = (playerConnection.service.playerVolume.value - 0.05f).coerceAtLeast(0f)
+                        playerConnection.service.playerVolume.value =
+                            (playerConnection.service.playerVolume.value - 0.05f).coerceAtLeast(0f)
                         true
                     }
+
                     Key.Spacebar -> {
                         playerConnection.player.togglePlayPause()
                         true
                     }
+
                     Key.N -> {
                         if (keyEvent.isShiftPressed) {
                             playerConnection.seekToNext()
                             true
                         } else false
                     }
+
                     Key.P -> {
                         if (keyEvent.isShiftPressed) {
                             playerConnection.seekToPrevious()
                             true
                         } else false
                     }
+
                     Key.L -> {
                         playerConnection.toggleLike()
                         true
                     }
+
                     else -> false
                 }
             },
@@ -954,7 +975,11 @@ fun BottomSheetPlayer(
                             modifier =
                                 Modifier
                                     .weight(1f)
-                                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
+                                    .windowInsetsPadding(
+                                        WindowInsets.systemBars.only(
+                                            WindowInsetsSides.Top
+                                        )
+                                    ),
                         ) {
                             Spacer(Modifier.weight(1f))
 
@@ -1158,7 +1183,9 @@ fun BottomSheetPlayer(
                     LyricsScreen(
                         mediaMetadata = metadata,
                         onBackClick = { lyricsSheetState.collapseSoft() },
-                        navController = navController
+                        navController = navController,
+                        lyricsSyncOffset = lyricsSyncOffset,
+                        modifier = modifier,
                     )
                 }
             }

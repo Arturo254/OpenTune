@@ -11,6 +11,7 @@ package com.arturo254.opentune.innertube
 import com.arturo254.opentune.innertube.models.AccountInfo
 import com.arturo254.opentune.innertube.models.YTItem
 import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.AlbumType
 import com.arturo254.opentune.innertube.models.Artist
 import com.arturo254.opentune.innertube.models.ArtistItem
 import com.arturo254.opentune.innertube.models.BrowseEndpoint
@@ -139,6 +140,112 @@ object YouTube {
             name == "TVHTML5" ||
             name == "TVHTML5_SIMPLY_EMBEDDED_PLAYER" ||
             name == "TVHTML5_SIMPLY"
+    }
+
+
+    /**
+     * Obtiene todos los nuevos lanzamientos (Álbumes, Singles, EPs) de forma categorizada
+     * Usa el browseId "FEmusic_new_releases" que es la página completa
+     */
+    suspend fun newReleasesCategorized(): Result<NewReleasesCategorizedResponse> = runCatching {
+        val response =
+            innerTube.browse(WEB_REMIX, browseId = "FEmusic_new_releases").body<BrowseResponse>()
+
+        val albums = mutableListOf<AlbumItem>()
+        val singles = mutableListOf<AlbumItem>()
+        val eps = mutableListOf<AlbumItem>()
+
+        val contents = response.contents
+            ?.singleColumnBrowseResultsRenderer
+            ?.tabs
+            ?.firstOrNull()
+            ?.tabRenderer
+            ?.content
+            ?.sectionListRenderer
+            ?.contents
+            .orEmpty()
+
+        contents.forEach { content ->
+            // Buscar en GridRenderer
+            content.gridRenderer?.items?.forEach { item ->
+                item.musicTwoRowItemRenderer?.let { renderer ->
+                    when {
+                        renderer.subtitle?.runs?.any {
+                            it.text.contains("Single", ignoreCase = true) ||
+                                    it.text.contains("• Single", ignoreCase = true)
+                        } == true -> {
+                            NewReleaseAlbumPage.fromMusicTwoRowItemRenderer(renderer)?.let {
+                                singles.add(it.copy(type = AlbumType.SINGLE))
+                            }
+                        }
+
+                        renderer.subtitle?.runs?.any {
+                            it.text.contains("EP", ignoreCase = true) ||
+                                    it.text.contains("• EP", ignoreCase = true)
+                        } == true -> {
+                            NewReleaseAlbumPage.fromMusicTwoRowItemRenderer(renderer)?.let {
+                                eps.add(it.copy(type = AlbumType.EP))
+                            }
+                        }
+
+                        else -> {
+                            NewReleaseAlbumPage.fromMusicTwoRowItemRenderer(renderer)?.let {
+                                albums.add(it.copy(type = AlbumType.ALBUM))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Buscar en MusicCarouselShelfRenderer
+            content.musicCarouselShelfRenderer?.contents?.forEach { carouselContent ->
+                carouselContent.musicTwoRowItemRenderer?.let { renderer ->
+                    when {
+                        renderer.subtitle?.runs?.any {
+                            it.text.contains("Single", ignoreCase = true) ||
+                                    it.text.contains("• Single", ignoreCase = true)
+                        } == true -> {
+                            NewReleaseAlbumPage.fromMusicTwoRowItemRenderer(renderer)?.let {
+                                singles.add(it.copy(type = AlbumType.SINGLE))
+                            }
+                        }
+
+                        renderer.subtitle?.runs?.any {
+                            it.text.contains("EP", ignoreCase = true) ||
+                                    it.text.contains("• EP", ignoreCase = true)
+                        } == true -> {
+                            NewReleaseAlbumPage.fromMusicTwoRowItemRenderer(renderer)?.let {
+                                eps.add(it.copy(type = AlbumType.EP))
+                            }
+                        }
+
+                        else -> {
+                            NewReleaseAlbumPage.fromMusicTwoRowItemRenderer(renderer)?.let {
+                                albums.add(it.copy(type = AlbumType.ALBUM))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        NewReleasesCategorizedResponse(
+            albums = albums.distinctBy { it.id },
+            singles = singles.distinctBy { it.id },
+            eps = eps.distinctBy { it.id }
+        )
+    }
+
+    /**
+     * Respuesta categorizada de nuevos lanzamientos
+     */
+    data class NewReleasesCategorizedResponse(
+        val albums: List<AlbumItem>,
+        val singles: List<AlbumItem>,
+        val eps: List<AlbumItem>,
+    ) {
+        val total: Int get() = albums.size + singles.size + eps.size
+        val isEmpty: Boolean get() = albums.isEmpty() && singles.isEmpty() && eps.isEmpty()
     }
 
     private fun resolvePlayerPoToken(client: YouTubeClient, videoId: String, explicitPoToken: String?): String? {
@@ -1223,3 +1330,5 @@ object YouTube {
 
     private val VISITOR_DATA_REGEX = Regex("^Cg[t|s]")
 }
+
+

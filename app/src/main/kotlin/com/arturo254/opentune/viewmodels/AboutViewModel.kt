@@ -40,7 +40,7 @@ class AboutViewModel : ViewModel() {
         fetchContributorsFromGitHub()
     }
 
-    private fun fetchContributorsFromGitHub() {
+    fun fetchContributorsFromGitHub() {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null

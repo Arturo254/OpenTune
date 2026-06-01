@@ -90,6 +90,7 @@ import com.arturo254.opentune.constants.PlayerCustomBlurKey
 import com.arturo254.opentune.constants.PlayerCustomContrastKey
 import com.arturo254.opentune.constants.PlayerCustomBrightnessKey
 import com.arturo254.opentune.constants.DisableBlurKey
+import com.arturo254.opentune.di.LyricsHelperEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -103,8 +104,9 @@ import com.arturo254.opentune.utils.makeTimeString
 @Composable
 fun LyricsScreen(
     mediaMetadata: MediaMetadata,
-    onBackClick: () -> Unit,
     navController: NavController,
+    onBackClick: () -> Unit,
+    lyricsSyncOffset: Int,
     modifier: Modifier = Modifier
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -136,7 +138,7 @@ fun LyricsScreen(
                     // Get LyricsHelper from Hilt
                     val entryPoint = EntryPointAccessors.fromApplication(
                         context.applicationContext,
-                        com.arturo254.opentune.di.LyricsHelperEntryPoint::class.java
+                        LyricsHelperEntryPoint::class.java
                     )
                     val lyricsHelper = entryPoint.lyricsHelper()
                     
@@ -388,7 +390,9 @@ fun LyricsScreen(
                                     )
                                 } else {
                                     Lyrics(
-                                        sliderPositionProvider = { sliderPosition }
+                                        sliderPositionProvider = { sliderPosition },
+                                        lyricsSyncOffset = lyricsSyncOffset,
+                                        modifier = modifier,
                                     )
                                 }
                             }
@@ -684,7 +688,9 @@ fun LyricsScreen(
                             )
                         } else {
                             Lyrics(
-                                sliderPositionProvider = { sliderPosition }
+                                sliderPositionProvider = { sliderPosition },
+                                lyricsSyncOffset = lyricsSyncOffset,
+                                modifier = modifier,
                             )
                         }
                     }
