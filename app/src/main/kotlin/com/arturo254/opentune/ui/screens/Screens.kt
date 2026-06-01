@@ -41,6 +41,13 @@ sealed class Screens(
         route = "library"
     )
 
+    object DownloadQueue : Screens(
+        titleId = R.string.download_queue,
+        iconIdInactive = R.drawable.downloading,
+        iconIdActive = R.drawable.downloading,
+        route = "download_queue"
+    )
+
     object MoodAndGenres : Screens(
         titleId = R.string.mood_and_genres,
         iconIdInactive = R.drawable.style,
