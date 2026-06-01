@@ -93,6 +93,10 @@
     <string name="remove_all_from_library">Remove all from library</string>
     <string name="action_download">Download</string>
     <string name="downloading">Downloading</string>
+    <string name="action_cancel_all">Cancel All</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="exo_download_pause">Pause</string>
+    <string name="exo_download_resume">Resume</string>
     <string name="remove_download">Remove download</string>
     <string name="import_playlist">Import playlist</string>
     <string name="import_failed">Import failed</string>

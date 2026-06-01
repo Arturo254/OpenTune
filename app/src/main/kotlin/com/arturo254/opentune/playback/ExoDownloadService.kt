@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.playback
 
 import android.app.Notification
@@ -25,7 +23,6 @@ import com.arturo254.opentune.R
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-
 @AndroidEntryPoint
 class ExoDownloadService : DownloadService(
     NOTIFICATION_ID,
@@ -37,10 +34,49 @@ class ExoDownloadService : DownloadService(
     @Inject
     lateinit var downloadUtil: DownloadUtil
 
+    private val notificationUpdateListener = object : DownloadManager.Listener {
+        override fun onDownloadsPausedChanged(downloadManager: DownloadManager, downloadsPaused: Boolean) {
+            updateNotification()
+        }
+
+        override fun onDownloadChanged(downloadManager: DownloadManager, download: Download, finalException: Exception?) {
+            updateNotification()
+        }
+
+        override fun onIdle(downloadManager: DownloadManager) {
+            updateNotification()
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        downloadManager.addListener(notificationUpdateListener)
+    }
+
+    override fun onDestroy() {
+        downloadManager.removeListener(notificationUpdateListener)
+        super.onDestroy()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == REMOVE_ALL_PENDING_DOWNLOADS) {
-            downloadManager.currentDownloads.forEach { download ->
-                downloadManager.removeDownload(download.request.id)
+        when (intent?.action) {
+            REMOVE_ALL_PENDING_DOWNLOADS -> {
+                downloadManager.currentDownloads.forEach { download ->
+                    downloadManager.removeDownload(download.request.id)
+                }
+            }
+            REMOVE_DOWNLOAD -> {
+                intent.getStringExtra(EXTRA_DOWNLOAD_ID)?.let { id ->
+                    downloadManager.removeDownload(id)
+                }
+            }
+            PAUSE_DOWNLOADS -> {
+                downloadManager.pauseDownloads()
+                updateNotification()
+            }
+            RESUME_DOWNLOADS -> {
+                downloadManager.resumeDownloads()
+                updateNotification()
             }
         }
         return super.onStartCommand(intent, flags, startId)
@@ -53,32 +89,96 @@ class ExoDownloadService : DownloadService(
     override fun getForegroundNotification(
         downloads: MutableList<Download>,
         notMetRequirements: Int
-    ): Notification =
-        Notification.Builder.recoverBuilder(
-            this, downloadUtil.downloadNotificationHelper.buildProgressNotification(
+    ): Notification {
+        val notificationHelper = downloadUtil.downloadNotificationHelper
+
+        val activeDownload = downloads.find { it.state == Download.STATE_DOWNLOADING || it.state == Download.STATE_RESTARTING }
+            ?: downloads.firstOrNull()
+
+        val title = activeDownload?.let {
+            val songName = Util.fromUtf8Bytes(it.request.data)
+            if (downloads.size > 1) {
+                "$songName (+${downloads.size - 1})"
+            } else {
+                songName
+            }
+        } ?: resources.getString(R.string.downloading)
+
+        val builder = Notification.Builder.recoverBuilder(
+            this, notificationHelper.buildProgressNotification(
                 this,
                 R.drawable.download,
                 null,
-                if (downloads.size == 1) Util.fromUtf8Bytes(downloads[0].request.data)
-                else resources.getQuantityString(R.plurals.n_song, downloads.size, downloads.size),
+                title,
                 downloads,
                 notMetRequirements
             )
-        ).addAction(
+        )
+
+        // 1. Pause/Resume Button
+        val isPaused = downloadManager.downloadsPaused || downloads.all { it.state == Download.STATE_QUEUED || it.state == Download.STATE_RESTARTING }
+        val pauseResumeAction = if (isPaused) {
             Notification.Action.Builder(
-                Icon.createWithResource(this, R.drawable.close),
-                getString(android.R.string.cancel),
+                Icon.createWithResource(this, R.drawable.play),
+                getString(R.string.exo_download_resume),
                 PendingIntent.getService(
-                    this,
-                    0,
-                    Intent(this, ExoDownloadService::class.java).setAction(
-                        REMOVE_ALL_PENDING_DOWNLOADS
-                    ),
+                    this, 1,
+                    Intent(this, ExoDownloadService::class.java).setAction(RESUME_DOWNLOADS),
                     PendingIntent.FLAG_IMMUTABLE
                 )
             ).build()
+        } else {
+            Notification.Action.Builder(
+                Icon.createWithResource(this, R.drawable.pause),
+                getString(R.string.exo_download_pause),
+                PendingIntent.getService(
+                    this, 2,
+                    Intent(this, ExoDownloadService::class.java).setAction(PAUSE_DOWNLOADS),
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+            ).build()
+        }
+
+        // 2. Cancel Button (Current/First)
+        val cancelAction = activeDownload?.let { download ->
+            Notification.Action.Builder(
+                Icon.createWithResource(this, R.drawable.close),
+                getString(R.string.action_cancel),
+                PendingIntent.getService(
+                    this, 3,
+                    Intent(this, ExoDownloadService::class.java)
+                        .setAction(REMOVE_DOWNLOAD)
+                        .putExtra(EXTRA_DOWNLOAD_ID, download.request.id),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            ).build()
+        }
+
+        // 3. Cancel All Button
+        val cancelAllAction = Notification.Action.Builder(
+            Icon.createWithResource(this, R.drawable.close),
+            getString(R.string.action_cancel_all),
+            PendingIntent.getService(
+                this, 4,
+                Intent(this, ExoDownloadService::class.java).setAction(REMOVE_ALL_PENDING_DOWNLOADS),
+                PendingIntent.FLAG_IMMUTABLE
+            )
         ).build()
 
+        builder.setActions(pauseResumeAction)
+        cancelAction?.let { builder.addAction(it) }
+        builder.addAction(cancelAllAction)
+
+        return builder.build()
+    }
+
+    private fun updateNotification() {
+        val downloads = downloadManager.currentDownloads
+        if (downloads.isNotEmpty()) {
+            val notification = getForegroundNotification(downloads.toMutableList(), 0)
+            startForeground(NOTIFICATION_ID, notification)
+        }
+    }
 
     /**
      * This helper will outlive the lifespan of a single instance of [ExoDownloadService]
@@ -110,5 +210,9 @@ class ExoDownloadService : DownloadService(
         const val NOTIFICATION_ID = 1
         const val JOB_ID = 1
         const val REMOVE_ALL_PENDING_DOWNLOADS = "REMOVE_ALL_PENDING_DOWNLOADS"
+        const val REMOVE_DOWNLOAD = "REMOVE_DOWNLOAD"
+        const val PAUSE_DOWNLOADS = "PAUSE_DOWNLOADS"
+        const val RESUME_DOWNLOADS = "RESUME_DOWNLOADS"
+        const val EXTRA_DOWNLOAD_ID = "EXTRA_DOWNLOAD_ID"
     }
 }
