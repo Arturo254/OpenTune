@@ -1,5 +1,5 @@
 /*
- * OpenTune Project Original (2026)
+ * OpenTune Project Original
  * Arturo254 (github.com/Arturo254)
  *
  * DownloadQueueScreen author:
@@ -145,11 +145,11 @@ fun DownloadQueueItem(
             )
 
             val statusText = when (item.download.state) {
-                Download.STATE_QUEUED -> stringResource(R.string.download_queued)
+                Download.STATE_QUEUED -> stringResource(R.string.queued)
                 Download.STATE_DOWNLOADING -> stringResource(R.string.downloading)
-                Download.STATE_RESTARTING -> stringResource(R.string.download_restarting)
-                Download.STATE_FAILED -> stringResource(R.string.download_failed)
-                Download.STATE_STOPPED -> stringResource(R.string.download_paused)
+                Download.STATE_RESTARTING -> stringResource(R.string.restarting)
+                Download.STATE_FAILED -> stringResource(R.string.failed)
+                Download.STATE_STOPPED -> stringResource(R.string.paused)
                 else -> ""
             }
 
@@ -175,7 +175,7 @@ fun DownloadQueueItem(
         IconButton(onClick = onRemove) {
             Icon(
                 painter = painterResource(R.drawable.close),
-                contentDescription = "Remove",
+                contentDescription = stringResource(R.string.remove),
                 modifier = Modifier.size(20.dp)
             )
         }
