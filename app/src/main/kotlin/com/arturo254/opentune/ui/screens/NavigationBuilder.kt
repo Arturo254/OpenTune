@@ -5,6 +5,7 @@
  */
 
 package com.arturo254.opentune.ui.screens
+import com.arturo254.opentune.ui.screens.DownloadQueueScreen
 
 import android.net.Uri
 import androidx.compose.animation.core.tween
@@ -382,6 +383,9 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable("settings/about") {
         AboutScreen(navController, scrollBehavior)
+    }
+    composable(Screens.DownloadQueue.route) {
+        DownloadQueueScreen(navController)
     }
     composable("settings/po_token") {
         PoTokenScreen(navController, scrollBehavior)
