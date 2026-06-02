@@ -918,4 +918,9 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="new_releases_empty_desc">No new releases found at the moment.</string>
 
     <string name="download_queue">Download Queue</string>
+    <string name="no_active_downloads">No active downloads</string>
+    <string name="download_queued">Queued</string>
+    <string name="download_restarting">Restarting</string>
+    <string name="download_failed">Failed</string>
+    <string name="download_paused">Paused</string>
 </resources>

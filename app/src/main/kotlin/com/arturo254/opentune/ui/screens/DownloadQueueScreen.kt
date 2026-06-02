@@ -88,7 +88,7 @@ fun DownloadQueueScreen(
             ) {
                 EmptyPlaceholder(
                     icon = R.drawable.downloading,
-                    text = "No active downloads"
+                    text = stringResource(R.string.no_active_downloads)
                 )
             }
         } else {
@@ -145,11 +145,11 @@ fun DownloadQueueItem(
             )
 
             val statusText = when (item.download.state) {
-                Download.STATE_QUEUED -> "Queued"
-                Download.STATE_DOWNLOADING -> "Downloading"
-                Download.STATE_RESTARTING -> "Restarting"
-                Download.STATE_FAILED -> "Failed"
-                Download.STATE_STOPPED -> "Paused"
+                Download.STATE_QUEUED -> stringResource(R.string.download_queued)
+                Download.STATE_DOWNLOADING -> stringResource(R.string.downloading)
+                Download.STATE_RESTARTING -> stringResource(R.string.download_restarting)
+                Download.STATE_FAILED -> stringResource(R.string.download_failed)
+                Download.STATE_STOPPED -> stringResource(R.string.download_paused)
                 else -> ""
             }
 

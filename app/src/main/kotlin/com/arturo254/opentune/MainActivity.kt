@@ -1729,6 +1729,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleDeepLinkIntent(intent: Intent, navController: NavHostController) {
+        if (intent.action == ACTION_DOWNLOAD_QUEUE) {
+            navController.navigate(Screens.DownloadQueue.route)
+            return
+        }
+
         val uri = intent.data ?: intent.extras?.getString(Intent.EXTRA_TEXT)?.toUri() ?: return
         val coroutineScope = lifecycleScope
 
@@ -1742,11 +1747,6 @@ class MainActivity : ComponentActivity() {
 
         if (uri.scheme.equals("OpenTune", ignoreCase = true) && authority == "login") {
             navController.navigate(buildLoginRoute(uri.getQueryParameter(LOGIN_URL_ARGUMENT)))
-            return
-        }
-
-        if (intent.action == ACTION_DOWNLOAD_QUEUE) {
-            navController.navigate(Screens.DownloadQueue.route)
             return
         }
 

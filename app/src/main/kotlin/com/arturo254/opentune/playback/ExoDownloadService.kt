@@ -19,6 +19,7 @@ import androidx.media3.exoplayer.offline.DownloadNotificationHelper
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.scheduler.PlatformScheduler
 import androidx.media3.exoplayer.scheduler.Scheduler
+import com.arturo254.opentune.MainActivity
 import com.arturo254.opentune.R
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -107,8 +108,8 @@ class ExoDownloadService : DownloadService(
         val contentIntent = PendingIntent.getActivity(
             this,
             0,
-            Intent(this, Class.forName("com.arturo254.opentune.MainActivity")).apply {
-                action = ACTION_DOWNLOAD_QUEUE
+            Intent(this, MainActivity::class.java).apply {
+                action = MainActivity.ACTION_DOWNLOAD_QUEUE
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             },
             PendingIntent.FLAG_IMMUTABLE
