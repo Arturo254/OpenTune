@@ -51,7 +51,9 @@ class DownloadQueueViewModel @Inject constructor(
                 DownloadItem(
                     download = download,
                     song = songMap[download.request.id],
-                    title = Util.fromUtf8Bytes(download.request.data)
+                    title = download.request.data?.let { Util.fromUtf8Bytes(it) } 
+                        ?: songMap[download.request.id]?.song?.title 
+                        ?: download.request.id
                 )
             }
             .sortedBy { it.download.startTimeMs }
