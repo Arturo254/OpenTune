@@ -33,7 +33,7 @@ object BetterLyrics {
             coerceInputValues = true
         }
     }
-    
+
     private val client by lazy {
         HttpClient(OkHttp) {
             install(ContentNegotiation) {
@@ -49,7 +49,7 @@ object BetterLyrics {
             defaultRequest {
                 url("https://lyrics-api.boidu.dev/")
             }
-            
+
             // Don't throw on non-2xx responses, handle them gracefully
             expectSuccess = false
         }
@@ -102,9 +102,9 @@ object BetterLyrics {
                 if (album.isNotBlank()) parameter("al", album)
                 if (durationSeconds > 0) parameter("d", durationSeconds)
             }
-            
+
             logger?.invoke("$endpoint response status: ${response.status}")
-    
+
             val responseText = response.bodyAsText()
             if (!response.status.isSuccess()) {
                 logger?.invoke("$endpoint request failed with status: ${response.status}")
