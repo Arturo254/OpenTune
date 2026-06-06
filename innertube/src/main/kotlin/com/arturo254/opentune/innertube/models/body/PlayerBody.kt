@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models.body
 
 import com.arturo254.opentune.innertube.models.Context
@@ -18,8 +16,6 @@ data class PlayerBody(
     val playlistId: String?,
     val playbackContext: PlaybackContext? = null,
     val serviceIntegrityDimensions: ServiceIntegrityDimensions? = null,
-    val contentCheckOk: Boolean = true,
-    val racyCheckOk: Boolean = true,
 ) {
     @Serializable
     data class PlaybackContext(

@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models
 
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -26,13 +24,7 @@ data class ThumbnailRenderer(
         val thumbnailCrop: String?,
         val thumbnailScale: String?,
     ) {
-        fun getThumbnailUrl(): String? {
-            return thumbnail.thumbnails
-                .filter { it.width != null && it.height != null }
-                .maxByOrNull { it.width!! * it.height!! }
-                ?.url
-                ?: thumbnail.thumbnails.lastOrNull()?.url  // Fallback to last if no dimensions available
-        }
+        fun getThumbnailUrl() = thumbnail.thumbnails.lastOrNull()?.normalizedUrl
     }
 
     @Serializable

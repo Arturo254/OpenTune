@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models.response
 
 import com.arturo254.opentune.innertube.models.AccountInfo
@@ -51,7 +49,7 @@ data class AccountMenuResponse(
                                     name = name,
                                     email = email?.runs?.firstOrNull()?.text,
                                     channelHandle = channelHandle?.runs?.firstOrNull()?.text,
-                                    thumbnailUrl = accountPhoto.thumbnails.lastOrNull()?.url,
+                                    thumbnailUrl = accountPhoto.thumbnails.lastOrNull()?.normalizedUrl,
                                 )
                             }
                         }

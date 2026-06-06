@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models.response
 
 import com.arturo254.opentune.innertube.models.ResponseContext
@@ -47,7 +45,7 @@ data class PlayerResponse(
     data class StreamingData(
         val formats: List<Format>?,
         val adaptiveFormats: List<Format>,
-        val expiresInSeconds: Int,
+        val expiresInSeconds: Int? = null,
     ) {
         @Serializable
         data class Format(

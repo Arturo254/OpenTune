@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models
 
 import kotlinx.serialization.Serializable
@@ -15,7 +13,6 @@ data class MusicResponsiveHeaderRenderer(
     val thumbnail: ThumbnailRenderer?,
     val buttons: List<Button>,
     val title: Runs,
-    val badges: List<Badges>? = null,
     val subtitle: Runs,
     val secondSubtitle: Runs?,
     val straplineTextOne: Runs?

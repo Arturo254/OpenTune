@@ -4,11 +4,10 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.pages
 
 import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.AlbumReleaseType
 import com.arturo254.opentune.innertube.models.Artist
 import com.arturo254.opentune.innertube.models.MusicTwoRowItemRenderer
 import com.arturo254.opentune.innertube.models.oddElements
@@ -16,6 +15,9 @@ import com.arturo254.opentune.innertube.models.splitBySeparator
 
 object NewReleaseAlbumPage {
     fun fromMusicTwoRowItemRenderer(renderer: MusicTwoRowItemRenderer): AlbumItem? {
+        val subtitleRuns = renderer.subtitle?.runs ?: return null
+        val subtitleGroups = subtitleRuns.splitBySeparator()
+
         return AlbumItem(
             browseId = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
             playlistId =
@@ -31,17 +33,20 @@ object NewReleaseAlbumPage {
                     ?.firstOrNull()
                     ?.text ?: return null,
             artists =
-                renderer.subtitle?.runs?.splitBySeparator()?.getOrNull(1)?.oddElements()?.map {
+                subtitleGroups.getOrNull(1)?.oddElements()?.map {
                     Artist(
                         name = it.text,
                         id = it.navigationEndpoint?.browseEndpoint?.browseId,
                     )
                 } ?: return null,
             year =
-                renderer.subtitle.runs
+                subtitleRuns
                     .lastOrNull()
                     ?.text
                     ?.toIntOrNull(),
+            releaseType = AlbumReleaseType.fromLabel(
+                subtitleGroups.firstOrNull()?.joinToString(separator = "") { it.text }
+            ),
             thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
             explicit =
                 renderer.subtitleBadges?.find {

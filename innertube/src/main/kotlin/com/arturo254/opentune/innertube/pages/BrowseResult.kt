@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.pages
 
 import com.arturo254.opentune.innertube.models.YTItem
@@ -14,6 +12,7 @@ import com.arturo254.opentune.innertube.models.filterVideo
 
 data class BrowseResult(
     val title: String?,
+    val thumbnail: String? = null,
     val items: List<Item>,
 ) {
     data class Item(

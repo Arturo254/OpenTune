@@ -6,32 +6,44 @@
 
 
 
+
+
 package com.arturo254.opentune.innertube.utils
 
 import com.arturo254.opentune.innertube.YouTube
 import com.arturo254.opentune.innertube.pages.LibraryPage
+import com.arturo254.opentune.innertube.pages.PlaylistContinuationPage
 import com.arturo254.opentune.innertube.pages.PlaylistPage
 import java.security.MessageDigest
 
 @JvmName("completedLibrary")
 suspend fun Result<PlaylistPage>.completed(): Result<PlaylistPage> = runCatching {
-    val page = getOrThrow()
+    completePlaylistPage(getOrThrow()) { continuation ->
+        YouTube.playlistContinuation(continuation).getOrNull()
+    }
+}
+
+internal suspend fun completePlaylistPage(
+    page: PlaylistPage,
+    fetchContinuationPage: suspend (String) -> PlaylistContinuationPage?,
+): PlaylistPage {
     val songs = page.songs.toMutableList()
-    var continuation = page.songsContinuation
+    var continuation = page.songsContinuation.normalizedContinuation()
+        ?: page.continuation.normalizedContinuation()
     val seenContinuations = mutableSetOf<String>()
     var requestCount = 0
     val maxRequests = 50
     var consecutiveEmptyResponses = 0
-    
+
     while (continuation != null && requestCount < maxRequests) {
         if (continuation in seenContinuations) {
             break
         }
         seenContinuations.add(continuation)
         requestCount++
-        
-        val continuationPage = YouTube.playlistContinuation(continuation).getOrNull() ?: break
-        
+
+        val continuationPage = fetchContinuationPage(continuation) ?: break
+
         if (continuationPage.songs.isEmpty()) {
             consecutiveEmptyResponses++
             if (consecutiveEmptyResponses >= 2) break
@@ -39,14 +51,14 @@ suspend fun Result<PlaylistPage>.completed(): Result<PlaylistPage> = runCatching
             consecutiveEmptyResponses = 0
             songs += continuationPage.songs
         }
-        
-        continuation = continuationPage.continuation
+
+        continuation = continuationPage.continuation.normalizedContinuation()
     }
-    PlaylistPage(
-        playlist = page.playlist,
+
+    return page.copy(
         songs = songs,
         songsContinuation = null,
-        continuation = page.continuation
+        continuation = null
     )
 }
 
@@ -105,20 +117,51 @@ fun parseCookieString(cookie: String): Map<String, String> =
         .toMap()
 
 fun String.parseTime(): Int? {
-    try {
-        val parts = split(":").map { it.toInt() }
-        if (parts.size == 2) {
-            return parts[0] * 60 + parts[1]
+    val normalized =
+        buildString(length) {
+            for (char in this@parseTime) {
+                val digit = Character.digit(char, 10)
+                when {
+                    digit >= 0 -> append(digit)
+                    char.isDurationSeparator() -> append(':')
+                    char.isIgnorableDurationChar() -> Unit
+                    else -> return null
+                }
+            }
         }
-        if (parts.size == 3) {
-            return parts[0] * 3600 + parts[1] * 60 + parts[2]
-        }
-    } catch (e: Exception) {
-        return null
+
+    val parts = normalized.split(':')
+    if (parts.any { it.isBlank() || it.length > 3 }) return null
+    if (parts.size !in 2..3) return null
+    if (parts.drop(1).any { it.length !in 1..2 }) return null
+
+    val values = parts.map { it.toIntOrNull() ?: return null }
+    if (values.drop(1).any { it !in 0..59 }) return null
+
+    return when (values.size) {
+        2 -> values[0] * 60 + values[1]
+        3 -> values[0] * 3600 + values[1] * 60 + values[2]
+        else -> null
     }
-    return null
 }
+
+private fun Char.isDurationSeparator(): Boolean =
+    this == ':' ||
+            this == '.' ||
+            this == ',' ||
+            this == '：' ||
+            this == '．' ||
+            this == '﹕' ||
+            this == '꞉' ||
+            this == '∶' ||
+            this == '٫'
+
+private fun Char.isIgnorableDurationChar(): Boolean =
+    isWhitespace() ||
+            Character.getType(this) == Character.FORMAT.toInt()
 
 fun isPrivateId(browseId: String): Boolean {
     return browseId.contains("privately")
 }
+
+private fun String?.normalizedContinuation(): String? = this?.takeUnless(String::isBlank)

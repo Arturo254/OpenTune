@@ -2,11 +2,6 @@
  * OpenTune Project Original (2026)
  * Arturo254 (github.com/Arturo254)
  * Licensed Under GPL-3.0 | see git history for contributors
- *
- * Cold-start poToken generator based on SmartTube's PoTokenService.
- * Produces a deterministic proof-of-origin token from an identifier
- * (visitorData or dataSyncId) and a client-state string without
- * requiring a WebView or BotGuard execution.
  */
 
 package com.arturo254.opentune.innertube.utils

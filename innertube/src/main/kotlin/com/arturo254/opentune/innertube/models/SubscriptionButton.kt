@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models
 
 import kotlinx.serialization.Serializable
@@ -18,5 +16,7 @@ data class SubscriptionButton(
     data class SubscribeButtonRenderer(
         val subscribed: Boolean,
         val channelId: String,
+        val subscriberCountText: Runs? = null,
+        val subscriberCountWithSubscribeText: Runs? = null,
     )
 }

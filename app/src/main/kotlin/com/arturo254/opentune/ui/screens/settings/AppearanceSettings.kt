@@ -455,13 +455,13 @@ fun AppearanceSettings(
             onCheckedChange = onHidePlayerThumbnailChange
         )
 
-        SwitchPreference(
-            title = { Text(stringResource(R.string.OpenTune_canvas)) },
-            description = stringResource(R.string.OpenTune_canvas_desc),
-            icon = { Icon(painterResource(R.drawable.motion_photos_on), null) },
-            checked = OpenTuneCanvasEnabled,
-            onCheckedChange = onOpenTuneCanvasEnabledChange
-        )
+//        SwitchPreference(
+//            title = { Text(stringResource(R.string.OpenTune_canvas)) },
+//            description = stringResource(R.string.OpenTune_canvas_desc),
+//            icon = { Icon(painterResource(R.drawable.motion_photos_on), null) },
+//            checked = OpenTuneCanvasEnabled,
+//            onCheckedChange = onOpenTuneCanvasEnabledChange
+//        )
       
 
         ThumbnailCornerRadiusSelectorButton(

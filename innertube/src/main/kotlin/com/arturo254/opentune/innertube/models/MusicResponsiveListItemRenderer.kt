@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 @file:OptIn(ExperimentalSerializationApi::class)
 
 package com.arturo254.opentune.innertube.models

@@ -4,11 +4,10 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models.response
 
 import com.arturo254.opentune.innertube.models.Continuation
+import com.arturo254.opentune.innertube.models.ContinuationItemRenderer
 import com.arturo254.opentune.innertube.models.MusicResponsiveListItemRenderer
 import com.arturo254.opentune.innertube.models.Tabs
 import kotlinx.serialization.Serializable
@@ -34,7 +33,8 @@ data class SearchResponse(
         ) {
             @Serializable
             data class Content(
-                val musicResponsiveListItemRenderer: MusicResponsiveListItemRenderer,
+                val musicResponsiveListItemRenderer: MusicResponsiveListItemRenderer? = null,
+                val continuationItemRenderer: ContinuationItemRenderer? = null,
             )
         }
     }

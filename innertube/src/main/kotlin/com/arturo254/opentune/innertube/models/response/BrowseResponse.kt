@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models.response
 
 import com.arturo254.opentune.innertube.models.Button
@@ -102,6 +100,7 @@ data class BrowseResponse(
             val playButton: Button?,
             val startRadioButton: Button?,
             val subscriptionButton: SubscriptionButton?,
+            val monthlyListenerCount: Runs? = null,
             val menu: Menu,
         )
 
@@ -130,7 +129,9 @@ data class BrowseResponse(
         @Serializable
         data class MusicThumbnail(
             val url: String?,
-        )
+        ) {
+            val normalizedUrl: String? get() = url?.let { if (it.startsWith("//")) "https:$it" else it }
+        }
         @Serializable
         data class MusicThumbnailRenderer(
             val musicThumbnailRenderer: MusicThumbnailRenderer,

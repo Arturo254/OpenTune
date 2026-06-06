@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.innertube.models
 
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -64,8 +62,9 @@ data class SectionListRenderer(
     ) {
         @Serializable
         data class ItemSectionContent(
-            val gridRenderer: GridRenderer?,
-            val musicShelfRenderer: MusicShelfRenderer?,
+            val musicResponsiveListItemRenderer: MusicResponsiveListItemRenderer? = null,
+            val gridRenderer: GridRenderer? = null,
+            val musicShelfRenderer: MusicShelfRenderer? = null,
         )
     }
 }

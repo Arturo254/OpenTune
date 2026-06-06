@@ -17,5 +17,6 @@ dependencies {
     implementation(libs.newpipe.extractor)
     implementation(libs.re2j)
     implementation(libs.rhino)
+    implementation(libs.okhttp.dnsoverhttps)
     testImplementation(libs.junit)
 }
