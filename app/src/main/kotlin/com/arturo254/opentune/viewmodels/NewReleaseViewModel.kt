@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.viewmodels
 
 import android.content.Context
@@ -14,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import com.arturo254.opentune.innertube.YouTube
 import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.AlbumReleaseType
 import com.arturo254.opentune.innertube.models.filterExplicit
 import com.arturo254.opentune.innertube.models.filterVideo
 import com.arturo254.opentune.constants.HideExplicitKey
@@ -27,6 +26,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -48,6 +48,17 @@ constructor(
     val newReleaseAlbums = _newReleaseAlbums.asStateFlow()
     private val _uiState = MutableStateFlow<NewReleaseUiState>(NewReleaseUiState.Loading)
     val uiState = _uiState.asStateFlow()
+
+    // Derived flows — sin tocar la lógica existente
+    val albums = _newReleaseAlbums.map { list ->
+        list.filter { it.releaseType == AlbumReleaseType.ALBUM }
+    }
+    val singles = _newReleaseAlbums.map { list ->
+        list.filter { it.releaseType == AlbumReleaseType.SINGLE }
+    }
+    val eps = _newReleaseAlbums.map { list ->
+        list.filter { it.releaseType == AlbumReleaseType.EP }
+    }
 
     init {
         load()
