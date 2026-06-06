@@ -101,6 +101,7 @@ jobs:
 
       # Delete old bot comment if exists
       - name: Delete old APK comment on PR
+        continue-on-error: true
         uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -129,6 +130,7 @@ jobs:
 
       # Post new comment on PR
       - name: Post APK download comment on PR
+        continue-on-error: true
         uses: actions/github-script@v9
         env:
           VERSION: ${{ steps.version.outputs.version }}
