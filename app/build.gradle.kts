@@ -1,6 +1,9 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import java.io.ByteArrayOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.regex.Pattern
 
 plugins {
     alias(libs.plugins.android.application)
@@ -11,14 +14,56 @@ plugins {
 }
 
 fun fetchGitCommitHash(): String {
-    return try {
+    // Primero intenta obtener del repositorio local
+    try {
+        val rootDir = rootProject.projectDir
         val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+            .directory(rootDir)
             .redirectErrorStream(true)
             .start()
         val output = process.inputStream.bufferedReader().readText().trim()
         process.waitFor()
-        output.ifEmpty { "unknown" }
+        if (output.isNotEmpty() && output != "unknown" && !output.contains("fatal")) {
+            println("Git commit (local): $output")
+            return output
+        }
     } catch (e: Exception) {
+        println("Error reading local git commit: ${e.message}")
+    }
+
+    // Fallback: Obtener del repositorio remoto de GitHub sin dependencias externas
+    return try {
+        println("Fetching latest commit from GitHub API...")
+        val url = URL("https://api.github.com/repos/Arturo254/OpenTune/commits/master")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+
+        val responseCode = connection.responseCode
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            val response = connection.inputStream.bufferedReader().use { it.readText() }
+
+            // Extraer el SHA del JSON manualmente con regex
+            val shaPattern = Pattern.compile("\"sha\":\"([a-f0-9]{40})\"")
+            val matcher = shaPattern.matcher(response)
+
+            if (matcher.find()) {
+                val fullSha = matcher.group(1)
+                val shortSha = fullSha.take(7)
+                println("Git commit (remote): $shortSha")
+                shortSha
+            } else {
+                println("Could not find SHA in GitHub response")
+                "unknown"
+            }
+        } else {
+            println("GitHub API returned code: $responseCode")
+            "unknown"
+        }
+    } catch (e: Exception) {
+        println("Error fetching remote git commit: ${e.message}")
         "unknown"
     }
 }
