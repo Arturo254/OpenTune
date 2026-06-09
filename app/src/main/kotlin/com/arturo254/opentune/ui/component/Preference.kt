@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.ui.component
 
 import androidx.compose.animation.core.Spring
@@ -39,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -65,9 +64,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.unit.sp
 import com.arturo254.opentune.R
+import me.saket.squiggles.SquigglySlider
 import kotlin.math.roundToInt
 
 val LocalPreferenceInGroup = compositionLocalOf { false }
@@ -188,12 +187,13 @@ fun <T> ListPreference(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            showDialog = false
-                            onValueSelected(value)
-                        }.padding(horizontal = 16.dp, vertical = 12.dp),
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                showDialog = false
+                                onValueSelected(value)
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     RadioButton(
                         selected = value == selectedValue,
@@ -296,10 +296,10 @@ fun EditTextPreference(
     if (showDialog) {
         TextFieldDialog(
             initialTextFieldValue =
-            TextFieldValue(
-                text = value,
-                selection = TextRange(value.length),
-            ),
+                TextFieldValue(
+                    text = value,
+                    selection = TextRange(value.length),
+                ),
             singleLine = singleLine,
             isInputValid = isInputValid,
             onDone = onValueChange,
@@ -360,7 +360,7 @@ fun SliderPreference(
                 showDialog = false
             },
             onReset = {
-                sliderValue = 30f // Default value or any reset value you prefer
+                sliderValue = 30f
             },
             content = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -375,7 +375,7 @@ fun SliderPreference(
 
                     Spacer(Modifier.height(16.dp))
 
-                    Slider(
+                    SquigglySlider(
                         value = sliderValue,
                         onValueChange = { sliderValue = it },
                         valueRange = 15f..60f,
@@ -396,100 +396,131 @@ fun SliderPreference(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun CrossfadeSliderPreference(
     modifier: Modifier = Modifier,
     value: Int,
     onValueChange: (Int) -> Unit,
     isEnabled: Boolean = true,
 ) {
-    var showDialog by remember {
-        mutableStateOf(false)
+    var showDialog by remember { mutableStateOf(false) }
+    var localValue by remember { mutableFloatStateOf(value.toFloat()) }
+
+    // Actualizar localValue cuando value cambia desde fuera
+    androidx.compose.runtime.LaunchedEffect(value) {
+        localValue = value.toFloat()
     }
 
-    var sliderValue by remember {
-        mutableFloatStateOf(value.toFloat())
+    val displayValue = localValue.roundToInt().coerceIn(0, 10)
+    val isCrossfadeEnabled = displayValue > 0
+
+    val descriptionText = when (displayValue) {
+        0 -> stringResource(R.string.crossfade_disabled_description)
+        else -> pluralStringResource(R.plurals.seconds, displayValue, displayValue)
     }
 
     if (showDialog) {
-        ActionPromptDialog(
-            titleBar = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.audio_crossfade_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
+                    // Valor actual
                     Text(
-                        text = stringResource(R.string.audio_crossfade_dialog_title),
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-                }
-            },
-            onDismiss = { showDialog = false },
-            onConfirm = {
-                val rounded = sliderValue.roundToInt().coerceIn(0, 10)
-                sliderValue = rounded.toFloat()
-                showDialog = false
-                onValueChange.invoke(rounded)
-            },
-            onCancel = {
-                sliderValue = value.toFloat()
-                showDialog = false
-            },
-            onReset = {
-                sliderValue = 0f
-            },
-            content = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    val rounded = sliderValue.roundToInt().coerceIn(0, 10)
-                    Text(
-                        text =
-                        if (rounded == 0) {
+                        text = if (displayValue == 0) {
                             stringResource(R.string.dark_theme_off)
                         } else {
-                            pluralStringResource(
-                                R.plurals.seconds,
-                                rounded,
-                                rounded
-                            )
+                            pluralStringResource(R.plurals.seconds, displayValue, displayValue)
                         },
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isCrossfadeEnabled)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(24.dp))
 
-                    Text(
-                        text = stringResource(R.string.audio_crossfade_description),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Slider(
-                        value = sliderValue,
-                        onValueChange = { sliderValue = it.coerceIn(0f, 10f) },
+                    // Slider
+                    SquigglySlider(
+                        value = localValue,
+                        onValueChange = {
+                            localValue = it.roundToInt()
+                                .coerceIn(0, 10)
+                                .toFloat()
+                        },
                         valueRange = 0f..10f,
-                        steps = 9,
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // Marcas del slider
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        listOf(0, 2, 4, 6, 8, 10).forEach { mark ->
+                            Text(
+                                text = "${mark}s",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (displayValue >= mark && mark > 0)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                fontSize = 10.sp,
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val finalValue = localValue.roundToInt().coerceIn(0, 10)
+                        onValueChange(finalValue)
+                        showDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.save))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        localValue = value.toFloat()
+                        showDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
     }
 
-    val descriptionText =
-        if (value <= 0) {
-            stringResource(R.string.dark_theme_off)
-        } else {
-            pluralStringResource(R.plurals.seconds, value, value)
-        }
-
     PreferenceEntry(
         modifier = modifier,
-        title = { Text(stringResource(R.string.audio_crossfade_title)) },
+        title = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stringResource(R.string.audio_crossfade_title))
+                if (isCrossfadeEnabled) {
+                    CrossfadeBadge(duration = displayValue)
+                }
+            }
+        },
         description = descriptionText,
         icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
         onClick = { if (isEnabled) showDialog = true },
@@ -497,6 +528,27 @@ fun CrossfadeSliderPreference(
     )
 }
 
+@Composable
+private fun CrossfadeBadge(duration: Int) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .size(width = 48.dp, height = 24.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = "${duration}s",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NumberPickerPreference(
     modifier: Modifier = Modifier,
@@ -551,11 +603,14 @@ fun NumberPickerPreference(
 
                     Spacer(Modifier.height(16.dp))
 
-                    Slider(
+                    SquigglySlider(
                         value = sliderValue,
-                        onValueChange = { sliderValue = it.coerceIn(minValue.toFloat(), maxValue.toFloat()) },
+                        onValueChange = {
+                            sliderValue = it.roundToInt()
+                                .coerceIn(minValue, maxValue)
+                                .toFloat()
+                        },
                         valueRange = minValue.toFloat()..maxValue.toFloat(),
-                        steps = maxValue - minValue - 1,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

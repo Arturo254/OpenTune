@@ -302,4 +302,15 @@
     <string name="cloud_uploading">Uploading to the cloud: %d%%</string>
     <string name="last_cloud_url">Last link</string>
     <string name="cloud_upload_error_detail">Error: %s</string>
+
+    <string name="crossfade_disabled_description">Crossfade disabled</string>
+    <string name="crossfade_short_description">Quick transition</string>
+    <string name="crossfade_medium_description">Balanced mix</string>
+    <string name="crossfade_long_description">Long transition</string>
+    <string name="crossfade_extreme_description">Continuous mix</string>
+    <string name="crossfade_disabled">Disabled</string>
+    <string name="crossfade_smooth_transition">Smooth transition</string>
+    <string name="crossfade_tip">Higher values ​​work best in electronic or ambient music</string>
+    <string name="preview_crossfade">Preview</string>
+    <string name="crossfade_duration_seconds">%d seconds</string>
 </resources>

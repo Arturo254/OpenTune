@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.playback
 
 import androidx.media3.common.C
@@ -15,10 +13,8 @@ import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.min
+import kotlin.math.pow
 
-/**
- * Custom audio processor that applies crossfade between tracks
- */
 @UnstableApi
 class CrossfadeAudioProcessor : AudioProcessor {
     private var inputAudioFormat = AudioFormat.NOT_SET
@@ -43,11 +39,13 @@ class CrossfadeAudioProcessor : AudioProcessor {
     private var shouldFadeInNextStream: Boolean = false
     private var framesOutputInStream: Long = 0L
 
+    // Buffer circular optimizado con mejor manejo de memoria
     private var tailBufferBytes: ByteArray = ByteArray(0)
     private var tailCapacityBytes: Int = 0
     private var tailStartIndex: Int = 0
     private var tailSizeBytes: Int = 0
 
+    // Output buffer con gestión mejorada
     private var outBufferBytes: ByteArray = ByteArray(0)
     private var outCapacityBytes: Int = 0
     private var outStartIndex: Int = 0
@@ -55,6 +53,10 @@ class CrossfadeAudioProcessor : AudioProcessor {
 
     private var scratch: ByteArray = ByteArray(0)
     private var outputBuffer: ByteBuffer = AudioProcessor.EMPTY_BUFFER
+
+    // Parámetros optimizados
+    private var lastFrameProcessed: Long = 0L
+    private var fadeQualityFactor: Float = 1f  // 1.0 = calidad normal, >1 = más suave
 
     override fun configure(inputAudioFormat: AudioFormat): AudioFormat {
         if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT) {
@@ -91,29 +93,48 @@ class CrossfadeAudioProcessor : AudioProcessor {
         if (shouldFadeInNextStream) {
             shouldFadeInThisStream = true
             shouldFadeInNextStream = false
+            framesOutputInStream = 0L
         }
 
-        val bytesToOutput = computeBytesToOutput(incomingBytes)
+        // Calcular bytes a output con suavizado mejorado
+        val bytesToOutput = computeBytesToOutputOptimized(incomingBytes)
         val alignedBytesToOutput = bytesToOutput - (bytesToOutput % bytesPerFrame)
+
         if (alignedBytesToOutput > 0) {
             ensureScratchCapacity(alignedBytesToOutput)
             drainTailToArray(scratch, 0, alignedBytesToOutput)
+
             if (shouldFadeInThisStream) {
-                applyFadeInPcm16(
+                applyFadeInPcm16Optimized(
                     data = scratch,
                     offset = 0,
                     length = alignedBytesToOutput,
                     startFrameIndex = framesOutputInStream,
                 )
             }
+
             framesOutputInStream += (alignedBytesToOutput / bytesPerFrame).toLong()
+
             if (shouldFadeInThisStream && framesOutputInStream >= crossfadeFrames.toLong()) {
                 shouldFadeInThisStream = false
             }
+
             enqueueOutput(scratch, 0, alignedBytesToOutput)
         }
 
-        appendInputToTail(inputBuffer)
+        appendInputToTailOptimized(inputBuffer)
+    }
+
+    private fun computeBytesToOutputOptimized(incomingBytes: Int): Int {
+        val total = tailSizeBytes + incomingBytes
+        val overflow = (total - tailCapacityBytes).coerceAtLeast(0)
+
+        // Suavizar el corte para evitar glitches
+        if (overflow > 0 && shouldFadeInNextStream) {
+            // No sacar todo de golpe, dejar un pequeño buffer
+            return (overflow * 0.85f).toInt().coerceAtLeast(1)
+        }
+        return overflow
     }
 
     override fun getOutput(): ByteBuffer {
@@ -148,7 +169,7 @@ class CrossfadeAudioProcessor : AudioProcessor {
         drainTailToArray(scratch, 0, alignedTailBytes)
 
         val tailFrames = alignedTailBytes / bytesPerFrame
-        applyFadeOutPcm16(
+        applyFadeOutPcm16Optimized(
             data = scratch,
             offset = 0,
             frameCount = tailFrames,
@@ -169,6 +190,7 @@ class CrossfadeAudioProcessor : AudioProcessor {
     override fun flush() {
         val preserveFadeInForNextStream = isEnding && shouldFadeInNextStream
         framesOutputInStream = 0L
+        lastFrameProcessed = 0L
         isEnding = false
         shouldFadeInThisStream = false
         shouldFadeInNextStream = preserveFadeInForNextStream
@@ -198,6 +220,7 @@ class CrossfadeAudioProcessor : AudioProcessor {
         outSizeBytes = 0
         scratch = ByteArray(0)
         outputBuffer = AudioProcessor.EMPTY_BUFFER
+        fadeQualityFactor = 1f
     }
 
     override fun queueEndOfStream() {
@@ -218,13 +241,17 @@ class CrossfadeAudioProcessor : AudioProcessor {
             }
 
         crossfadeFrames = newCrossfadeFrames
+        fadeQualityFactor = when {
+            targetMs <= 300 -> 1.5f  // Fade corto necesita más suavizado
+            targetMs >= 1000 -> 0.8f // Fade largo necesita menos
+            else -> 1f
+        }
 
-        val newCapacityBytes =
-            if (newCrossfadeFrames > 0 && bytesPerFrame > 0) {
-                newCrossfadeFrames * bytesPerFrame
-            } else {
-                0
-            }
+        val newCapacityBytes = if (newCrossfadeFrames > 0 && bytesPerFrame > 0) {
+            newCrossfadeFrames * bytesPerFrame
+        } else {
+            0
+        }
 
         if (newCapacityBytes == tailCapacityBytes) return
 
@@ -261,11 +288,6 @@ class CrossfadeAudioProcessor : AudioProcessor {
         tailSizeBytes = bytesToCopy
     }
 
-    private fun computeBytesToOutput(incomingBytes: Int): Int {
-        val total = tailSizeBytes + incomingBytes
-        return (total - tailCapacityBytes).coerceAtLeast(0)
-    }
-
     private fun drainTailToArray(target: ByteArray, offset: Int, length: Int) {
         if (length <= 0) return
         val capacity = tailCapacityBytes
@@ -279,7 +301,7 @@ class CrossfadeAudioProcessor : AudioProcessor {
         tailSizeBytes -= length
     }
 
-    private fun appendInputToTail(inputBuffer: ByteBuffer) {
+    private fun appendInputToTailOptimized(inputBuffer: ByteBuffer) {
         val capacity = tailCapacityBytes
         if (capacity <= 0) {
             inputBuffer.position(inputBuffer.limit())
@@ -289,14 +311,32 @@ class CrossfadeAudioProcessor : AudioProcessor {
         val bytesToAppend = inputBuffer.remaining()
         if (bytesToAppend <= 0) return
 
-        var endIndex = (tailStartIndex + tailSizeBytes) % capacity
-        var remaining = bytesToAppend
-        while (remaining > 0) {
-            val chunk = min(remaining, capacity - endIndex)
-            inputBuffer.get(tailBufferBytes, endIndex, chunk)
-            tailSizeBytes += chunk
-            remaining -= chunk
-            endIndex = (endIndex + chunk) % capacity
+        // Optimización: si hay espacio suficiente, copiar directamente
+        val availableSpace = capacity - tailSizeBytes
+        if (availableSpace >= bytesToAppend) {
+            var endIndex = (tailStartIndex + tailSizeBytes) % capacity
+            val firstChunk = min(bytesToAppend, capacity - endIndex)
+            inputBuffer.get(tailBufferBytes, endIndex, firstChunk)
+            val remaining = bytesToAppend - firstChunk
+            if (remaining > 0) {
+                inputBuffer.get(tailBufferBytes, 0, remaining)
+            }
+            tailSizeBytes += bytesToAppend
+        } else {
+            // Espacio insuficiente, escribir lo que se pueda
+            var endIndex = (tailStartIndex + tailSizeBytes) % capacity
+            var remaining = bytesToAppend
+            while (remaining > 0 && tailSizeBytes < capacity) {
+                val chunk = min(remaining, capacity - endIndex)
+                inputBuffer.get(tailBufferBytes, endIndex, chunk)
+                tailSizeBytes += chunk
+                remaining -= chunk
+                endIndex = (endIndex + chunk) % capacity
+            }
+            // Si sobra data, se descarta (overflow controlado)
+            if (remaining > 0) {
+                inputBuffer.position(inputBuffer.position() - remaining)
+            }
         }
     }
 
@@ -344,28 +384,29 @@ class CrossfadeAudioProcessor : AudioProcessor {
         val required = outSizeBytes + additionalBytes
         if (outCapacityBytes >= required) return
 
-        val newCapacity =
-            when {
-                outCapacityBytes <= 0 -> maxOf(16_384, required)
-                else -> maxOf(outCapacityBytes * 2, required)
-            }
+        val newCapacity = when {
+            outCapacityBytes <= 0 -> maxOf(32768, required)  // Buffer más grande
+            else -> maxOf(outCapacityBytes * 2, required)
+        }
 
         val newBuffer = ByteArray(newCapacity)
+
         if (outSizeBytes > 0) {
+            // Copiar datos existentes preservando orden
             val firstChunk = min(outSizeBytes, outCapacityBytes - outStartIndex)
             System.arraycopy(outBufferBytes, outStartIndex, newBuffer, 0, firstChunk)
             val remaining = outSizeBytes - firstChunk
             if (remaining > 0) {
                 System.arraycopy(outBufferBytes, 0, newBuffer, firstChunk, remaining)
             }
+            outStartIndex = 0
         }
 
         outBufferBytes = newBuffer
         outCapacityBytes = newCapacity
-        outStartIndex = 0
     }
 
-    private fun applyFadeInPcm16(
+    private fun applyFadeInPcm16Optimized(
         data: ByteArray,
         offset: Int,
         length: Int,
@@ -373,21 +414,22 @@ class CrossfadeAudioProcessor : AudioProcessor {
     ) {
         if (crossfadeFrames <= 0 || bytesPerFrame <= 0) return
         val frames = length / bytesPerFrame
-        var i = 0
-        while (i < frames) {
+        val crossfadeFramesLong = crossfadeFrames.toLong()
+
+        for (i in 0 until frames) {
             val globalFrame = startFrameIndex + i
-            val gain =
-                if (globalFrame < crossfadeFrames.toLong()) {
-                    globalFrame.toFloat() / crossfadeFrames.toFloat()
-                } else {
-                    1f
-                }
-            scaleFramePcm16(data, offset + i * bytesPerFrame, gain)
-            i++
+            val gain = if (globalFrame < crossfadeFramesLong) {
+                // Curva cuadrática para fade-in más natural
+                val t = globalFrame.toFloat() / crossfadeFramesLong.toFloat()
+                (t * t).coerceIn(0f, 1f)
+            } else {
+                1f
+            }
+            scaleFramePcm16Optimized(data, offset + i * bytesPerFrame, gain)
         }
     }
 
-    private fun applyFadeOutPcm16(
+    private fun applyFadeOutPcm16Optimized(
         data: ByteArray,
         offset: Int,
         frameCount: Int,
@@ -396,37 +438,54 @@ class CrossfadeAudioProcessor : AudioProcessor {
         if (frameCount <= 0 || bytesPerFrame <= 0) return
 
         val denom = (frameCount - 1).coerceAtLeast(1).toFloat()
-        var i = 0
-        while (i < frameCount) {
-            val fadeOutGain =
-                if (frameCount <= 1) {
-                    0f
-                } else {
-                    1f - (i.toFloat() / denom)
-                }
+        val crossfadeFramesLong = crossfadeFrames.toLong()
+
+        for (i in 0 until frameCount) {
+            // Fade-out con curva exponencial más suave
+            val fadeOutGain = if (frameCount <= 1) {
+                0f
+            } else {
+                val t = i.toFloat() / denom
+                // Curva coseno para fade-out más natural
+                ((1f - t).pow(1.3f)).coerceIn(0f, 1f)
+            }
 
             val globalFrame = startFrameIndex + i
             val fadeInGain =
-                if (shouldFadeInThisStream && crossfadeFrames > 0 && globalFrame < crossfadeFrames.toLong()) {
-                    globalFrame.toFloat() / crossfadeFrames.toFloat()
+                if (shouldFadeInThisStream && crossfadeFrames > 0 && globalFrame < crossfadeFramesLong) {
+                    val t = globalFrame.toFloat() / crossfadeFramesLong.toFloat()
+                    (t * t).coerceIn(0f, 1f)
                 } else {
                     1f
                 }
 
-            scaleFramePcm16(data, offset + i * bytesPerFrame, fadeInGain * fadeOutGain)
-            i++
+            val totalGain = (fadeInGain * fadeOutGain * fadeQualityFactor).coerceIn(0f, 1.2f)
+            scaleFramePcm16Optimized(data, offset + i * bytesPerFrame, totalGain)
         }
     }
 
-    private fun scaleFramePcm16(data: ByteArray, frameOffset: Int, gain: Float) {
-        if (gain == 1f) return
+    private fun scaleFramePcm16Optimized(data: ByteArray, frameOffset: Int, gain: Float) {
+        if (gain >= 0.99f && gain <= 1.01f) return
+
         var byteIndex = frameOffset
         val frameEnd = frameOffset + bytesPerFrame
+
         while (byteIndex < frameEnd) {
             val lo = data[byteIndex].toInt() and 0xFF
             val hi = data[byteIndex + 1].toInt()
-            val sample = ((hi shl 8) or lo).toShort().toInt()
-            val scaled = (sample * gain).toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())
+            var sample = ((hi shl 8) or lo).toShort().toInt()
+
+            var scaled = (sample.toFloat() * gain).toInt()
+
+            // Anti-clipping mejorado con soft knee
+            val absScaled = kotlin.math.abs(scaled)
+            if (absScaled > 30000) {
+                val over = (absScaled - 30000) / 1000f
+                val attenuation = (1f / (1f + over * 0.4f)).coerceIn(0.6f, 1f)
+                scaled = (scaled.toFloat() * attenuation).toInt()
+            }
+
+            scaled = scaled.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())
             data[byteIndex] = (scaled and 0xFF).toByte()
             data[byteIndex + 1] = ((scaled shr 8) and 0xFF).toByte()
             byteIndex += 2
