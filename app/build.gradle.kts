@@ -84,7 +84,7 @@ android {
         applicationId = "com.Arturo254.opentune"
         minSdk = 26
         targetSdk = 36
-        versionCode = 129
+        versionCode = 130
         versionName = "3.0.3"
 //        versionName = "3.0.2-$gitCommit"
 
