@@ -359,29 +359,29 @@ interface DatabaseDao {
     @Query(
         """
         SELECT song.*
-        FROM (SELECT *, COUNT(1) AS referredCount
+        FROM (SELECT relatedSongId, COUNT(1) AS referredCount
               FROM related_song_map
+              WHERE songId IN (SELECT songId
+                               FROM (SELECT songId
+                                     FROM event
+                                     ORDER BY ROWID DESC
+                                     LIMIT 5)
+                               UNION
+                               SELECT songId
+                               FROM (SELECT songId
+                                     FROM event
+                                     WHERE timestamp > :now - 86400000 * 7
+                                     GROUP BY songId
+                                     ORDER BY SUM(playTime) DESC
+                                     LIMIT 5)
+                               UNION
+                               SELECT id
+                               FROM (SELECT id
+                                     FROM song
+                                     ORDER BY totalPlayTime DESC
+                                     LIMIT 10))
               GROUP BY relatedSongId) map
                  JOIN song ON song.id = map.relatedSongId
-        WHERE songId IN (SELECT songId
-                         FROM (SELECT songId
-                               FROM event
-                               ORDER BY ROWID DESC
-                               LIMIT 5)
-                         UNION
-                         SELECT songId
-                         FROM (SELECT songId
-                               FROM event
-                               WHERE timestamp > :now - 86400000 * 7
-                               GROUP BY songId
-                               ORDER BY SUM(playTime) DESC
-                               LIMIT 5)
-                         UNION
-                         SELECT id
-                         FROM (SELECT id
-                               FROM song
-                               ORDER BY totalPlayTime DESC
-                               LIMIT 10))
         ORDER BY referredCount DESC
         LIMIT 100
     """,
@@ -1197,7 +1197,7 @@ interface DatabaseDao {
 
     @Transaction
     @Query(
-        "SELECT song.* FROM (SELECT * from related_song_map GROUP BY relatedSongId) map JOIN song ON song.id = map.relatedSongId where songId = :songId",
+        "SELECT song.* FROM (SELECT relatedSongId FROM related_song_map WHERE songId = :songId GROUP BY relatedSongId) map JOIN song ON song.id = map.relatedSongId",
     )
     fun getRelatedSongs(songId: String): Flow<List<Song>>
 
@@ -1205,13 +1205,13 @@ interface DatabaseDao {
     @Query(
         """
         SELECT song.*
-        FROM (SELECT *
+        FROM (SELECT relatedSongId
               FROM related_song_map
+              WHERE songId = :songId
               GROUP BY relatedSongId) map
                  JOIN
              song
              ON song.id = map.relatedSongId
-        WHERE songId = :songId
         """
     )
     fun relatedSongs(songId: String): List<Song>
