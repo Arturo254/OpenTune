@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.ui.screens.artist
 
 import android.content.ClipData
@@ -61,6 +59,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -88,6 +87,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.navigation.NavController
 import androidx.palette.graphics.Palette
 import coil3.compose.AsyncImage
@@ -97,11 +97,13 @@ import coil3.request.allowHardware
 import coil3.size.Size
 import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import com.arturo254.opentune.LocalDatabase
 import com.arturo254.opentune.LocalPlayerAwareWindowInsets
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
+import com.arturo254.opentune.canvas.providers.AppleMusicArtistBackgroundProvider
 import com.arturo254.opentune.constants.AppBarHeight
 import com.arturo254.opentune.constants.DisableBlurKey
 import com.arturo254.opentune.constants.HideExplicitKey
@@ -134,12 +136,21 @@ import com.arturo254.opentune.ui.menu.YouTubeAlbumMenu
 import com.arturo254.opentune.ui.menu.YouTubeArtistMenu
 import com.arturo254.opentune.ui.menu.YouTubePlaylistMenu
 import com.arturo254.opentune.ui.menu.YouTubeSongMenu
+import com.arturo254.opentune.ui.player.CanvasArtworkPlayer
 import com.arturo254.opentune.ui.theme.PlayerColorExtractor
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.ui.utils.resize
 import com.arturo254.opentune.utils.rememberPreference
 import com.arturo254.opentune.viewmodels.ArtistViewModel
 import com.valentinilk.shimmer.shimmer
+
+// Sealed class for video background state
+sealed class VideoBackgroundState {
+    object Loading : VideoBackgroundState()
+    object Empty : VideoBackgroundState()
+    data class Success(val url: String) : VideoBackgroundState()
+    data class Error(val message: String) : VideoBackgroundState()
+}
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -178,6 +189,44 @@ fun ArtistScreen(
 
     // Get thumbnail URL
     val thumbnail = artistPage?.artist?.thumbnail ?: libraryArtist?.artist?.thumbnailUrl
+
+    val artistName = artistPage?.artist?.title ?: libraryArtist?.artist?.name
+
+    val storefront = remember {
+        java.util.Locale.getDefault()
+            .country
+            .takeIf { it.length == 2 }
+            ?.lowercase(java.util.Locale.ROOT)
+            ?: "us"
+    }
+
+    // Enhanced video background state with error handling and loading state
+    val videoBackgroundState by produceState<VideoBackgroundState>(
+        initialValue = VideoBackgroundState.Loading,
+        artistName, storefront
+    ) {
+        value = if (!artistName.isNullOrBlank()) {
+            try {
+                val url = withContext(Dispatchers.IO) {
+                    AppleMusicArtistBackgroundProvider.getByArtistName(
+                        artistName = artistName,
+                        storefront = storefront,
+                    )
+                }
+                if (url.isNullOrBlank()) {
+                    VideoBackgroundState.Empty
+                } else {
+                    // Small delay to ensure smooth transition
+                    delay(100)
+                    VideoBackgroundState.Success(url)
+                }
+            } catch (e: Exception) {
+                VideoBackgroundState.Error(e.message ?: "Failed to load background video")
+            }
+        } else {
+            VideoBackgroundState.Empty
+        }
+    }
 
     // Extract gradient colors from artist image
     LaunchedEffect(thumbnail) {
@@ -239,9 +288,40 @@ fun ArtistScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(surfaceColor)
     ) {
-        // Mesh gradient background layer
+
+        // Video background with state handling
+        when (val state = videoBackgroundState) {
+            is VideoBackgroundState.Success -> {
+                CanvasArtworkPlayer(
+                    primaryUrl = state.url,
+                    fallbackUrl = null,
+                    isPlaying = true,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(-2f),
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
+                )
+            }
+
+            is VideoBackgroundState.Loading -> {
+                // Optional: Show subtle loading indicator or just transparent background
+                // For better UX, we show nothing and let the gradient/blur handle it
+            }
+
+            is VideoBackgroundState.Error, is VideoBackgroundState.Empty -> {
+                // No video, just use gradient background
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    surfaceColor.copy(alpha = 0.55f)
+                )
+        )
+
         if (!disableBlur && gradientColors.isNotEmpty() && gradientAlpha > 0f) {
             Box(
                 modifier = Modifier
@@ -503,7 +583,7 @@ fun ArtistScreen(
                         if (!description.isNullOrBlank()) {
                             var isExpanded by rememberSaveable { mutableStateOf(false) }
                             val maxLines = if (isExpanded) Int.MAX_VALUE else 2
-                            
+
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -526,7 +606,7 @@ fun ArtistScreen(
                                     maxLines = maxLines,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                
+
                                 if (!isExpanded && description.length > 100) {
                                     Text(
                                         text = stringResource(R.string.more),
@@ -774,7 +854,8 @@ fun ArtistScreen(
                                             } else {
                                                 playerConnection.playQueue(
                                                     ListQueue(
-                                                        title = libraryArtist?.artist?.name ?: "Unknown Artist",
+                                                        title = libraryArtist?.artist?.name
+                                                            ?: "Unknown Artist",
                                                         items = librarySongs.map { it.toMediaItem() },
                                                         startIndex = index
                                                     )
@@ -993,12 +1074,19 @@ fun ArtistScreen(
                                                                 )
 
                                                             is AlbumItem -> navController.navigate("album/${item.id}")
-                                                            is ArtistItem -> navController.navigate("artist/${item.id}")
-                                                            is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                                            is ArtistItem -> navController.navigate(
+                                                                "artist/${item.id}"
+                                                            )
+
+                                                            is PlaylistItem -> navController.navigate(
+                                                                "online_playlist/${item.id}"
+                                                            )
                                                         }
                                                     },
                                                     onLongClick = {
-                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        haptic.performHapticFeedback(
+                                                            HapticFeedbackType.LongPress
+                                                        )
                                                         menuState.show {
                                                             when (item) {
                                                                 is SongItem ->
@@ -1058,7 +1146,6 @@ fun ArtistScreen(
             }
         )
 
-        // Snackbar
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier
@@ -1066,6 +1153,7 @@ fun ArtistScreen(
                 .align(Alignment.BottomCenter)
         )
     }
+
 
     // Top App Bar
     TopAppBar(
