@@ -32,6 +32,9 @@ val UseNewLibraryDesignKey = booleanPreferencesKey("useNewLibraryDesign")
 val UseNewMiniPlayerDesignKey = booleanPreferencesKey("useNewMiniPlayerDesign")
 val HidePlayerThumbnailKey = booleanPreferencesKey("hidePlayerThumbnail")
 val OpenTuneCanvasKey = booleanPreferencesKey("OpenTuneCanvas")
+
+// Fuente del canvas: AUTO, APPLE_MUSIC, OPENTUNE, TIDAL
+val CanvasSourceKey = stringPreferencesKey("canvasSource")
 val ThumbnailCornerRadiusKey = floatPreferencesKey("thumbnailCornerRadius")
 val CropThumbnailToSquareKey = booleanPreferencesKey("cropThumbnailToSquare")
 val SeekExtraSeconds = booleanPreferencesKey("seekExtraSeconds")
@@ -72,7 +75,7 @@ val TogetherAllowGuestsToControlPlaybackKey = booleanPreferencesKey("together_al
 val TogetherRequireHostApprovalToJoinKey = booleanPreferencesKey("together_require_host_approval_to_join")
 val TogetherLastJoinLinkKey = stringPreferencesKey("together_last_join_link")
 val TogetherWelcomeShownKey = booleanPreferencesKey("together_welcome_shown")
-    
+
 // ListenBrainz scrobbling
 val ListenBrainzEnabledKey = booleanPreferencesKey("listenbrainz_enabled")
 val ListenBrainzTokenKey = stringPreferencesKey("listenbrainz_token")
@@ -653,3 +656,10 @@ val AodClockFormatKey = booleanPreferencesKey("aod_clock_24h")
 val LyricsLineBlurKey = booleanPreferencesKey("lyricsLineBlur")
 
 val LyricsSyncOffsetKey = intPreferencesKey("lyrics_sync_offset")
+
+
+enum class CanvasSource {
+    AUTO,
+    APPLE_MUSIC,
+    TIDAL,
+}

@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.arturo254.opentune.LocalPlayerAwareWindowInsets
 import com.arturo254.opentune.R
+import com.arturo254.opentune.constants.CanvasSource
+import com.arturo254.opentune.constants.CanvasSourceKey
 import com.arturo254.opentune.constants.ChipSortTypeKey
 import com.arturo254.opentune.constants.DarkModeKey
 import com.arturo254.opentune.constants.DefaultOpenTabKey
@@ -140,9 +142,9 @@ fun AppearanceSettings(
         HidePlayerThumbnailKey,
         defaultValue = false
     )
-    val (OpenTuneCanvasEnabled, onOpenTuneCanvasEnabledChange) = rememberPreference(
-        OpenTuneCanvasKey,
-        defaultValue = false
+    val (canvasSource, setCanvasSource) = rememberEnumPreference(
+        key = CanvasSourceKey,
+        defaultValue = CanvasSource.AUTO,
     )
     val (thumbnailCornerRadius, onThumbnailCornerRadiusChange) = rememberPreference(
         key = ThumbnailCornerRadiusKey,
@@ -455,13 +457,20 @@ fun AppearanceSettings(
             onCheckedChange = onHidePlayerThumbnailChange
         )
 
-//        SwitchPreference(
-//            title = { Text(stringResource(R.string.OpenTune_canvas)) },
-//            description = stringResource(R.string.OpenTune_canvas_desc),
-//            icon = { Icon(painterResource(R.drawable.motion_photos_on), null) },
-//            checked = OpenTuneCanvasEnabled,
-//            onCheckedChange = onOpenTuneCanvasEnabledChange
-//        )
+        ListPreference(
+            title = { Text("Canvas source") },
+            icon = { Icon(painterResource(R.drawable.motion_photos_on), null) },
+            selectedValue = canvasSource,
+            values = CanvasSource.entries,
+            valueText = { source ->
+                when (source) {
+                    CanvasSource.AUTO -> "Automático"
+                    CanvasSource.APPLE_MUSIC -> "Apple Music"
+                    CanvasSource.TIDAL -> "Tidal"
+                }
+            },
+            onValueSelected = setCanvasSource,
+        )
       
 
         ThumbnailCornerRadiusSelectorButton(
