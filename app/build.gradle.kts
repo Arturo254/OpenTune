@@ -302,6 +302,9 @@ dependencies {
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.content.negotiation)
 
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+
     coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.timber)

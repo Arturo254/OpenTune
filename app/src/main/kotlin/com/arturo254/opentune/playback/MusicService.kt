@@ -148,6 +148,7 @@ import com.arturo254.opentune.extensions.findNextMediaItemById
 import com.arturo254.opentune.extensions.mediaItems
 import com.arturo254.opentune.extensions.metadata
 import com.arturo254.opentune.extensions.setOffloadEnabled
+import com.arturo254.opentune.extensions.togglePlayPause
 import com.arturo254.opentune.extensions.toMediaItem
 import com.arturo254.opentune.extensions.toPersistQueue
 import com.arturo254.opentune.extensions.toQueue
@@ -184,6 +185,9 @@ import com.arturo254.opentune.constants.ScrobbleDelayPercentKey
 import com.arturo254.opentune.constants.ScrobbleMinSongDurationKey
 import com.arturo254.opentune.constants.ScrobbleDelaySecondsKey
 import com.arturo254.opentune.constants.TogetherClientIdKey
+import com.arturo254.opentune.widget.PlayerWidgetActions
+import com.arturo254.opentune.widget.PlayerWidgetState
+import com.arturo254.opentune.widget.PlayerWidgetUpdater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -3708,10 +3712,12 @@ class MusicService :
         }
     }
     ensurePresenceManager()
+        updatePlayerWidgets()
 }
 
     override fun onPlaybackStateChanged(@Player.State playbackState: Int) {
     super.onPlaybackStateChanged(playbackState)
+        updatePlayerWidgets()
 
     val activeMediaId = player.currentMediaItem?.mediaId
     clearStreamRefreshGuards(activeMediaId)
@@ -4054,8 +4060,10 @@ class MusicService :
         ensurePresenceManager()
         // Scrobble: Track play/pause state
         scrobbleManager?.onPlayerStateChanged(player.isPlaying, player.currentMetadata, duration = player.duration)
+       updatePlayerWidgets()
     } else if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)) {
         ensurePresenceManager()
+       updatePlayerWidgets()
     } else {
         ensurePresenceManager()
     }
@@ -4978,8 +4986,58 @@ class MusicService :
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        handlePlayerWidgetAction(intent?.action)
         super.onStartCommand(intent, flags, startId)
         return START_NOT_STICKY
+    }
+
+    private fun handlePlayerWidgetAction(action: String?) {
+        when (action) {
+            PlayerWidgetActions.ACTION_PLAY_PAUSE -> {
+                if (!player.playWhenReady) {
+                    cancelIdleStop()
+                    promoteToStartedService()
+                    ensureStartedAsForeground()
+                }
+                player.togglePlayPause()
+                updatePlayerWidgets()
+            }
+
+            PlayerWidgetActions.ACTION_NEXT -> {
+                if (player.hasNextMediaItem()) {
+                    cancelIdleStop()
+                    promoteToStartedService()
+                    ensureStartedAsForeground()
+                    player.seekToNext()
+                    player.prepare()
+                    player.playWhenReady = true
+                }
+                updatePlayerWidgets()
+            }
+
+            PlayerWidgetActions.ACTION_PREVIOUS -> {
+                if (player.hasPreviousMediaItem()) {
+                    cancelIdleStop()
+                    promoteToStartedService()
+                    ensureStartedAsForeground()
+                    player.seekToPrevious()
+                    player.prepare()
+                    player.playWhenReady = true
+                }
+                updatePlayerWidgets()
+            }
+
+            PlayerWidgetActions.ACTION_REFRESH -> updatePlayerWidgets()
+        }
+    }
+
+    private fun updatePlayerWidgets() {
+        if (!::player.isInitialized) return
+
+        scope.launch(SilentHandler) {
+            val state = PlayerWidgetState.fromPlayer(player, this@MusicService)
+            PlayerWidgetUpdater.update(this@MusicService, state)
+        }
     }
 
     override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {

@@ -51,6 +51,7 @@ import com.arturo254.opentune.constants.PureBlackKey
 import com.arturo254.opentune.ui.component.BottomSheet
 import com.arturo254.opentune.ui.component.BottomSheetMenu
 import com.arturo254.opentune.ui.component.LocalMenuState
+import com.arturo254.opentune.ui.component.WidgetSettings
 import com.arturo254.opentune.ui.component.rememberBottomSheetState
 import com.arturo254.opentune.ui.screens.BrowseScreen
 import com.arturo254.opentune.ui.screens.artist.ArtistAlbumsScreen
@@ -338,6 +339,10 @@ fun NavGraphBuilder.navigationBuilder(
         },
     ) {
         AODSettings(navController, scrollBehavior)
+    }
+
+    composable("settings/widget") {
+        WidgetSettings(navController, scrollBehavior)
     }
     composable("settings/content") {
         ContentSettings(navController, scrollBehavior)

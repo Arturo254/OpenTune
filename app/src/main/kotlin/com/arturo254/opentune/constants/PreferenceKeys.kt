@@ -664,3 +664,21 @@ enum class CanvasSource {
     APPLE_MUSIC,
     TIDAL,
 }
+
+// Home Screen Widget (OpenTunePlayerWidget)
+
+enum class WidgetBackgroundMode {
+    BLUR,
+    DOMINANT_COLOR,
+    SOLID,
+}
+
+val WidgetBackgroundModeKey = stringPreferencesKey("widget_background_mode")
+
+/** Intensidad del scrim oscuro sobre el fondo (0.0 - 1.0), para mantener contraste del texto. */
+val WidgetScrimOpacityKey = floatPreferencesKey("widget_scrim_opacity")
+
+/** Radio de las esquinas del widget, en dp. */
+val WidgetCornerRadiusKey = floatPreferencesKey("widget_corner_radius")
+
+val WidgetShowProgressBarKey = booleanPreferencesKey("widget_show_progress_bar")

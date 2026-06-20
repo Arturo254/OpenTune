@@ -842,6 +842,13 @@ fun AppearanceSettings(
             onClick = { navController.navigate("settings/appearance/always_on_display") }
         )
 
+//        PreferenceEntry(
+//            title = { Text("Widget Settings") },
+//            description = "Personaliza la apariencia del widget",
+//            icon = { Icon(painterResource(R.drawable.buttons), null) },
+//            onClick = { navController.navigate("settings/widget") }
+//        )
+
         SwitchPreference(
             title = { Text(stringResource(R.string.show_home_category_chips)) },
             description = stringResource(R.string.show_home_category_chips_desc),

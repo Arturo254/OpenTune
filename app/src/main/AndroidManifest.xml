@@ -177,6 +177,19 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".widget.OpenTunePlayerWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/opentune_player_widget" />
+        </receiver>
+
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc" />

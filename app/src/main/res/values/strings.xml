@@ -926,4 +926,22 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="failed">Failed</string>
     <string name="paused">Paused</string>
     <string name="Apple_Music">Apple Music</string>
+
+
+    <!-- Widget de pantalla de inicio -->
+    <string name="widget_settings_title">Widget de reproducción</string>
+    <string name="widget_preview">Vista previa</string>
+    <string name="widget_background">Fondo</string>
+    <string name="widget_background_blur">Difuminado</string>
+    <string name="widget_background_dominant_color">Color dominante</string>
+    <string name="widget_background_solid">Sólido</string>
+    <string name="widget_blur_unavailable_notice">El fondo difuminado requiere Android 12 o superior. En versiones anteriores se usará el color dominante.</string>
+    <string name="widget_scrim_intensity">Intensidad del oscurecido</string>
+    <string name="widget_shape">Forma</string>
+    <string name="widget_corner_radius">Radio de esquinas</string>
+    <string name="widget_content">Contenido</string>
+    <string name="widget_show_progress_bar">Mostrar barra de progreso</string>
+    <string name="widget_show_progress_bar_desc">Muestra el avance de la canción actual en el widget</string>
+
+
 </resources>

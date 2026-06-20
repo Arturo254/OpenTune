@@ -3281,7 +3281,7 @@ fun QueueCollapsedContentV8(
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Icon(
-                    painter = painterResource(R.drawable.lyrics),
+                    painter = painterResource(R.drawable.lyrics_apple),
                     contentDescription = "Lyrics",
                     tint = textBackgroundColor.copy(alpha = 0.7f),
                     modifier = Modifier.size(20.dp)
