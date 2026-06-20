@@ -167,6 +167,7 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 
+
 private const val SeekbarSettleToleranceMs = 1_500L
 private const val V7BackdropBlurHeightFraction = 0.54f // The height of the blur layout in PlayerDesignStyle V7
 
@@ -953,6 +954,65 @@ fun BottomSheetPlayer(
                             Spacer(Modifier.height(16.dp))
                         }
                     }
+                } else if (playerDesignStyle == PlayerDesignStyle.V8) {
+                    Box(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        V8PlayerBackdrop(
+                            thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                            disableBlur = disableBlur,
+                            label = "v8BackdropLandscape"
+                        )
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = queueSheetState.collapsedBound)
+                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                                .nestedScroll(state.preUpPostDownNestedScrollConnection),
+                        ) {
+                            enrichedMetadata?.let {
+                                V8PlayerControlsContent(
+                                    mediaMetadata = it,
+                                    playerDesignStyle = playerDesignStyle,
+                                    sliderStyle = SliderStyle.Thick,
+                                    playbackState = playbackState,
+                                    isPlaying = isPlaying,
+                                    isLoading = isLoading,
+                                    repeatMode = repeatMode,
+                                    canSkipPrevious = canSkipPrevious,
+                                    canSkipNext = canSkipNext,
+                                    textButtonColor = Color.White,
+                                    iconButtonColor = Color.Black,
+                                    textBackgroundColor = Color.White,
+                                    icBackgroundColor = Color.Black,
+                                    sliderPosition = sliderPosition,
+                                    position = position,
+                                    duration = duration,
+                                    playerConnection = playerConnection,
+                                    navController = navController,
+                                    state = state,
+                                    menuState = menuState,
+                                    bottomSheetPageState = bottomSheetPageState,
+                                    clipboardManager = clipboardManager,
+                                    context = context,
+                                    onSliderValueChange = onSliderValueChange,
+                                    onSliderValueChangeFinished = onSliderValueChangeFinished,
+                                    currentFormat = currentFormat,
+                                    onResetTimer = { resetAodTimer() },
+                                    nextUpMetadata = nextUpMetadata,
+                                    onExpandQueue = { queueSheetState.expandSoft() },
+                                    playerVolume = playerVolume.value,
+                                    onVolumeChange = { newVolume ->
+                                        playerConnection.service.playerVolume.value = newVolume
+                                    }
+                                )
+                            }
+
+                            Spacer(Modifier.height(16.dp))
+                        }
+                    }
                 } else {
                     Row(
                         modifier =
@@ -1096,6 +1156,66 @@ fun BottomSheetPlayer(
                         ) {
                             enrichedMetadata?.let {
                                 controlsContent(it)
+                            }
+
+                            Spacer(Modifier.height(24.dp))
+                        }
+                    }
+                } else if (playerDesignStyle == PlayerDesignStyle.V8) {
+                    // V8 - Apple Music Style (Portrait)
+                    Box(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        V8PlayerBackdrop(
+                            thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                            disableBlur = disableBlur,
+                            label = "v8BackdropPortrait"
+                        )
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = queueSheetState.collapsedBound)
+                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                                .nestedScroll(state.preUpPostDownNestedScrollConnection),
+                        ) {
+                            enrichedMetadata?.let {
+                                V8PlayerControlsContent(
+                                    mediaMetadata = it,
+                                    playerDesignStyle = playerDesignStyle,
+                                    sliderStyle = SliderStyle.Thick,
+                                    playbackState = playbackState,
+                                    isPlaying = isPlaying,
+                                    isLoading = isLoading,
+                                    repeatMode = repeatMode,
+                                    canSkipPrevious = canSkipPrevious,
+                                    canSkipNext = canSkipNext,
+                                    textButtonColor = Color.White,
+                                    iconButtonColor = Color.Black,
+                                    textBackgroundColor = Color.White,
+                                    icBackgroundColor = Color.Black,
+                                    sliderPosition = sliderPosition,
+                                    position = position,
+                                    duration = duration,
+                                    playerConnection = playerConnection,
+                                    navController = navController,
+                                    state = state,
+                                    menuState = menuState,
+                                    bottomSheetPageState = bottomSheetPageState,
+                                    clipboardManager = clipboardManager,
+                                    context = context,
+                                    onSliderValueChange = onSliderValueChange,
+                                    onSliderValueChangeFinished = onSliderValueChangeFinished,
+                                    currentFormat = currentFormat,
+                                    onResetTimer = { resetAodTimer() },
+                                    nextUpMetadata = nextUpMetadata,
+                                    onExpandQueue = { queueSheetState.expandSoft() },
+                                    playerVolume = playerVolume.value,
+                                    onVolumeChange = { newVolume ->
+                                        playerConnection.service.playerVolume.value = newVolume
+                                    }
+                                )
                             }
 
                             Spacer(Modifier.height(24.dp))

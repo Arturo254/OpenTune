@@ -63,7 +63,8 @@ inline fun <reified T : Enum<T>> SortHeader(
                     indication = ripple(bounded = false),
                 ) {
                     menuExpanded = !menuExpanded
-                }.padding(horizontal = 4.dp, vertical = 8.dp),
+                }
+                .padding(horizontal = 4.dp, vertical = 8.dp),
         )
 
         DropdownMenu(
@@ -114,11 +115,11 @@ inline fun <reified T : Enum<T>> SortHeader(
             if (allowDescending) {
                 ResizableIconButton(
                     icon = if (sortDescending) R.drawable.arrow_downward else R.drawable.arrow_upward,
-                    color = MaterialTheme.colorScheme.primary,
                     modifier =
                     Modifier
                         .size(32.dp)
                         .padding(8.dp),
+                    color = MaterialTheme.colorScheme.primary,
                     onClick = { onSortDescendingChange(!sortDescending) },
                 )
             }

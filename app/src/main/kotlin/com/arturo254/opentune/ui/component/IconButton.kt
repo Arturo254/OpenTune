@@ -17,7 +17,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.IconButtonColors
@@ -46,8 +45,11 @@ fun ResizableIconButton(
     color: Color = MaterialTheme.colorScheme.onSurface,
     enabled: Boolean = true,
     indication: Indication? = null,
+    interactionSource: MutableInteractionSource? = null,
     onClick: () -> Unit = {},
 ) {
+    val actualInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
+
     Image(
         painter = painterResource(icon),
         contentDescription = null,
@@ -55,7 +57,7 @@ fun ResizableIconButton(
         modifier = modifier
             .clickable(
                 indication = indication ?: ripple(bounded = false),
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = actualInteractionSource,
                 enabled = enabled,
                 onClick = onClick,
             )

@@ -925,4 +925,5 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="restarting">Restarting</string>
     <string name="failed">Failed</string>
     <string name="paused">Paused</string>
+    <string name="Apple_Music">Apple Music</string>
 </resources>

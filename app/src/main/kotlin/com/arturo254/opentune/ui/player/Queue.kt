@@ -399,6 +399,19 @@ fun Queue(
                         deviceName = activeDevice
                     )
                 }
+
+                // ============================================================
+                // V8 - Apple Music Style Collapsed Content
+                // ============================================================
+                PlayerDesignStyle.V8 -> {
+                    QueueCollapsedContentV8(
+                        showCodecOnPlayer = showCodecOnPlayer,
+                        currentFormat = currentFormat,
+                        textBackgroundColor = TextBackgroundColor,
+                        onShowLyrics = onShowLyrics,
+                        onExpandQueue = { state.expandSoft() },
+                    )
+                }
             }
 
             if (showSleepTimerDialog) {
@@ -762,18 +775,28 @@ fun Queue(
                                                             } else {
                                                                 val joined =
                                                                     togetherSessionState as? com.arturo254.opentune.together.TogetherSessionState.Joined
-                                                                val isGuest = joined?.role is com.arturo254.opentune.together.TogetherRole.Guest
+                                                                val isGuest =
+                                                                    joined?.role is com.arturo254.opentune.together.TogetherRole.Guest
                                                                 if (isGuest) {
                                                                     if (joined?.roomState?.settings?.allowGuestsToControlPlayback != true) {
-                                                                        Toast.makeText(context, R.string.not_allowed, Toast.LENGTH_SHORT).show()
+                                                                        Toast.makeText(
+                                                                            context,
+                                                                            R.string.not_allowed,
+                                                                            Toast.LENGTH_SHORT
+                                                                        ).show()
                                                                         return@combinedClickable
                                                                     }
                                                                     val trackId =
-                                                                        window.mediaItem.metadata?.id?.trim().orEmpty().ifBlank {
+                                                                        window.mediaItem.metadata?.id?.trim()
+                                                                            .orEmpty().ifBlank {
                                                                             window.mediaItem.mediaId.trim()
                                                                         }
                                                                     if (trackId.isBlank()) return@combinedClickable
-                                                                    Toast.makeText(context, R.string.together_requesting_song_change, Toast.LENGTH_SHORT).show()
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        R.string.together_requesting_song_change,
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
                                                                     playerConnection.service.requestTogetherControl(
                                                                         com.arturo254.opentune.together.ControlAction.SeekToTrack(
                                                                             trackId = trackId,
@@ -785,14 +808,17 @@ fun Queue(
                                                                     playerConnection.player.seekToDefaultPosition(
                                                                         window.firstPeriodIndex,
                                                                     )
-                                                                    playerConnection.player.playWhenReady = true
+                                                                    playerConnection.player.playWhenReady =
+                                                                        true
                                                                     shouldScrollToCurrent = false
                                                                 }
                                                             }
                                                         }
                                                     },
                                                     onLongClick = {
-                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        haptic.performHapticFeedback(
+                                                            HapticFeedbackType.LongPress
+                                                        )
                                                         if (!selection) {
                                                             selection = true
                                                         }
