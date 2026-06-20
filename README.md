@@ -357,16 +357,46 @@ Si encuentras valor en **OpenTune** y quieres contribuir a su desarrollo continu
 
 ---
 
-## Reconocimientos
+## 🌟 Reconocimientos
 
-Agradecimientos especiales a los siguientes contribuidores y colaboradores:
+OpenTune existe gracias al trabajo, inspiración y apoyo de numerosos proyectos y personas dentro de la comunidad de desarrollo de aplicaciones musicales open source.
 
-- **ArchiveTune** - Código Inicial e inspiración
-‎Vivi Music (Inspiración de diseño)
-- **Fabito02** - Apoyo incondicional desde el principio
-- **Traductores de la comunidad** - Haciendo OpenTune accesible mundialmente
-- **Testers beta** - Ayudando a mejorar la estabilidad y usabilidad
+Agradecemos especialmente a:
 
+---
+
+### 💡 Proyectos que inspiraron OpenTune
+
+- **[ArchiveTune](https://github.com/koiverse/ArchiveTune)**  
+  Proyecto base e inspiración inicial para muchas de las ideas y funcionalidades que dieron forma a OpenTune.
+
+- **[Vivi Music](https://github.com/vivizzz007/vivi-music)**  
+  Codigo fuente de Canvas, API e inspiracion.
+
+---
+
+### 🤝 Colaboradores principales
+
+- **[@Fabito02](https://github.com/Fabito02)**  
+  Por su apoyo constante, feedback, ideas y acompañamiento durante el desarrollo inicial del proyecto.
+
+---
+
+### 🌍 Comunidad OpenTune
+
+- **Traductores de la comunidad**  
+  Gracias a todos los colaboradores que ayudan a mantener OpenTune disponible en múltiples idiomas y permiten que usuarios de todo el mundo puedan disfrutar de la aplicación.
+
+- **Beta testers**  
+  Gracias a quienes prueban nuevas versiones, reportan errores y proporcionan comentarios que ayudan a mejorar la estabilidad, rendimiento y experiencia de usuario.
+
+---
+
+### ❤️ Inspiración Open Source
+
+OpenTune también reconoce el trabajo de todos los desarrolladores que crean herramientas, librerías y proyectos de código abierto que hacen posible construir aplicaciones modernas para Android.
+
+Sin la comunidad open source, este proyecto no sería posible.
 ---
 
 ## Licencia
