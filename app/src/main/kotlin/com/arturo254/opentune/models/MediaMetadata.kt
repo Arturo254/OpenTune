@@ -29,6 +29,7 @@ data class MediaMetadata(
     val liked: Boolean = false,
     val likedDate: LocalDateTime? = null,
     val inLibrary: LocalDateTime? = null,
+    val spotifyTrackId: String? = null,
 ) : Serializable {
     companion object {
         private const val serialVersionUID = 1L
@@ -130,6 +131,6 @@ fun SongItem.toMediaMetadata() =
                 title = it.name,
             )
         },
+        setVideoId = setVideoId,
         explicit = explicit,
-        setVideoId = setVideoId
     )

@@ -928,20 +928,45 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="Apple_Music">Apple Music</string>
 
 
-    <!-- Widget de pantalla de inicio -->
-    <string name="widget_settings_title">Widget de reproducción</string>
-    <string name="widget_preview">Vista previa</string>
-    <string name="widget_background">Fondo</string>
-    <string name="widget_background_blur">Difuminado</string>
-    <string name="widget_background_dominant_color">Color dominante</string>
-    <string name="widget_background_solid">Sólido</string>
-    <string name="widget_blur_unavailable_notice">El fondo difuminado requiere Android 12 o superior. En versiones anteriores se usará el color dominante.</string>
-    <string name="widget_scrim_intensity">Intensidad del oscurecido</string>
-    <string name="widget_shape">Forma</string>
-    <string name="widget_corner_radius">Radio de esquinas</string>
-    <string name="widget_content">Contenido</string>
-    <string name="widget_show_progress_bar">Mostrar barra de progreso</string>
-    <string name="widget_show_progress_bar_desc">Muestra el avance de la canción actual en el widget</string>
+    <string name="widget_settings_title">Playback widget</string>
+    <string name="widget_preview">Preview</string>
+    <string name="widget_background">Background</string>
+    <string name="widget_background_blur">Blur</string>
+    <string name="widget_background_dominant_color">Dominant color</string>
+    <string name="widget_background_solid">Solid</string>
+    <string name="widget_blur_unavailable_notice">Blur background requires Android 12 or higher. In previous versions, the dominant color will be used.</string>
+    <string name="widget_scrim_intensity">Scrim Intensity</string>
+    <string name="widget_shape">Shape</string>
+    <string name="widget_corner_radius">Corner Radius</string>
+    <string name="widget_content">Content</string>
+    <string name="widget_show_progress_bar">Show Progress Bar</string>
+    <string name="widget_show_progress_bar_desc">Shows the current song\'s progress in the widget</string>
+
+    <string name="spotify_connect">Connect Spotify</string>
+    <string name="spotify_refresh">Refresh Spotify library</string>
+    <string name="spotify_available_count">%1$d playlists available</string>
+    <string name="spotify_connected_as">Connected as %1$s</string>
+    <string name="spotify_not_connected">Spotify is not connected</string>
+    <string name="spotify_track_count">%1$d tracks</string>
+    <string name="spotify_login_title">Spotify login</string>
+    <string name="spotify_loading_library">Loading Spotify library</string>
+    <string name="spotify_no_sources">No Spotify playlists found</string>
+    <string name="spotify_account">Spotify account</string>
+    <string name="spotify_playlists">Spotify Playlist</string>
+    <string name="spotify_waiting_for_login">Waiting for Spotify login</string>
+    <string name="spotify_show_playlist">Show Playlist</string>
+    <string name="spotify_show_playlist_desc">Show Spotify playlists in Library.</string>
+    <string name="spotify_reload_playlist">Reload Playlist</string>
+    <string name="spotify_reload_playlist_desc">Refresh Spotify playlists from your account.</string>
+    <string name="spotify_no_tracks">No Spotify tracks found.</string>
+    <string name="spotify_connected">Connected to Spotify</string>
+    <string name="ai_model_no_results">ia model no results</string>
+    <string name="tracks_label">Tracks</string>
+    <string name="spotify">Spotify</string>
+    <string name="see_all">see all</string>
+    <string name="your_albums">your albums</string>
+    <string name="your_artists">your artist</string>
+    <string name="more_label">more</string>
 
 
 </resources>

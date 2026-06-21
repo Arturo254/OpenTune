@@ -144,10 +144,16 @@ inline fun ListItem(
         modifier = modifier
             .height(ListItemHeight)
             .padding(horizontal = 8.dp)
-            .then(if (isActive) Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.secondaryContainer) else Modifier)
+            .then(
+                if (isActive) Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer) else Modifier
+            )
     ) {
         Box(Modifier.padding(6.dp), contentAlignment = Alignment.Center) { thumbnailContent() }
-        Column(Modifier.weight(1f).padding(horizontal = 6.dp)) {
+        Column(Modifier
+            .weight(1f)
+            .padding(horizontal = 6.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
@@ -268,6 +274,7 @@ private fun playlistPlaceholderIcon(
 fun LibraryPlaylistFeatureCard(
     playlist: Playlist,
     modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(26.dp),
     autoPlaylist: Boolean = false,
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
@@ -668,7 +675,9 @@ fun SongGridItem(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.basicMarquee().fillMaxWidth()
+            modifier = Modifier
+                .basicMarquee()
+                .fillMaxWidth()
         )
     },
     subtitle = {
@@ -895,7 +904,9 @@ fun AlbumGridItem(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.basicMarquee().fillMaxWidth()
+            modifier = Modifier
+                .basicMarquee()
+                .fillMaxWidth()
         )
     },
     subtitle = {
@@ -1102,7 +1113,9 @@ fun OverlayPlaylistListItem(
             onDismissRequest = { showPreview = false },
             confirmButton = { TextButton(onClick = { showPreview = false }) { Text(stringResource(R.string.close_dialog)) } },
             text = {
-                Box(modifier = Modifier.fillMaxWidth().height(360.dp)) {
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(360.dp)) {
                     AsyncImage(model = backgroundUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 }
             }
@@ -1130,7 +1143,9 @@ fun PlaylistGridItem(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.basicMarquee().fillMaxWidth()
+            modifier = Modifier
+                .basicMarquee()
+                .fillMaxWidth()
         )
     },
     subtitle = {
@@ -1353,7 +1368,9 @@ fun YouTubeGridItem(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = if (item is ArtistItem) TextAlign.Center else TextAlign.Start,
-            modifier = Modifier.basicMarquee().fillMaxWidth()
+            modifier = Modifier
+                .basicMarquee()
+                .fillMaxWidth()
         )
     },
     subtitle = {
@@ -1515,6 +1532,7 @@ fun ItemThumbnail(
     albumIndex: Int? = null,
     isSelected: Boolean = false,
     shouldLoadImage: Boolean = true,
+    @DrawableRes placeholderIconRes: Int? = null,
     thumbnailRatio: Float = 1f
 ) {
     val context = LocalContext.current

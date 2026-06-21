@@ -829,6 +829,7 @@ fun AppearanceSettings(
                     LibraryFilter.ALBUMS -> stringResource(R.string.albums)
                     LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
                     LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
+                    LibraryFilter.SPOTIFY -> stringResource(R.string.spotify)
                 }
             },
             onValueSelected = onDefaultChipChange,
@@ -842,12 +843,12 @@ fun AppearanceSettings(
             onClick = { navController.navigate("settings/appearance/always_on_display") }
         )
 
-//        PreferenceEntry(
-//            title = { Text("Widget Settings") },
-//            description = "Personaliza la apariencia del widget",
-//            icon = { Icon(painterResource(R.drawable.buttons), null) },
-//            onClick = { navController.navigate("settings/widget") }
-//        )
+        PreferenceEntry(
+            title = { Text("Widget Settings") },
+            description = "Personaliza la apariencia del widget",
+            icon = { Icon(painterResource(R.drawable.buttons), null) },
+            onClick = { navController.navigate("settings/widget") }
+        )
 
         SwitchPreference(
             title = { Text(stringResource(R.string.show_home_category_chips)) },

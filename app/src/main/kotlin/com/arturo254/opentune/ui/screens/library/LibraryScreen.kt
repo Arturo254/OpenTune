@@ -63,6 +63,7 @@ fun LibraryScreen(navController: NavController) {
                         LibraryFilter.SONGS to stringResource(R.string.filter_songs),
                         LibraryFilter.ALBUMS to stringResource(R.string.filter_albums),
                         LibraryFilter.ARTISTS to stringResource(R.string.filter_artists),
+                        LibraryFilter.SPOTIFY to stringResource(R.string.spotify)
                     ),
                     currentValue = filterType,
                     onValueUpdate = {
@@ -78,6 +79,7 @@ fun LibraryScreen(navController: NavController) {
                         LibraryFilter.SONGS to R.drawable.music_note,
                         LibraryFilter.ALBUMS to R.drawable.album,
                         LibraryFilter.ARTISTS to R.drawable.person,
+                        LibraryFilter.SPOTIFY to R.drawable.spotify_icon
                     ),
                     modifier = Modifier.weight(1f),
                 )
@@ -123,7 +125,7 @@ fun LibraryScreen(navController: NavController) {
                 .drawBehind {
                     val width = size.width
                     val height = size.height
-                    
+
                     // Create mesh gradient with 5 color blobs for more variation
                     // First color blob - top left
                     drawRect(
@@ -139,7 +141,7 @@ fun LibraryScreen(navController: NavController) {
                             radius = width * 0.55f
                         )
                     )
-                    
+
                     // Second color blob - top right
                     drawRect(
                         brush = Brush.radialGradient(
@@ -154,7 +156,7 @@ fun LibraryScreen(navController: NavController) {
                             radius = width * 0.65f
                         )
                     )
-                    
+
                     // Third color blob - middle left
                     drawRect(
                         brush = Brush.radialGradient(
@@ -169,7 +171,7 @@ fun LibraryScreen(navController: NavController) {
                             radius = width * 0.6f
                         )
                     )
-                    
+
                     // Fourth color blob - middle right
                     drawRect(
                         brush = Brush.radialGradient(
@@ -184,7 +186,7 @@ fun LibraryScreen(navController: NavController) {
                             radius = width * 0.7f
                         )
                     )
-                    
+
                     // Fifth color blob - bottom center (helps with smooth fade)
                     drawRect(
                         brush = Brush.radialGradient(
@@ -199,7 +201,7 @@ fun LibraryScreen(navController: NavController) {
                             radius = width * 0.8f
                         )
                     )
-                    
+
                     // Add a final vertical gradient overlay to ensure smooth bottom fade
                     drawRect(
                         brush = Brush.verticalGradient(
@@ -219,19 +221,31 @@ fun LibraryScreen(navController: NavController) {
         }
 
         when (filterType) {
-            LibraryFilter.LIBRARY -> LibraryMixScreen(navController, filterContent)
+            LibraryFilter.LIBRARY -> LibraryMixScreen(
+                navController,
+                filterContent,
+                onTabSelected = { filterType = it }
+            )
             LibraryFilter.PLAYLISTS -> LibraryPlaylistsScreen(navController, filterContent)
             LibraryFilter.SONGS -> LibrarySongsScreen(
                 navController,
-                { filterType = LibraryFilter.LIBRARY })
-
+                { filterType = LibraryFilter.LIBRARY }
+            )
             LibraryFilter.ALBUMS -> LibraryAlbumsScreen(
                 navController,
-                { filterType = LibraryFilter.LIBRARY })
-
+                { filterType = LibraryFilter.LIBRARY }
+            )
             LibraryFilter.ARTISTS -> LibraryArtistsScreen(
                 navController,
-                { filterType = LibraryFilter.LIBRARY })
+                { filterType = LibraryFilter.LIBRARY }
+            )
+
+            LibraryFilter.SPOTIFY -> {
+                LibrarySpotifyPlaylistsScreen(
+                    navController = navController,
+                    filterContent = filterContent
+                )
+            }
         }
     }
 }

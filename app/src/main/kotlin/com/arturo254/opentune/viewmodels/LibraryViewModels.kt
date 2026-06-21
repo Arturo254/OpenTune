@@ -4,12 +4,9 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.arturo254.opentune.viewmodels
-import kotlinx.coroutines.flow.combine
 
 import android.content.Context
 import androidx.compose.runtime.MutableState
@@ -37,7 +34,6 @@ import com.arturo254.opentune.constants.HideVideoKey
 import com.arturo254.opentune.constants.LibraryFilter
 import com.arturo254.opentune.constants.PlaylistSortDescendingKey
 import com.arturo254.opentune.constants.PlaylistSortType
-import com.arturo254.opentune.constants.PlaylistSortDescendingKey
 import com.arturo254.opentune.constants.PlaylistSortTypeKey
 import com.arturo254.opentune.constants.SongFilter
 import com.arturo254.opentune.constants.SongFilterKey
@@ -60,13 +56,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.Collator
@@ -74,6 +71,10 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.util.Locale
 import javax.inject.Inject
+
+// ──────────────────────────────────────────────────────────────────────────────
+// LibrarySongsViewModel (sin cambios)
+// ──────────────────────────────────────────────────────────────────────────────
 
 @HiltViewModel
 class LibrarySongsViewModel
@@ -267,8 +268,8 @@ constructor(
                             database.albumsByIds(downloadedAlbumIds, sortType, descending)
                                 .map { albums -> albums.filterExplicitAlbums(hideExplicit) }
                         }
-                    
-                        AlbumFilter.DOWNLOADED_FULL ->
+
+                    AlbumFilter.DOWNLOADED_FULL ->
                         combine(
                             database.allSongs().flowOn(Dispatchers.IO),
                             downloadUtil.downloads
@@ -411,39 +412,63 @@ constructor(
     database: MusicDatabase,
     private val syncUtils: SyncUtils,
 ) : ViewModel() {
-    val syncAllLibrary = {
-         viewModelScope.launch(Dispatchers.IO) {
-             try {
-                 syncUtils.performFullSync()
-             } catch (e: Exception) {
-                 timber.log.Timber.e(e, "Error during manual sync")
-             }
-         }
-    }
+
+    // ── Estado de refresco ──────────────────────────────────────────────────
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
+    // ── Top Value (para "My Top N") ─────────────────────────────────────────
     val topValue =
         context.dataStore.data
             .map { it[TopSize] ?: "50" }
             .distinctUntilChanged()
+
+    // ── Artistas (bookmarked) ──────────────────────────────────────────────
     var artists =
         database
             .artistsBookmarked(
                 ArtistSortType.CREATE_DATE,
                 true,
             ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-    var albums = context.dataStore.data
-        .map { it[HideExplicitKey] ?: false }
-        .distinctUntilChanged()
-        .flatMapLatest { hideExplicit ->
-            database.albumsLiked(AlbumSortType.CREATE_DATE, true).map { it.filterExplicitAlbums(hideExplicit) }
-        }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    // ── Álbumes (bookmarked) ────────────────────────────────────────────────
+    var albums =
+        context.dataStore.data
+            .map { it[HideExplicitKey] ?: false }
+            .distinctUntilChanged()
+            .flatMapLatest { hideExplicit ->
+                database.albumsLiked(AlbumSortType.CREATE_DATE, true)
+                    .map { it.filterExplicitAlbums(hideExplicit) }
+            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    // ── Playlists ────────────────────────────────────────────────────────────
     var playlists =
         context.dataStore.data
             .map {
-                it[PlaylistSortTypeKey].toEnum(PlaylistSortType.CUSTOM) to (it[PlaylistSortDescendingKey] ?: true)
+                it[PlaylistSortTypeKey].toEnum(PlaylistSortType.CUSTOM) to
+                        (it[PlaylistSortDescendingKey] ?: true)
             }.distinctUntilChanged()
-            .flatMapLatest { (sortType, descending) -> database.playlists(sortType, descending) }
-            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+            .flatMapLatest { (sortType, descending) ->
+                database.playlists(sortType, descending)
+            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    // ── Sincronización completa ─────────────────────────────────────────────
+    fun syncAllLibrary() {
+        if (_isRefreshing.value) return
+        viewModelScope.launch(Dispatchers.IO) {
+            _isRefreshing.value = true
+            try {
+                syncUtils.performFullSync()
+            } catch (e: Exception) {
+                timber.log.Timber.e(e, "Error during manual sync")
+                reportException(e)
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    // ── Inicialización: actualizar metadatos de álbumes y artistas ─────────
     init {
         viewModelScope.launch(Dispatchers.IO) {
             albums.collect { albums ->
@@ -468,6 +493,7 @@ constructor(
                     }
             }
         }
+
         viewModelScope.launch(Dispatchers.IO) {
             artists.collect { artists ->
                 artists

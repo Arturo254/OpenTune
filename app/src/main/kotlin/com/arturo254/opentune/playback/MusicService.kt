@@ -3298,12 +3298,6 @@ class MusicService :
             artists = artists.map { name -> com.arturo254.opentune.models.MediaMetadata.Artist(id = null, name = name) },
             duration = durationSec,
             thumbnailUrl = thumbnailUrl,
-            album = null,
-            setVideoId = null,
-            explicit = false,
-            liked = false,
-            likedDate = null,
-            inLibrary = null,
         )
     }
 
@@ -4767,10 +4761,6 @@ class MusicService :
             duration = -1,
             thumbnailUrl = thumbnailUrl,
             album = album,
-            explicit = false,
-            liked = false,
-            likedDate = null,
-            inLibrary = null,
         )
     }
 

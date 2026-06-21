@@ -682,3 +682,13 @@ val WidgetScrimOpacityKey = floatPreferencesKey("widget_scrim_opacity")
 val WidgetCornerRadiusKey = floatPreferencesKey("widget_corner_radius")
 
 val WidgetShowProgressBarKey = booleanPreferencesKey("widget_show_progress_bar")
+
+
+val SpotifySpDcKey = stringPreferencesKey("spotify_sp_dc")
+val SpotifySpKeyKey = stringPreferencesKey("spotify_sp_key")
+val SpotifyAccessTokenKey = stringPreferencesKey("spotify_access_token")
+val SpotifyAccessTokenExpiresAtKey = longPreferencesKey("spotify_access_token_expires_at")
+val SpotifyAccountNameKey = stringPreferencesKey("spotify_account_name")
+val SpotifyAccountAvatarUrlKey = stringPreferencesKey("spotify_account_avatar_url")
+val ShowSpotifyPlaylistsKey = booleanPreferencesKey("show_spotify_playlists")
+val SpotifyLibraryPlaylistsCacheKey = stringPreferencesKey("spotify_library_playlists_cache")
