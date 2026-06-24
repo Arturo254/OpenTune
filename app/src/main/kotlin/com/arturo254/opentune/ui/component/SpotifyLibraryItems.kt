@@ -58,8 +58,6 @@ fun SpotifyLibraryPlaylistListItem(
 
     LibraryPlaylistFeatureCard(
         playlist = libraryPlaylist,
-        shape = shape,
-        trailingContent = trailing,
         modifier =
             modifier
                 .fillMaxWidth()

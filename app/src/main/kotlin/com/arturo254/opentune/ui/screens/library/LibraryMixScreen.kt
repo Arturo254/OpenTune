@@ -99,8 +99,10 @@ import com.arturo254.opentune.spotify.SpotifyLibraryViewModel
 import com.arturo254.opentune.spotify.SpotifyMapper
 import com.arturo254.opentune.spotify.models.SpotifyPlaylist
 import com.arturo254.opentune.ui.component.ExpressivePullToRefreshBox
+import com.arturo254.opentune.ui.component.GridPosition
 import com.arturo254.opentune.ui.component.LibraryAlbumSpotlightCard
 import com.arturo254.opentune.ui.component.LibraryArtistSpotlightCard
+import com.arturo254.opentune.ui.component.LibraryHeroFavoriteTile
 import com.arturo254.opentune.ui.component.LibraryPinnedCollectionTile
 import com.arturo254.opentune.ui.component.LibraryPlaylistListItem
 import com.arturo254.opentune.ui.component.LocalMenuState
@@ -110,6 +112,8 @@ import com.arturo254.opentune.ui.menu.ArtistMenu
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
 import com.arturo254.opentune.viewmodels.LibraryMixViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
@@ -304,6 +308,7 @@ fun LibraryMixScreen(
         if (!canEnterReorderMode) reorderEnabled = false
     }
 
+
     ExpressivePullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.syncAllLibrary() },
@@ -341,11 +346,55 @@ fun LibraryMixScreen(
                 }
             }
 
+
+
+            // Modificada para devolver un String en lugar de un Int
+            fun String.extractId(): String = this.substringAfterLast('/')
+
             if (shortcuts.isNotEmpty()) {
                 item(key = "shortcuts") {
                     LibraryShortcutGrid(
                         entries = shortcuts,
                         onClick = navController::navigate,
+                        onPlayPlaylist = { entry ->
+                            playerConnection?.let { connection ->
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    // playlistId ahora será un String (ej: "15" o el UUID de la playlist)
+                                    val playlistId = entry.route.extractId()
+                                    database.playlistSongs(playlistId).first()
+                                        .let { playlistSongs ->
+                                            if (playlistSongs.isNotEmpty()) {
+                                                connection.playQueue(
+                                                    ListQueue(
+                                                        title = entry.title,
+                                                        items = playlistSongs.map { it.song.toMediaItem() }
+                                                    )
+                                                )
+                                            }
+                                        }
+                                }
+                            }
+                        },
+                        onShufflePlaylist = { entry ->
+                            playerConnection?.let { connection ->
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    // playlistId ahora será un String
+                                    val playlistId = entry.route.extractId()
+                                    database.playlistSongs(playlistId).first()
+                                        .let { playlistSongs ->
+                                            if (playlistSongs.isNotEmpty()) {
+                                                connection.playQueue(
+                                                    ListQueue(
+                                                        title = entry.title,
+                                                        items = playlistSongs.shuffled()
+                                                            .map { it.song.toMediaItem() }
+                                                    )
+                                                )
+                                            }
+                                        }
+                                }
+                            }
+                        },
                         modifier = Modifier.padding(horizontal = 24.dp),
                     )
                 }
@@ -467,57 +516,52 @@ fun LibraryMixScreen(
                     }
                 }
 
-                items(
-                    items = sortedAlbums,
-                    key = { it.id },
-                ) { album ->
-                    LibraryAlbumSpotlightCard(
-                        album = album,
-                        isActive = album.id == mediaMetadata?.album?.id,
-                        isPlaying = isPlaying,
-                        onPlay = {
-                            coroutineScope.launch {
-                                database.albumWithSongs(album.id).firstOrNull()
-                                    ?.let { albumWithSongs ->
-                                        playerConnection.playQueue(LocalAlbumRadio(albumWithSongs))
-                                    }
-                            }
-                        },
-                        trailingContent = {
-                            IconButton(
-                                onClick = {
-                                    menuState.show {
-                                        AlbumMenu(
-                                            originalAlbum = album,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.more_vert),
-                                    contentDescription = null,
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .combinedClickable(
-                                onClick = { navController.navigate("album/${album.id}") },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        AlbumMenu(
-                                            originalAlbum = album,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
-                                        )
+                item(key = "albums_row") {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        items(
+                            items = sortedAlbums,
+                            key = { it.id },
+                            contentType = { "album" },
+                        ) { album ->
+                            LibraryAlbumSpotlightCard(
+                                album = album,
+                                isActive = album.id == mediaMetadata?.album?.id,
+                                isPlaying = isPlaying,
+                                onPlay = {
+                                    coroutineScope.launch {
+                                        database.albumWithSongs(album.id).firstOrNull()
+                                            ?.let { albumWithSongs ->
+                                                playerConnection.playQueue(
+                                                    LocalAlbumRadio(
+                                                        albumWithSongs
+                                                    )
+                                                )
+                                            }
                                     }
                                 },
+                                modifier = Modifier
+                                    .combinedClickable(
+                                        onClick = { navController.navigate("album/${album.id}") },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                AlbumMenu(
+                                                    originalAlbum = album,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                    )
+                                    .animateItem(),
                             )
-                            .animateItem(),
-                    )
+                        }
+                    }
                 }
             }
 
@@ -728,29 +772,53 @@ private fun LibraryControlCard(
 private fun LibraryShortcutGrid(
     entries: List<LibraryShortcutEntry>,
     onClick: (String) -> Unit,
+    onPlayPlaylist: (LibraryShortcutEntry) -> Unit,
+    onShufflePlaylist: (LibraryShortcutEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier,
     ) {
-        entries.chunked(2).forEach { rowEntries ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                rowEntries.forEach { entry ->
-                    LibraryPinnedCollectionTile(
-                        title = entry.title,
-                        iconRes = entry.iconRes,
-                        accentColor = entry.accentColor,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable(onClick = { onClick(entry.route) }),
-                    )
-                }
-                if (rowEntries.size == 1) {
-                    Spacer(Modifier.weight(1f))
+        if (entries.isNotEmpty()) {
+            val heroEntry = entries.first()
+
+            LibraryHeroFavoriteTile(
+                title = heroEntry.title,
+                iconRes = heroEntry.iconRes, badgeText = "Más reproducidos",
+
+                accentColor = heroEntry.accentColor,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = { onClick(heroEntry.route) }),
+            )
+
+            val remainingEntries = entries.drop(1)
+            remainingEntries.chunked(2).forEach { rowEntries ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    rowEntries.forEachIndexed { index, entry ->
+                        val position = when {
+                            rowEntries.size == 1 -> GridPosition.SINGLE
+                            index == 0 -> GridPosition.LEFT
+                            else -> GridPosition.RIGHT
+                        }
+
+                        LibraryPinnedCollectionTile(
+                            title = entry.title,
+                            iconRes = entry.iconRes,
+                            gridPosition = position,
+                            accentColor = entry.accentColor,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable(onClick = { onClick(entry.route) }),
+                        )
+                    }
+                    if (rowEntries.size == 1) {
+                        Spacer(Modifier.weight(1f))
+                    }
                 }
             }
         }

@@ -248,7 +248,6 @@ fun LibraryPlaylistListItem(
 
     LibraryPlaylistFeatureCard(
         playlist = playlist,
-        trailingContent = trailing,
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = openPlaylist),

@@ -38,13 +38,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -87,8 +93,10 @@ import androidx.media3.exoplayer.offline.Download.STATE_COMPLETED
 import androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING
 import androidx.media3.exoplayer.offline.Download.STATE_QUEUED
 import coil3.compose.AsyncImage
+import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
+import coil3.toBitmap
 import com.arturo254.opentune.LocalDatabase
 import com.arturo254.opentune.LocalDownloadUtil
 import com.arturo254.opentune.LocalPlayerConnection
@@ -115,6 +123,8 @@ import com.arturo254.opentune.innertube.models.YTItem
 import com.arturo254.opentune.models.ItemMetadata
 import com.arturo254.opentune.models.MediaMetadata
 import com.arturo254.opentune.playback.queues.LocalAlbumRadio
+import com.arturo254.opentune.ui.theme.PlayerColorExtractor
+import com.arturo254.opentune.ui.theme.extractThemeColor
 import com.arturo254.opentune.ui.utils.resize
 import com.arturo254.opentune.utils.joinByBullet
 import com.arturo254.opentune.utils.makeTimeString
@@ -268,6 +278,7 @@ private fun playlistPlaceholderIcon(
     }
 
 
+private val LibraryCardThumbnailSize = 72.dp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -279,32 +290,72 @@ fun LibraryPlaylistFeatureCard(
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
     val subtitleText = playlistCountText(playlist = playlist, autoPlaylist = autoPlaylist)
-    val thumbnailSize = 86.dp
-    val thumbnailShape = RoundedCornerShape(22.dp)
+    val thumbnailSize = LibraryCardThumbnailSize
+    val thumbnailShape = RoundedCornerShape(18.dp)
+    val context = LocalContext.current
+    val primaryThumbnailUrl = playlist.thumbnails.getOrNull(0)
+    var extractedGlowColor by remember(primaryThumbnailUrl) { mutableStateOf(Color.Transparent) }
+    val glowColor by animateColorAsState(
+        targetValue = extractedGlowColor,
+        animationSpec = tween(400),
+        label = "playlistItemGlow",
+    )
+    LaunchedEffect(primaryThumbnailUrl) {
+        if (primaryThumbnailUrl == null) return@LaunchedEffect
+        val bitmap =
+            runCatching {
+                context.imageLoader
+                    .execute(
+                        ImageRequest
+                            .Builder(context)
+                            .data(primaryThumbnailUrl)
+                            .size(
+                                PlayerColorExtractor.Config.IMAGE_SIZE,
+                                PlayerColorExtractor.Config.IMAGE_SIZE
+                            )
+                            .allowHardware(false)
+                            .build(),
+                    ).image
+                    ?.toBitmap()
+            }.getOrNull() ?: return@LaunchedEffect
+        extractedGlowColor = withContext(Dispatchers.Default) { bitmap.extractThemeColor() }
+    }
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = RoundedCornerShape(26.dp),
+        shape = shape,
         modifier = modifier,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
         ) {
-            PlaylistThumbnail(
-                thumbnails = playlist.thumbnails,
-                size = thumbnailSize,
-                placeHolder = {
-                    Icon(
-                        painter = painterResource(playlistPlaceholderIcon(playlist, autoPlaylist)),
-                        contentDescription = null,
-                        tint = LocalContentColor.current.copy(alpha = 0.8f),
-                        modifier = Modifier.size(thumbnailSize / 2),
-                    )
-                },
-                shape = thumbnailShape,
-            )
+            Box(
+                modifier =
+                    Modifier
+                        .size(thumbnailSize),
+            ) {
+                PlaylistThumbnail(
+                    thumbnails = playlist.thumbnails,
+                    size = thumbnailSize,
+                    placeHolder = {
+                        Icon(
+                            painter = painterResource(
+                                playlistPlaceholderIcon(
+                                    playlist,
+                                    autoPlaylist
+                                )
+                            ),
+                            contentDescription = null,
+                            tint = LocalContentColor.current.copy(alpha = 0.8f),
+                            modifier = Modifier.size(thumbnailSize / 2),
+                        )
+                    },
+                    shape = thumbnailShape,
+                )
+            }
             Spacer(Modifier.width(16.dp))
             Column(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -344,11 +395,11 @@ fun LibraryAlbumSpotlightCard(
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     onPlay: (() -> Unit)? = null,
-    trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
-    val subtitle = joinByBullet(
-        album.artists.joinToString { it.name },
-        pluralStringResource(R.plurals.n_song, album.album.songCount, album.album.songCount),
+    val subtitle = pluralStringResource(
+        R.plurals.n_song,
+        album.album.songCount,
+        album.album.songCount
     )
 
     val containerColor by animateColorAsState(
@@ -360,18 +411,23 @@ fun LibraryAlbumSpotlightCard(
     )
 
     Card(
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        modifier = modifier,
+        modifier = modifier
+            .width(130.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(modifier = Modifier.size(88.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(106.dp)
+                    .clip(RoundedCornerShape(24.dp)),
+            ) {
                 LocalThumbnail(
                     thumbnailUrl = album.album.thumbnailUrl,
                     isActive = isActive,
@@ -386,27 +442,26 @@ fun LibraryAlbumSpotlightCard(
                     )
                 }
             }
-            Spacer(Modifier.width(16.dp))
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
                     text = album.album.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
                 )
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
                 )
-            }
-            Row {
-                trailingContent()
             }
         }
     }
@@ -466,54 +521,205 @@ fun LibraryArtistSpotlightCard(
     }
 }
 
+enum class GridPosition {
+    LEFT, RIGHT, SINGLE
+}
 
 @Composable
-fun LibraryPinnedCollectionTile(
+fun LibraryHeroFavoriteTile(
     title: String,
     @DrawableRes iconRes: Int,
+    badgeText: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     accentColor: Color = MaterialTheme.colorScheme.primary,
 ) {
     val animatedColor by animateColorAsState(accentColor, spring())
 
+    val expressiveHeroShape = RoundedCornerShape(
+        topStart = 38.dp,
+        topEnd = 12.dp,
+        bottomEnd = 38.dp,
+        bottomStart = 38.dp
+    )
+
+    val expressiveIconShape = RoundedCornerShape(
+        topStart = 24.dp,
+        topEnd = 12.dp,
+        bottomEnd = 24.dp,
+        bottomStart = 12.dp
+    )
+
+
     Card(
-        shape = RoundedCornerShape(26.dp),
+        shape = expressiveHeroShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+        modifier = modifier
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(expressiveIconShape)
+                        .background(animatedColor.copy(alpha = 0.16f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(iconRes),
+                        contentDescription = null,
+                        tint = animatedColor,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    SuggestionChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                text = badgeText.uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = MaterialTheme.typography.labelSmall.letterSpacing * 1.5
+                                )
+                            )
+                        },
+                        shape = CircleShape,
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        ),
+                        border = null,
+                        modifier = Modifier.height(24.dp)
+                    )
+
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Black
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    subtitle?.takeIf { it.isNotBlank() }?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LibraryPinnedCollectionTile(
+    title: String,
+    @DrawableRes iconRes: Int,
+    gridPosition: GridPosition,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
+) {
+    val animatedColor by animateColorAsState(accentColor, spring())
+
+    val expressiveCardShape = when (gridPosition) {
+        GridPosition.LEFT -> RoundedCornerShape(
+            topStart = 28.dp,
+            bottomStart = 28.dp,
+            topEnd = 6.dp,
+            bottomEnd = 6.dp
+        )
+
+        GridPosition.RIGHT -> RoundedCornerShape(
+            topStart = 6.dp,
+            bottomStart = 6.dp,
+            topEnd = 28.dp,
+            bottomEnd = 28.dp
+        )
+
+        GridPosition.SINGLE -> RoundedCornerShape(28.dp)
+    }
+
+    val expressiveIconShape = RoundedCornerShape(
+        topStart = 16.dp,
+        topEnd = 8.dp,
+        bottomEnd = 16.dp,
+        bottomStart = 8.dp
+    )
+
+    Card(
+        shape = expressiveCardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        modifier = modifier,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+        modifier = modifier
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(18.dp)
         ) {
-            Surface(shape = CircleShape) {
+            Box(
+                modifier = Modifier
+                    .clip(expressiveIconShape)
+                    .background(animatedColor.copy(alpha = 0.10f))
+                    .padding(10.dp)
+            ) {
                 Icon(
                     painter = painterResource(iconRes),
                     contentDescription = null,
                     tint = animatedColor,
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = MaterialTheme.typography.titleMedium.letterSpacing
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+
                 subtitle?.takeIf { it.isNotBlank() }?.let {
                     Text(
                         text = it,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium
+                        ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

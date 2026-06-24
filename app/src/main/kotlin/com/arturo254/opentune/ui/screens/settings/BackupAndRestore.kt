@@ -8,6 +8,7 @@ package com.arturo254.opentune.ui.screens.settings
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Message
 import android.view.ViewGroup
@@ -21,13 +22,20 @@ import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -39,6 +47,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
@@ -52,12 +61,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -68,6 +82,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -84,6 +99,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
@@ -616,219 +633,306 @@ fun BackupAndRestore(
             // ── Spotify Account card ──────────────────────────────────────────
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(),
+                    shape = RoundedCornerShape(28.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 4.dp,
+                        pressedElevation = 8.dp
+                    ),
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
                     ) {
-                        // Header
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        // ============ HEADER DRAMÁTICO ============
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
+                                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                                        ),
+                                        start = Offset(0f, 0f),
+                                        end = Offset(
+                                            Float.POSITIVE_INFINITY,
+                                            Float.POSITIVE_INFINITY
+                                        )
+                                    )
+                                )
+                                .padding(20.dp),
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(18.dp),
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                             ) {
+                                // Icon animado
                                 Box(
-                                    modifier = Modifier.size(52.dp),
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(MaterialTheme.colorScheme.tertiaryContainer),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.spotify_icon),
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        modifier = Modifier.size(26.dp),
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .animateContentSize(),
                                     )
                                 }
-                            }
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.spotify_account),
-                                    style = MaterialTheme.typography.titleLarge,
-                                )
-                                Text(
-                                    text = if (spotifyState.isAuthenticated) {
-                                        if (spotifyState.accountName.isNotBlank()) {
-                                            stringResource(
-                                                R.string.spotify_connected_as,
-                                                spotifyState.accountName
-                                            )
-                                        } else {
-                                            stringResource(R.string.spotify_connected)
-                                        }
-                                    } else {
-                                        stringResource(R.string.spotify_not_connected)
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 2.dp),
-                                )
-                            }
-
-                            AnimatedVisibility(visible = spotifyState.isLoading) {
-                                CircularWavyProgressIndicator(
-                                    modifier = Modifier.size(28.dp),
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        }
-
-                        // Spotify account info when connected
-                        if (spotifyState.isAuthenticated) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                            ) {
-                                SpotifyAccountIcon(avatarUrl = spotifyState.accountAvatarUrl)
 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = spotifyState.accountName.takeIf { it.isNotBlank() }
-                                            ?: stringResource(R.string.spotify_account),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium,
+                                        text = stringResource(R.string.spotify_account),
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Bold,
                                     )
+
                                     Text(
-                                        text = if (spotifyState.playlistCount > 0) {
-                                            stringResource(
-                                                R.string.spotify_available_count,
-                                                spotifyState.playlistCount
-                                            )
+                                        text = if (spotifyState.isAuthenticated) {
+                                            spotifyState.accountName.ifBlank {
+                                                stringResource(R.string.spotify_connected)
+                                            }
                                         } else {
-                                            stringResource(R.string.spotify_no_sources)
+                                            stringResource(R.string.spotify_not_connected)
                                         },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(
+                                            alpha = 0.8f
+                                        ),
+                                    )
+                                }
+
+                                // Loading indicator animado
+                                AnimatedVisibility(
+                                    visible = spotifyState.isLoading,
+                                    enter = scaleIn(animationSpec = spring(dampingRatio = 0.6f)),
+                                    exit = scaleOut(),
+                                ) {
+                                    CircularWavyProgressIndicator(
+                                        modifier = Modifier.size(36.dp),
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
                                     )
                                 }
                             }
-
-                            // Switch para mostrar playlists
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.spotify_icon),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                                Text(
-                                    text = stringResource(R.string.spotify_show_playlist),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Switch(
-                                    checked = showSpotifyPlaylists,
-                                    onCheckedChange = onShowSpotifyPlaylistsChange,
-                                    enabled = !spotifyState.isLoading,
-                                )
-                            }
-
-                            // Botones de acción
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                NewActionButton(
-                                    icon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.sync),
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        )
-                                    },
-                                    text = stringResource(R.string.spotify_reload_playlist),
-                                    onClick = { spotifyAccountViewModel.reloadPlaylists() },
-                                    modifier = Modifier.weight(1f),
-                                    backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    enabled = !spotifyState.isLoading,
-                                )
-                                NewActionButton(
-                                    icon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.logout),
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                                        )
-                                    },
-                                    text = stringResource(R.string.action_logout),
-                                    onClick = { spotifyAccountViewModel.logout() },
-                                    modifier = Modifier.weight(1f),
-                                    backgroundColor = MaterialTheme.colorScheme.errorContainer,
-                                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                                    enabled = !spotifyState.isLoading,
-                                )
-                            }
-                        } else {
-                            // Botón conectar
-                            NewActionButton(
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.spotify_icon),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    )
-                                },
-                                text = stringResource(R.string.spotify_connect),
-                                onClick = { showSpotifyLogin = true },
-                                modifier = Modifier.fillMaxWidth(),
-                                backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                enabled = !spotifyState.isLoading,
-                            )
                         }
 
-                        // Mostrar error de Spotify
-                        spotifyState.errorMessage?.let { error ->
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = fadeIn() + expandVertically(),
-                                exit = fadeOut() + shrinkVertically(),
+                        // ============ INFO DE CUENTA (Cuando conectado) ============
+                        AnimatedVisibility(
+                            visible = spotifyState.isAuthenticated,
+                            enter = expandVertically(animationSpec = spring(dampingRatio = 0.75f)) + fadeIn(),
+                            exit = shrinkVertically(animationSpec = spring()) + fadeOut(),
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
                             ) {
+                                // Account avatar + info
                                 Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.errorContainer,
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(12.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(14.dp),
                                     ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.error),
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                                            modifier = Modifier.size(18.dp),
+                                        Surface(
+                                            modifier = Modifier
+                                                .clip(MaterialShapes.Cookie6Sided.toShape())
+                                                .size(56.dp)
+                                        ) {
+                                            SpotifyAccountIcon(
+                                                avatarUrl = spotifyState.accountAvatarUrl,
+                                            )
+                                        }
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = spotifyState.accountName.takeIf { it.isNotBlank() }
+                                                    ?: stringResource(R.string.spotify_account),
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                            )
+
+                                            Text(
+                                                text = if (spotifyState.playlistCount > 0) {
+                                                    stringResource(
+                                                        R.string.spotify_available_count,
+                                                        spotifyState.playlistCount
+                                                    )
+                                                } else {
+                                                    stringResource(R.string.spotify_no_sources)
+                                                },
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Toggle con label mejorado
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                                modifier = Modifier.size(40.dp),
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.spotify_icon),
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(20.dp),
+                                                    )
+                                                }
+                                            }
+
+                                            Text(
+                                                text = stringResource(R.string.spotify_show_playlist),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium,
+                                            )
+                                        }
+
+                                        Switch(
+                                            checked = showSpotifyPlaylists,
+                                            onCheckedChange = onShowSpotifyPlaylistsChange,
+                                            enabled = !spotifyState.isLoading,
                                         )
+                                    }
+                                }
+
+                                // Botones de acción con mejor layout
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    SpotifyActionButton(
+                                        icon = R.drawable.sync,
+                                        label = stringResource(R.string.spotify_reload_playlist),
+                                        backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        onClick = { spotifyAccountViewModel.reloadPlaylists() },
+                                        enabled = !spotifyState.isLoading,
+                                        isLoading = spotifyState.isLoading,
+                                    )
+
+                                    SpotifyActionButton(
+                                        icon = R.drawable.logout,
+                                        label = stringResource(R.string.action_logout),
+                                        backgroundColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                        onClick = { spotifyAccountViewModel.logout() },
+                                        enabled = !spotifyState.isLoading,
+                                    )
+                                }
+                            }
+                        }
+
+                        // ============ BOTÓN CONECTAR (Cuando desconectado) ============
+                        AnimatedVisibility(
+                            visible = !spotifyState.isAuthenticated,
+                            enter = expandVertically(animationSpec = spring(dampingRatio = 0.75f)) + fadeIn(),
+                            exit = shrinkVertically(animationSpec = spring()) + fadeOut(),
+                        ) {
+                            SpotifyActionButton(
+                                icon = R.drawable.spotify_icon,
+                                label = stringResource(R.string.spotify_connect),
+                                backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                onClick = { showSpotifyLogin = true },
+                                enabled = !spotifyState.isLoading,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+
+                        // ============ ERROR DISPLAY (Expressive) ============
+                        spotifyState.errorMessage?.let { error ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = slideInVertically(
+                                    animationSpec = spring(dampingRatio = 0.7f),
+                                    initialOffsetY = { it / 2 }
+                                ) + fadeIn(),
+                                exit = slideOutVertically(animationSpec = spring()) + fadeOut(),
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(18.dp),
+                                    color = MaterialTheme.colorScheme.errorContainer,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(18.dp)),
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = MaterialTheme.colorScheme.onErrorContainer.copy(
+                                                alpha = 0.15f
+                                            ),
+                                            modifier = Modifier.size(40.dp),
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.error),
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                    modifier = Modifier.size(20.dp),
+                                                )
+                                            }
+                                        }
+
                                         Text(
                                             text = error,
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onErrorContainer,
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier.weight(1f),
                                         )
-                                        TextButton(
+
+                                        IconButton(
                                             onClick = { spotifyAccountViewModel.dismissError() },
-                                            colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                                            ),
+                                            modifier = Modifier.size(32.dp),
                                         ) {
-                                            Text(stringResource(android.R.string.ok))
+                                            Icon(
+                                                painter = painterResource(R.drawable.close),
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                modifier = Modifier.size(18.dp),
+                                            )
                                         }
                                     }
                                 }
@@ -837,7 +941,7 @@ fun BackupAndRestore(
                     }
                 }
             }
-            // ─────────────────────────────────────────────────────────────────
+
         }
     }
 
@@ -1279,4 +1383,60 @@ private fun String.toSpotifyCookieOrigin(): String? {
             }
             ?: "https"
     return "$scheme://$host"
+}
+
+@Composable
+fun SpotifyActionButton(
+    @DrawableRes icon: Int,
+    label: String,
+    backgroundColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isLoading: Boolean = false,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .height(56.dp)
+            .clip(RoundedCornerShape(20.dp)),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = backgroundColor,
+            disabledContainerColor = backgroundColor.copy(alpha = 0.5f),
+        ),
+        enabled = enabled,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .padding(end = 8.dp),
+                    color = contentColor,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .padding(end = 8.dp),
+                )
+            }
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor,
+            )
+        }
+    }
 }

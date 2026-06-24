@@ -71,6 +71,8 @@ import com.arturo254.opentune.constants.YtmSyncKey
 import com.arturo254.opentune.db.entities.Playlist
 import com.arturo254.opentune.db.entities.PlaylistEntity
 import com.arturo254.opentune.extensions.move
+import com.arturo254.opentune.ui.component.GridPosition
+import com.arturo254.opentune.ui.component.LibraryHeroFavoriteTile
 import com.arturo254.opentune.ui.component.LibraryPinnedCollectionTile
 import com.arturo254.opentune.ui.component.LibraryPlaylistListItem
 import com.arturo254.opentune.ui.component.LocalMenuState
@@ -450,29 +452,58 @@ private fun PlaylistControlCard(
 private fun PlaylistShortcutGrid(
     entries: List<PlaylistShortcutEntry>,
     onClick: (String) -> Unit,
+    onLongClick: (String) -> Unit = {}, // Añadido para aprovechar combinedClickable si lo necesitas
     modifier: Modifier = Modifier,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier,
     ) {
-        entries.chunked(2).forEach { rowEntries ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                rowEntries.forEach { entry ->
-                    LibraryPinnedCollectionTile(
-                        title = entry.title,
-                        iconRes = entry.iconRes,
-                        accentColor = entry.accentColor,
-                        modifier = Modifier
-                            .weight(1f)
-                            .combinedClickable(onClick = { onClick(entry.route) }),
+        if (entries.isNotEmpty()) {
+            val heroEntry = entries.first()
+
+            LibraryHeroFavoriteTile(
+                title = heroEntry.title,
+                iconRes = heroEntry.iconRes,
+                badgeText = "✦",
+                accentColor = heroEntry.accentColor,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        onClick = { onClick(heroEntry.route) },
+                        onLongClick = { onLongClick(heroEntry.route) }
                     )
-                }
-                if (rowEntries.size == 1) {
-                    Spacer(Modifier.weight(1f))
+            )
+
+            val remainingEntries = entries.drop(1)
+            remainingEntries.chunked(2).forEach { rowEntries ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    rowEntries.forEachIndexed { index, entry ->
+                        val position = when {
+                            rowEntries.size == 1 -> GridPosition.SINGLE
+                            index == 0 -> GridPosition.LEFT
+                            else -> GridPosition.RIGHT
+                        }
+
+                        LibraryPinnedCollectionTile(
+                            title = entry.title,
+                            iconRes = entry.iconRes,
+                            gridPosition = position,
+                            accentColor = entry.accentColor,
+                            modifier = Modifier
+                                .weight(1f)
+                                .combinedClickable(
+                                    onClick = { onClick(entry.route) },
+                                    onLongClick = { onLongClick(entry.route) }
+                                ),
+                        )
+                    }
+                    if (rowEntries.size == 1) {
+                        Spacer(Modifier.weight(1f))
+                    }
                 }
             }
         }
