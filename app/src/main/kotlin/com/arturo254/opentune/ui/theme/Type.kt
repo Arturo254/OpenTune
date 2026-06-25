@@ -132,7 +132,7 @@ private fun buildTypography(fontFamily: FontFamily) =
         )
     )
 
-private val AppFontFamily = FontFamily(Font(R.font.poppins))
+private val AppFontFamily = FontFamily(Font(R.font.linotte))
 val AppTypography = buildTypography(AppFontFamily)
 val SystemTypography = buildTypography(FontFamily.Default)
 

@@ -1,5 +1,6 @@
 /*
  * OpenTune Project Original (2026)
+ * Material 3 Expressive - New Release Screen
  * Arturo254 (github.com/Arturo254)
  * Licensed Under GPL-3.0 | see git history for contributors
  */
@@ -18,6 +19,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +42,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +55,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
+import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -60,7 +64,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
@@ -79,9 +85,9 @@ import com.arturo254.opentune.LocalPlayerAwareWindowInsets
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.innertube.models.AlbumItem
+import com.arturo254.opentune.innertube.models.AlbumReleaseType
 import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.component.LocalMenuState
-import com.arturo254.opentune.ui.component.shimmer.GridItemPlaceHolder
 import com.arturo254.opentune.ui.component.shimmer.ShimmerHost
 import com.arturo254.opentune.ui.menu.YouTubeAlbumMenu
 import com.arturo254.opentune.ui.utils.backToMain
@@ -128,41 +134,75 @@ fun NewReleaseScreen(
 
             // ── Hero Stats ──────────────────────────────────────────────────
             item {
-                AnimatedVisibility(
-                    visible = uiState is NewReleaseUiState.Success,
-                    enter = fadeIn(tween(500)) + slideInVertically(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMediumLow,
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    AnimatedVisibility(
+                        visible = uiState is NewReleaseUiState.Success,
+                        enter = fadeIn(tween(500)) + slideInVertically(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow,
+                            ),
+                            initialOffsetY = { -it / 2 },
                         ),
-                        initialOffsetY = { -it / 2 },
-                    ),
-                ) {
-                    NewReleaseHero(
-                        albumCount = albumsList.size,
-                        singleCount = singlesList.size,
-                        epCount = epsList.size,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                    )
-                }
-                // Shimmer del hero mientras carga
-                AnimatedVisibility(visible = uiState is NewReleaseUiState.Loading) {
-                    ShimmerHost {
-                        Box(
+                    ) {
+                        NewReleaseHero(
+                            albumCount = albumsList.size,
+                            singleCount = singlesList.size,
+                            epCount = epsList.size,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(96.dp)
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
-                                .clip(RoundedCornerShape(24.dp))
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                         )
                     }
                 }
             }
 
-            // ── Sección Albums ──────────────────────────────────────────────
+            item {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    AnimatedVisibility(visible = uiState is NewReleaseUiState.Loading) {
+                        ShimmerHost {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(96.dp)
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ── Carrusel Principal Destacado ──────────────────────────────
+            item {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    AnimatedVisibility(
+                        visible = uiState is NewReleaseUiState.Success && albumsList.isNotEmpty(),
+                        enter = fadeIn(tween(600)) + slideInVertically(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow,
+                            ),
+                            initialOffsetY = { -it / 2 },
+                        ),
+                    ) {
+                        FeaturedCarousel(
+                            albums = albumsList,
+                            isPlaying = isPlaying,
+                            mediaMetadata = mediaMetadata,
+                            navController = navController,
+                            haptic = haptic,
+                            menuState = menuState,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                        )
+                    }
+                }
+            }
+
+            // ── Sección Álbumes ──────────────────────────────────────────────
             item {
                 ReleaseSectionHeader(
                     title = stringResource(R.string.albums),
@@ -179,22 +219,25 @@ fun NewReleaseScreen(
                 )
             }
             item {
-                AnimatedContent(
-                    targetState = uiState is NewReleaseUiState.Loading,
-                    transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(250)) },
-                    label = "albums_carousel",
-                ) { isLoading ->
-                    if (isLoading || albumsList.isEmpty()) {
-                        CarouselShimmerRow()
-                    } else {
-                        M3Carousel(
-                            items = albumsList,
-                            isPlaying = isPlaying,
-                            mediaMetadata = mediaMetadata,
-                            navController = navController,
-                            haptic = haptic,
-                            menuState = menuState,
-                        )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    AnimatedContent(
+                        targetState = uiState is NewReleaseUiState.Loading,
+                        transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(250)) },
+                        label = "albums_carousel",
+                    ) { isLoading ->
+                        if (isLoading || albumsList.isEmpty()) {
+                            CarouselShimmerRow()
+                        } else {
+                            ExpressiveCarousel(
+                                items = albumsList,
+                                releaseType = AlbumReleaseType.ALBUM,
+                                isPlaying = isPlaying,
+                                mediaMetadata = mediaMetadata,
+                                navController = navController,
+                                haptic = haptic,
+                                menuState = menuState,
+                            )
+                        }
                     }
                 }
             }
@@ -223,22 +266,25 @@ fun NewReleaseScreen(
                 )
             }
             item {
-                AnimatedContent(
-                    targetState = uiState is NewReleaseUiState.Loading,
-                    transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(250)) },
-                    label = "singles_carousel",
-                ) { isLoading ->
-                    if (isLoading || singlesList.isEmpty()) {
-                        CarouselShimmerRow()
-                    } else {
-                        M3Carousel(
-                            items = singlesList,
-                            isPlaying = isPlaying,
-                            mediaMetadata = mediaMetadata,
-                            navController = navController,
-                            haptic = haptic,
-                            menuState = menuState,
-                        )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    AnimatedContent(
+                        targetState = uiState is NewReleaseUiState.Loading,
+                        transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(250)) },
+                        label = "singles_carousel",
+                    ) { isLoading ->
+                        if (isLoading || singlesList.isEmpty()) {
+                            CarouselShimmerRow()
+                        } else {
+                            ExpressiveCarousel(
+                                items = singlesList,
+                                releaseType = AlbumReleaseType.SINGLE,
+                                isPlaying = isPlaying,
+                                mediaMetadata = mediaMetadata,
+                                navController = navController,
+                                haptic = haptic,
+                                menuState = menuState,
+                            )
+                        }
                     }
                 }
             }
@@ -267,22 +313,25 @@ fun NewReleaseScreen(
                 )
             }
             item {
-                AnimatedContent(
-                    targetState = uiState is NewReleaseUiState.Loading,
-                    transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(250)) },
-                    label = "eps_carousel",
-                ) { isLoading ->
-                    if (isLoading || epsList.isEmpty()) {
-                        CarouselShimmerRow()
-                    } else {
-                        M3Carousel(
-                            items = epsList,
-                            isPlaying = isPlaying,
-                            mediaMetadata = mediaMetadata,
-                            navController = navController,
-                            haptic = haptic,
-                            menuState = menuState,
-                        )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    AnimatedContent(
+                        targetState = uiState is NewReleaseUiState.Loading,
+                        transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(250)) },
+                        label = "eps_carousel",
+                    ) { isLoading ->
+                        if (isLoading || epsList.isEmpty()) {
+                            CarouselShimmerRow()
+                        } else {
+                            ExpressiveCarousel(
+                                items = epsList,
+                                releaseType = AlbumReleaseType.EP,
+                                isPlaying = isPlaying,
+                                mediaMetadata = mediaMetadata,
+                                navController = navController,
+                                haptic = haptic,
+                                menuState = menuState,
+                            )
+                        }
                     }
                 }
             }
@@ -336,7 +385,7 @@ fun NewReleaseScreen(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Hero Stats
+// Hero Stats - M3 Expressive
 // ═══════════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -394,8 +443,8 @@ private fun HeroStat(
     count: Int,
     label: String,
     iconRes: Int,
-    containerColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color,
+    containerColor: Color,
+    contentColor: Color,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -461,8 +510,8 @@ private fun ReleaseSectionHeader(
     title: String,
     count: Int?,
     iconRes: Int,
-    containerColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color,
+    containerColor: Color,
+    contentColor: Color,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -470,7 +519,6 @@ private fun ReleaseSectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // Pill icon
         Surface(
             shape = CircleShape,
             color = containerColor,
@@ -494,7 +542,6 @@ private fun ReleaseSectionHeader(
             modifier = Modifier.weight(1f),
         )
 
-        // Badge count
         AnimatedVisibility(visible = count != null && count > 0) {
             Surface(
                 shape = RoundedCornerShape(50),
@@ -513,7 +560,7 @@ private fun ReleaseSectionHeader(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// M3 HorizontalMultiBrowseCarousel real
+// Featured Carousel - M3 Expressive (Destacado)
 // ═══════════════════════════════════════════════════════════════════════════
 
 @OptIn(
@@ -522,8 +569,257 @@ private fun ReleaseSectionHeader(
     ExperimentalFoundationApi::class
 )
 @Composable
-private fun M3Carousel(
+private fun FeaturedCarousel(
+    albums: List<AlbumItem>,
+    isPlaying: Boolean,
+    mediaMetadata: com.arturo254.opentune.models.MediaMetadata?,
+    navController: NavController,
+    haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    menuState: com.arturo254.opentune.ui.component.MenuState,
+    modifier: Modifier = Modifier,
+) {
+    val distinctItems = albums.take(5).distinctBy { it.id }
+    val carouselState = rememberCarouselState { distinctItems.size }
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Título de la sección destacada
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(28.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(R.drawable.star),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+            Text(
+                text = "Lo más destacado",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        HorizontalUncontainedCarousel(
+            state = carouselState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(vertical = 8.dp),
+            itemWidth = 280.dp,
+            itemSpacing = 12.dp,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+        ) { i ->
+            val album = distinctItems[i]
+            val isActive = mediaMetadata?.album?.id == album.id
+
+            FeaturedCarouselCard(
+                album = album,
+                isActive = isActive,
+                isPlaying = isPlaying,
+                onClick = { navController.navigate("album/${album.id}") },
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    menuState.show {
+                        YouTubeAlbumMenu(
+                            albumItem = album,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
+                },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun FeaturedCarouselCard(
+    album: AlbumItem,
+    isActive: Boolean,
+    isPlaying: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    val elevation by animateFloatAsState(
+        targetValue = if (isActive) 12f else 4f,
+        animationSpec = spring(
+            Spring.DampingRatioMediumBouncy,
+            Spring.StiffnessMedium,
+        ),
+        label = "featured_elevation",
+    )
+
+    Card(
+        modifier = Modifier
+            .width(280.dp)
+            .height(160.dp)
+            .shadow(
+                elevation = elevation.dp,
+                shape = RoundedCornerShape(
+                    topStart = 20.dp,
+                    topEnd = 20.dp,
+                    bottomStart = 16.dp,
+                    bottomEnd = 16.dp
+                ),
+                clip = false
+            )
+            .clip(
+                RoundedCornerShape(
+                    topStart = 20.dp,
+                    topEnd = 20.dp,
+                    bottomStart = 16.dp,
+                    bottomEnd = 16.dp
+                )
+            )
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isActive) 4.dp else 2.dp
+        )
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            AsyncImage(
+                model = album.thumbnail,
+                contentDescription = album.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 20.dp,
+                            topEnd = 20.dp,
+                            bottomStart = 16.dp,
+                            bottomEnd = 16.dp
+                        )
+                    )
+            )
+
+            // Gradiente overlay para legibilidad
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.6f)
+                            ),
+                            startY = 0.5f
+                        )
+                    )
+            )
+
+            // Información superpuesta
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = album.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                album.artists?.firstOrNull()?.let { artist ->
+                    Text(
+                        text = artist.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.8f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                album.year?.let { year ->
+                    Text(
+                        text = year.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            // Badge "Destacado"
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "★",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+
+            androidx.compose.animation.AnimatedVisibility(
+                visible = isActive && isPlaying,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp),
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(R.drawable.play),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Expressive Carousel - M3 Expressive con formas diferenciadas
+// ═══════════════════════════════════════════════════════════════════════════
+
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalFoundationApi::class
+)
+@Composable
+private fun ExpressiveCarousel(
     items: List<AlbumItem>,
+    releaseType: AlbumReleaseType,
     isPlaying: Boolean,
     mediaMetadata: com.arturo254.opentune.models.MediaMetadata?,
     navController: NavController,
@@ -533,22 +829,57 @@ private fun M3Carousel(
     val distinctItems = items.distinctBy { it.id }
     val carouselState = rememberCarouselState { distinctItems.size }
 
+    // Forma diferenciada según el tipo de lanzamiento
+    val cardShape = when (releaseType) {
+        AlbumReleaseType.ALBUM -> RoundedCornerShape(
+            topStart = 20.dp,
+            topEnd = 20.dp,
+            bottomStart = 16.dp,
+            bottomEnd = 16.dp
+        )
+
+        AlbumReleaseType.SINGLE -> RoundedCornerShape(
+            topStart = 12.dp,
+            topEnd = 24.dp,
+            bottomStart = 24.dp,
+            bottomEnd = 12.dp
+        )
+
+        AlbumReleaseType.EP -> RoundedCornerShape(
+            topStart = 16.dp,
+            topEnd = 16.dp,
+            bottomStart = 20.dp,
+            bottomEnd = 20.dp
+        )
+    }
+
+    // Color de acento según el tipo
+    val accentColor = when (releaseType) {
+        AlbumReleaseType.ALBUM -> MaterialTheme.colorScheme.primary
+        AlbumReleaseType.SINGLE -> MaterialTheme.colorScheme.tertiary
+        AlbumReleaseType.EP -> MaterialTheme.colorScheme.secondary
+    }
+
     HorizontalMultiBrowseCarousel(
         state = carouselState,
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
             .padding(vertical = 8.dp),
-        preferredItemWidth = 128.dp,
-        itemSpacing = 8.dp,
+        preferredItemWidth = 148.dp,
+        itemSpacing = 10.dp,
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) { i ->
         val album = distinctItems[i]
         val isActive = mediaMetadata?.album?.id == album.id
-        CarouselCard(
+
+        ExpressiveCarouselCard(
             album = album,
+            releaseType = releaseType,
             isActive = isActive,
             isPlaying = isPlaying,
+            shape = cardShape,
+            accentColor = accentColor,
             onClick = { navController.navigate("album/${album.id}") },
             onLongClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -566,25 +897,28 @@ private fun M3Carousel(
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun CarouselCard(
+private fun ExpressiveCarouselCard(
     album: AlbumItem,
+    releaseType: AlbumReleaseType,
     isActive: Boolean,
     isPlaying: Boolean,
+    shape: RoundedCornerShape,
+    accentColor: Color,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
     val elevation by animateFloatAsState(
-        targetValue = if (isActive) 8f else 2f,
+        targetValue = if (isActive) 10f else 3f,
         animationSpec = spring(
             Spring.DampingRatioMediumBouncy,
             Spring.StiffnessMedium,
         ),
-        label = "card_elevation",
+        label = "expressive_elevation",
     )
 
     Column(
         modifier = Modifier
-            .width(128.dp)
+            .width(148.dp)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -595,7 +929,24 @@ private fun CarouselCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(128.dp),
+                .height(148.dp)
+                .shadow(
+                    elevation = elevation.dp,
+                    shape = shape,
+                    clip = false
+                )
+                .clip(shape)
+                .let { modifier ->
+                    if (isActive) {
+                        modifier.border(
+                            width = 3.dp,
+                            color = accentColor,
+                            shape = shape
+                        )
+                    } else {
+                        modifier
+                    }
+                }
         ) {
             AsyncImage(
                 model = album.thumbnail,
@@ -603,24 +954,31 @@ private fun CarouselCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer {
-                        shadowElevation = elevation
-                    }
-                    .clip(
-                        if (isActive) MaterialTheme.shapes.large
-                        else MaterialTheme.shapes.medium
-                    )
-                    .let { modifier ->
-                        if (isActive) {
-                            modifier.background(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
-                            )
-                        } else {
-                            modifier
-                        }
-                    }
+                    .clip(shape)
             )
 
+            // Badge según tipo de lanzamiento
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = accentColor.copy(alpha = 0.9f),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                Text(
+                    text = when (releaseType) {
+                        AlbumReleaseType.ALBUM -> "LP"
+                        AlbumReleaseType.SINGLE -> "S"
+                        AlbumReleaseType.EP -> "EP"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
+
+            // Indicador de reproducción
             androidx.compose.animation.AnimatedVisibility(
                 visible = isActive && isPlaying,
                 modifier = Modifier
@@ -629,16 +987,14 @@ private fun CarouselCard(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = accentColor,
                     modifier = Modifier.size(24.dp),
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                    ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
                             painter = painterResource(R.drawable.play),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                            tint = Color.White,
                             modifier = Modifier.size(12.dp),
                         )
                     }
@@ -650,8 +1006,7 @@ private fun CarouselCard(
             text = album.title,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-            color = if (isActive) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurface,
+            color = if (isActive) accentColor else MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
@@ -703,13 +1058,13 @@ private fun CarouselShimmerRow() {
         repeat(4) {
             ShimmerHost {
                 Column(
-                    modifier = Modifier.width(128.dp),
+                    modifier = Modifier.width(148.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(128.dp)
+                            .size(148.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                     )
