@@ -58,7 +58,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.arturo254.opentune.R
-import com.arturo254.opentune.ui.utils.top
 import kotlinx.coroutines.launch
 
 val LocalBottomSheetPageState = compositionLocalOf { BottomSheetPageState() }
@@ -130,7 +129,7 @@ fun BottomSheetPage(
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                 .padding(top = 100.dp) // Give enough space from top
-                .clip(ShapeDefaults.Large.top())
+                .clip(ShapeDefaults.Large)
                 .background(background)
                 .pointerInput(Unit) {
                     detectVerticalDragGestures(
