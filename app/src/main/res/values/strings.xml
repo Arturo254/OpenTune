@@ -689,6 +689,36 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="error_loading_changelog">Error loading changelog</string>
     <string name="no_releases">No releases found</string>
     <string name="update_notification_channel_name">App Updates</string>
+
+    <!-- Android Auto -->
+    <string name="android_auto">Android Auto</string>
+    <string name="android_auto_general">General</string>
+    <string name="android_auto_enable">Enable Android Auto</string>
+    <string name="android_auto_enable_desc">Allow OpenTune to appear in Android Auto</string>
+    <string name="android_auto_open_settings">Open Android Auto settings</string>
+    <string name="android_auto_open_settings_desc">Open the system Android Auto settings</string>
+    <string name="android_auto_library">Library</string>
+    <string name="android_auto_show_liked_songs">Show Liked Songs</string>
+    <string name="android_auto_show_downloaded">Show Downloaded Songs</string>
+    <string name="android_auto_show_youtube_playlists">Show YouTube Playlists</string>
+    <string name="android_auto_show_youtube_playlists_desc">Display your YouTube Music playlists in Android Auto</string>
+    <string name="android_auto_show_history">Show History</string>
+    <string name="android_auto_simplified_mode">Simplified Mode</string>
+    <string name="android_auto_simplified_mode_desc">Simplify the Android Auto interface for safer driving</string>
+    <string name="android_auto_sorting">Sorting</string>
+    <string name="android_auto_song_sort">Song Sort Order</string>
+    <string name="android_auto_album_sort">Album Sort Order</string>
+    <string name="android_auto_artist_sort">Artist Sort Order</string>
+    <string name="android_auto_performance">Performance</string>
+    <string name="android_auto_item_limit">Item Limit</string>
+    <string name="android_auto_item_limit_desc">Maximum number of items to display in lists</string>
+    <string name="android_auto_tutorial_title">How to activate OpenTune in Android Auto</string>
+    <string name="android_auto_tutorial_step1">1. Open Android Auto app on your phone</string>
+    <string name="android_auto_tutorial_step2">2. Scroll to the bottom and tap on the version number</string>
+    <string name="android_auto_tutorial_step3">3. Tap repeatedly on \"Version information and permissions\" until you see \"You are now in developer mode\"</string>
+    <string name="android_auto_tutorial_step4">4. Tap the 3 dots at the top and go to \"Developer settings\", then enable \"Unknown sources\"</string>
+    <string name="android_auto_tutorial_step5">5. Restart Android Auto and OpenTune will appear in the media apps list</string>
+
     <string name="update_notification_channel_desc">Notifications for new app updates</string>
     <string name="update_notification_title">Update Available</string>
     <string name="update_notification_text">OpenTune %s is now available</string>

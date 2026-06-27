@@ -185,6 +185,44 @@ fun buildSettingsGroups(
 
         add(
             SettingsGroup(
+                title = stringResource(R.string.integrations),
+                items = listOf(
+                    SettingsItem(
+                        icon = painterResource(R.drawable.android_auto),
+                        title = stringResource(R.string.android_auto),
+                        subtitle = stringResource(R.string.android_auto_enable_desc),
+                        accentColor = MaterialTheme.colorScheme.primary,
+                        keywords = listOf(
+                            "android auto",
+                            "car",
+                            "automotive",
+                            "vehicle",
+                            "driving"
+                        ),
+                        onClick = { resetSearch(); navController.navigate("settings/android_auto") },
+                    ),
+                ),
+            ),
+        )
+
+        add(
+            SettingsGroup(
+                title = stringResource(R.string.aod_screen_title),
+                items = listOf(
+                    SettingsItem(
+                        icon = painterResource(R.drawable.bedtime),
+                        title = stringResource(R.string.aod_screen_title),
+                        subtitle = stringResource(R.string.aod_screen_title),
+                        accentColor = MaterialTheme.colorScheme.primary,
+                        keywords = listOf("AOD", "Always On Display", "Display"),
+                        onClick = { resetSearch(); navController.navigate("settings/appearance/always_on_display") },
+                    ),
+                ),
+            ),
+        )
+
+        add(
+            SettingsGroup(
                 title = stringResource(R.string.settings_section_system),
                 items = buildList {
                     if (isAndroid12OrLater) {
