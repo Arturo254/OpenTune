@@ -112,6 +112,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.C
 import androidx.media3.common.Player.STATE_BUFFERING
 import androidx.media3.common.Player.STATE_READY
@@ -162,6 +167,7 @@ import com.arturo254.opentune.constants.AodFullscreenKey
 import com.arturo254.opentune.constants.BlurRadiusKey
 import com.arturo254.opentune.constants.SeekExtraSeconds
 import com.arturo254.opentune.ui.component.COLLAPSED_ANCHOR
+import com.my.kizzy.gateway.entities.presence.Activity
 import com.skydoves.cloudy.cloudy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -189,6 +195,13 @@ fun BottomSheetPlayer(
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val menuState = LocalMenuState.current
 
+    val view = LocalView.current
+    val activity = context as? android.app.Activity
+    val activityWindow = activity?.window
+    val dialogWindow = (view.parent as? DialogWindowProvider)?.window
+    val window = dialogWindow ?: activityWindow
+
+
     val bottomSheetPageState = LocalBottomSheetPageState.current
 
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -215,6 +228,23 @@ fun BottomSheetPlayer(
     val (incrementalSeekSkipEnabled) = rememberPreference(SeekExtraSeconds, defaultValue = false)
     var keyboardSkipMultiplier by remember { mutableStateOf(1) }
     var lastKeyboardTapTime by remember { mutableLongStateOf(0L) }
+
+    val (playerFullscreen) = rememberPreference(
+        booleanPreferencesKey("player_fullscreen"),
+        defaultValue = false
+    )
+
+// Activar fullscreen al expandir
+    LaunchedEffect(state.isExpanded, playerFullscreen) {
+        if (state.isExpanded && playerFullscreen && window != null) {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+            insetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            insetsController.hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
 
 
 

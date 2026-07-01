@@ -313,4 +313,162 @@
     <string name="crossfade_tip">Higher values ​​work best in electronic or ambient music</string>
     <string name="preview_crossfade">Preview</string>
     <string name="crossfade_duration_seconds">%d seconds</string>
+
+
+    <string name="confirm">Confirm</string>
+    <string name="social_links">Social Networks</string>
+    <string name="view_license">View full license on GitHub</string>
+    <string name="paste">Paste</string>
+    <string name="player_design_v7">Immersive</string>
+    <string name="liquid_glass_navbar">Liquid Glass Navbar</string>
+
+    <string name="aod_style_title">AOD Style</string>
+    <string name="aod_style_classic">Classic</string>
+    <string name="aod_style_background">Ambient</string>
+    <string name="aod_style_minimal">Minimal</string>
+    <string name="aod_style_large">Immersive</string>
+    <string name="aod_style_spotlight">Spotlight</string>
+    <string name="aod_style_classic_desc">Centered artwork</string>
+    <string name="aod_style_background_desc">Blurred background art</string>
+    <string name="aod_style_minimal_desc">Only essentials</string>
+    <string name="aod_style_large_desc">Fullscreen artwork</string>
+    <string name="aod_style_spotlight_desc">Light halo effect</string>
+
+    <string name="aod_shape_title">Artwork shape</string>
+    <string name="aod_shape_rounded">Rounded</string>
+    <string name="aod_shape_circle">Circle</string>
+    <string name="aod_shape_squircle">Squircle</string>
+    <string name="aod_shape_diamond">Diamond</string>
+    <string name="aod_shape_hexagon">Hexagon</string>
+    <string name="aod_shape_star">Star</string>
+    <string name="aod_shape_arch">Arch</string>
+    <string name="aod_shape_petal">Flower</string>
+
+    <string name="aod_darkness_title">Background darkness</string>
+    <string name="aod_darkness_label">Darkness level</string>
+    <string name="aod_darkness_description">Overlay opacity for Ambient and Spotlight styles</string>
+
+    <string name="aod_art_size_title">Artwork size</string>
+    <string name="aod_art_size_label">Relative size</string>
+    <string name="aod_art_size_description">Fraction of screen width occupied by artwork</string>
+
+    <string name="aod_visible_elements_title">Visible elements</string>
+    <string name="aod_show_title">Show title</string>
+    <string name="aod_show_artist">Show artist</string>
+    <string name="aod_show_time">Show time</string>
+    <string name="aod_show_time_description">Position and duration labels</string>
+    <string name="aod_show_progress">Show progress bar</string>
+    <string name="aod_show_controls">Show controls</string>
+    <string name="aod_show_controls_description">Previous, Play/Pause, Next</string>
+
+    <string name="aod_screen_title">Always On Display</string>
+
+
+    <!-- AOD Auto-activation -->
+    <string name="aod_auto_activation_title">Automatic Activation</string>
+    <string name="aod_auto_activation_label">Inactivity Time</string>
+    <string name="aod_auto_activation_description">Automatically activate AOD after the selected inactivity time</string>
+    <string name="aod_auto_never">Never</string>
+    <string name="aod_auto_15s">15 seconds</string>
+    <string name="aod_auto_30s">30 seconds</string>
+    <string name="aod_auto_1m">1 minute</string>
+    <string name="aod_auto_2m">2 minutes</string>
+    <string name="aod_auto_never_short">Never</string>
+    <string name="aod_auto_2m_short">2 minutes</string>
+
+    <!-- AOD Fullscreen -->
+    <string name="aod_fullscreen_title">Full Screen</string>
+    <string name="aod_fullscreen_label">Immersive Mode</string>
+    <string name="aod_fullscreen_description">Hides the system status bar, navigation, and clock</string>
+    <string name="open_youtube_music">Open YouTube Music</string>
+    <string name="playback_login_refresh_required">Refresh YouTube Music login</string>
+    <string name="playback_confirmation_required">Playback confirmation required</string>
+    <string name="playback_requires_youtube_music_login_refresh">Refresh your YouTube Music login, then return to OpenTune.</string>
+    <string name="error_malformed_stream">Source error</string>
+    <string name="aod_spotlight_intensity_label">Spotlight intensity</string>
+    <string name="aod_spotlight_intensity_low">Dim</string>
+    <string name="aod_spotlight_intensity_high">Max</string>
+    <string name="aod_spotlight_pulse_label">Pulse effect</string>
+    <string name="aod_controls_title">Control buttons</string>
+    <string name="aod_controls_style_label">Button style</string>
+    <string name="aod_typography_title">Typography</string>
+    <string name="aod_text_size_label">Text size</string>
+    <string name="aod_text_size_description">Global scale for title, artist and timers</string>
+    <string name="aod_transitions_title">Transitions</string>
+    <string name="aod_transition_duration_label">Transition duration</string>
+    <string name="aod_transition_duration_fast">Fast</string>
+    <string name="aod_transition_duration_slow">Slow</string>
+    <string name="aod_transition_duration_description">Crossfade speed between tracks</string>
+    <string name="aod_system_clock_title">System clock</string>
+    <string name="aod_show_clock_label">Show clock</string>
+    <string name="aod_show_clock_description">Shows the system time on AOD</string>
+    <string name="aod_clock_format_24h_label">24-hour format</string>
+    <string name="aod_clock_format_24h_description">Toggle between 24h and 12h AM/PM</string>
+    <string name="aod_control_style_rounded">Rounded</string>
+    <string name="aod_control_style_square">Square</string>
+    <string name="aod_control_style_accent">Accent</string>
+    <string name="aod_control_style_minimal_flat">Flat</string>
+    <string name="AOD">AOD</string>
+    <string name="new_releases">New Releases</string>
+    <string name="singles">Singles</string>
+    <string name="ep">EP</string>
+    <string name="total_releases">Total releases</string>
+    <string name="n_releases">%d releases</string>
+    <string name="loading_new_releases">Loading new releases…</string>
+    <string name="new_releases_error_title">New releases unavailable</string>
+    <string name="new_releases_error_desc">OpenTune could not load this YouTube Music section. Try again later.</string>
+    <string name="no_releases_found">No releases found</string>
+    <string name="new_releases_empty_desc">No new releases found at the moment.</string>
+
+    <string name="download_queue">Download Queue</string>
+    <string name="no_active_downloads">No active downloads</string>
+    <!-- others -->
+    <string name="remove">Remove</string>
+    <string name="queued">Queued</string>
+    <string name="restarting">Restarting</string>
+    <string name="failed">Failed</string>
+    <string name="paused">Paused</string>
+    <string name="Apple_Music">Apple Music</string>
+
+
+    <string name="widget_settings_title">Playback widget</string>
+    <string name="widget_preview">Preview</string>
+    <string name="widget_background">Background</string>
+    <string name="widget_background_blur">Blur</string>
+    <string name="widget_background_dominant_color">Dominant color</string>
+    <string name="widget_background_solid">Solid</string>
+    <string name="widget_blur_unavailable_notice">Blur background requires Android 12 or higher. In previous versions, the dominant color will be used.</string>
+    <string name="widget_scrim_intensity">Scrim Intensity</string>
+    <string name="widget_shape">Shape</string>
+    <string name="widget_corner_radius">Corner Radius</string>
+    <string name="widget_content">Content</string>
+    <string name="widget_show_progress_bar">Show Progress Bar</string>
+    <string name="widget_show_progress_bar_desc">Shows the current song\'s progress in the widget</string>
+
+    <string name="spotify_connect">Connect Spotify</string>
+    <string name="spotify_refresh">Refresh Spotify library</string>
+    <string name="spotify_available_count">%1$d playlists available</string>
+    <string name="spotify_connected_as">Connected as %1$s</string>
+    <string name="spotify_not_connected">Spotify is not connected</string>
+    <string name="spotify_track_count">%1$d tracks</string>
+    <string name="spotify_login_title">Spotify login</string>
+    <string name="spotify_loading_library">Loading Spotify library</string>
+    <string name="spotify_no_sources">No Spotify playlists found</string>
+    <string name="spotify_account">Spotify account</string>
+    <string name="spotify_playlists">Spotify Playlist</string>
+    <string name="spotify_waiting_for_login">Waiting for Spotify login</string>
+    <string name="spotify_show_playlist">Show Playlist</string>
+    <string name="spotify_show_playlist_desc">Show Spotify playlists in Library.</string>
+    <string name="spotify_reload_playlist">Reload Playlist</string>
+    <string name="spotify_reload_playlist_desc">Refresh Spotify playlists from your account.</string>
+    <string name="spotify_no_tracks">No Spotify tracks found.</string>
+    <string name="spotify_connected">Connected to Spotify</string>
+    <string name="ai_model_no_results">ia model no results</string>
+    <string name="tracks_label">Tracks</string>
+    <string name="spotify">Spotify</string>
+    <string name="see_all">see all</string>
+    <string name="your_albums">your albums</string>
+    <string name="your_artists">your artist</string>
+    <string name="more_label">more</string>
+    <string name="player_fullscreen">Player fullscreen</string>
 </resources>

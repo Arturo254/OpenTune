@@ -42,6 +42,8 @@ val DisableBlurKey = booleanPreferencesKey("disableBlur")
 val BlurRadiusKey = floatPreferencesKey("blurRadius")
 val MiniPlayerLastAnchorKey = intPreferencesKey("miniPlayerLastAnchor")
 
+val PlayerFullscreenKey = booleanPreferencesKey("player_fullscreen")
+
 enum class SliderStyle {
     Standard,
     Wavy,

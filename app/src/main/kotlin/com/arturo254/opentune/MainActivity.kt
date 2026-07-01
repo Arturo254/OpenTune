@@ -270,6 +270,8 @@ import javax.inject.Inject
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.days
 import androidx.core.graphics.toColorInt
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import com.arturo254.opentune.constants.PlayerFullscreenKey
 
 @Suppress("DEPRECATION", "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
 @AndroidEntryPoint
@@ -821,6 +823,10 @@ class MainActivity : ComponentActivity() {
                         mutableStateOf(false)
                     }
 
+                    val isPlayerExpanded by remember {
+                        derivedStateOf { playerBottomSheetState.isExpanded }
+                    }
+
                     LaunchedEffect(
                         miniPlayerAnchor,
                         isYearInMusicScreen,
@@ -834,18 +840,42 @@ class MainActivity : ComponentActivity() {
 
                     var yearInMusicSavedPlayerAnchor by rememberSaveable { mutableStateOf(-1) }
 
-                    LaunchedEffect(isYearInMusicScreen, isAlwaysOnDisplayScreen) {
+
+                    val (playerFullscreen) = rememberPreference(
+                        PlayerFullscreenKey,
+                        defaultValue = false
+                    )
+
+                    LaunchedEffect(
+                        isYearInMusicScreen,
+                        isAlwaysOnDisplayScreen,
+                        isPlayerExpanded,
+                        playerFullscreen
+                    ) {
                         val controller = WindowCompat.getInsetsController(window, window.decorView)
-                        if (isAlwaysOnDisplayScreen) {
-                            controller.systemBarsBehavior =
-                                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                            controller.hide(WindowInsetsCompat.Type.systemBars())
-                        } else if (isYearInMusicScreen) {
-                            controller.systemBarsBehavior =
-                                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                            controller.hide(WindowInsetsCompat.Type.statusBars())
-                        } else {
-                            controller.show(WindowInsetsCompat.Type.systemBars())
+
+                        when {
+                            isAlwaysOnDisplayScreen -> {
+                                controller.systemBarsBehavior =
+                                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                                controller.hide(WindowInsetsCompat.Type.systemBars())
+                            }
+
+                            isPlayerExpanded && playerFullscreen -> {
+                                controller.systemBarsBehavior =
+                                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                                controller.hide(WindowInsetsCompat.Type.systemBars())
+                            }
+
+                            isYearInMusicScreen -> {
+                                controller.systemBarsBehavior =
+                                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                                controller.hide(WindowInsetsCompat.Type.statusBars())
+                            }
+
+                            else -> {
+                                controller.show(WindowInsetsCompat.Type.systemBars())
+                            }
                         }
                     }
 
