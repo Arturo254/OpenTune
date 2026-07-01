@@ -93,6 +93,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -200,7 +201,9 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
     val view = LocalView.current
     val context = LocalContext.current
     val activity = context as? Activity
-    val window = activity?.window
+    val activityWindow = activity?.window
+    val dialogWindow = (view.parent as? DialogWindowProvider)?.window
+    val window = dialogWindow ?: activityWindow
 
     val (fullscreenMode) = rememberPreference(AodFullscreenKey, true)
 
@@ -209,7 +212,7 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
 
         if (fullscreenMode && window != null) {
             WindowCompat.setDecorFitsSystemWindows(window, false)
-            val insetsController = WindowInsetsControllerCompat(window, view)
+            val insetsController = WindowCompat.getInsetsController(window, window.decorView)
             insetsController.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             insetsController.hide(WindowInsetsCompat.Type.systemBars())
@@ -218,7 +221,7 @@ fun AlwaysOnDisplayScreen(navController: NavController) {
         onDispose {
             view.keepScreenOn = false
             if (window != null) {
-                val insetsController = WindowInsetsControllerCompat(window, view)
+                val insetsController = WindowCompat.getInsetsController(window, window.decorView)
                 insetsController.show(WindowInsetsCompat.Type.systemBars())
                 WindowCompat.setDecorFitsSystemWindows(window, true)
             }

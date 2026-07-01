@@ -690,6 +690,7 @@ class MainActivity : ComponentActivity() {
                     val (previousTab) = rememberSaveable { mutableStateOf("home") }
                     val currentRoute = navBackStackEntry?.destination?.route
                     val isYearInMusicScreen = currentRoute == "year_in_music"
+                    val isAlwaysOnDisplayScreen = currentRoute == "always_on_display"
 
                     val navigationItems = remember { Screens.MainScreens }
                     val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
@@ -820,22 +821,31 @@ class MainActivity : ComponentActivity() {
                         mutableStateOf(false)
                     }
 
-                    LaunchedEffect(miniPlayerAnchor, isYearInMusicScreen, miniPlayerAnchorPersistenceEnabled) {
-                        if (!isYearInMusicScreen && miniPlayerAnchorPersistenceEnabled) {
+                    LaunchedEffect(
+                        miniPlayerAnchor,
+                        isYearInMusicScreen,
+                        isAlwaysOnDisplayScreen,
+                        miniPlayerAnchorPersistenceEnabled
+                    ) {
+                        if (!isYearInMusicScreen && !isAlwaysOnDisplayScreen && miniPlayerAnchorPersistenceEnabled) {
                             setSavedMiniPlayerAnchor(miniPlayerAnchor)
                         }
                     }
 
                     var yearInMusicSavedPlayerAnchor by rememberSaveable { mutableStateOf(-1) }
 
-                    LaunchedEffect(isYearInMusicScreen) {
+                    LaunchedEffect(isYearInMusicScreen, isAlwaysOnDisplayScreen) {
                         val controller = WindowCompat.getInsetsController(window, window.decorView)
-                        if (isYearInMusicScreen) {
+                        if (isAlwaysOnDisplayScreen) {
+                            controller.systemBarsBehavior =
+                                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                            controller.hide(WindowInsetsCompat.Type.systemBars())
+                        } else if (isYearInMusicScreen) {
                             controller.systemBarsBehavior =
                                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                             controller.hide(WindowInsetsCompat.Type.statusBars())
                         } else {
-                            controller.show(WindowInsetsCompat.Type.statusBars())
+                            controller.show(WindowInsetsCompat.Type.systemBars())
                         }
                     }
 

@@ -10,9 +10,7 @@ package com.arturo254.opentune.ui.screens.settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -31,6 +29,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,16 +47,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -74,6 +77,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -105,8 +109,6 @@ import com.arturo254.opentune.constants.AodStyleKey
 import com.arturo254.opentune.constants.AodTextScaleKey
 import com.arturo254.opentune.constants.AodTransitionDurationKey
 import com.arturo254.opentune.ui.component.IconButton
-import com.arturo254.opentune.ui.component.PreferenceGroupTitle
-import com.arturo254.opentune.ui.component.SwitchPreference
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.utils.rememberPreference
 import me.saket.squiggles.SquigglySlider
@@ -254,297 +256,492 @@ fun AODSettings(
         AodAutoTimeout.MINUTE_1, AodAutoTimeout.MINUTE_2
     )
 
-    Column(
+    Scaffold(
         modifier = Modifier
-            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
-            .verticalScroll(rememberScrollState())
-    ) {
-
-        Spacer(Modifier.height(8.dp))
-
-        // ── SECCIÓN: Pantalla ─────────────────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_fullscreen_title)) {
-            AodSwitchRow(
-                icon = R.drawable.fullscreen,
-                title = stringResource(R.string.aod_fullscreen_label),
-                description = stringResource(R.string.aod_fullscreen_description),
-                checked = fullscreen,
-                onChanged = setFullscreen,
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            LargeFlexibleTopAppBar(
+                title = { Text(stringResource(R.string.aod_screen_title)) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = navController::navigateUp,
+                        onLongClick = navController::backToMain,
+                    ) {
+                        Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
+                    }
+                },
+                colors = TopAppBarDefaults.largeTopAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                ),
+                scrollBehavior = scrollBehavior,
             )
-        }
+        },
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            AodOverviewCard(
+                currentStyle = currentStyle,
+                currentShape = currentShape,
+                autoTimeoutSecs = autoTimeoutSecs,
+                fullscreen = fullscreen,
+                onFullscreenChange = setFullscreen,
+                showClock = showClock,
+                onShowClockChange = setShowClock,
+            )
 
-        // ── SECCIÓN: Auto-activación ──────────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_auto_activation_title)) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+            AodSettingsSection(title = stringResource(R.string.aod_fullscreen_title)) {
+                AodSwitchRow(
+                    icon = R.drawable.fullscreen,
+                    title = stringResource(R.string.aod_fullscreen_label),
+                    description = stringResource(R.string.aod_fullscreen_description),
+                    checked = fullscreen,
+                    onChanged = setFullscreen,
+                )
+            }
+
+            AodSettingsSection(title = stringResource(R.string.aod_auto_activation_title)) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stringResource(R.string.aod_auto_activation_label),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f)
+                        )
+                        ExpressivePill(text = stringResource(autoTimeouts[autoTimeoutIndex].labelRes))
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            " ", style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.width(32.dp)
+                        )
+                        SquigglySlider(
+                            value = autoTimeoutIndex.toFloat(),
+                            onValueChange = { v ->
+                                val idx = (v + 0.5f).toInt().coerceIn(0, 4)
+                                autoTimeoutIndex = idx
+                                setAutoTimeoutSecs(autoTimeouts[idx].seconds)
+                            },
+                            valueRange = 0f..4f,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 8.dp)
+                        )
+                        Text(
+                            stringResource(R.string.aod_auto_2m_short),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        text = stringResource(R.string.aod_auto_activation_label),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.weight(1f)
-                    )
-                    ExpressivePill(text = stringResource(autoTimeouts[autoTimeoutIndex].labelRes))
-                }
-                Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        " ", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(32.dp)
-                    )
-                    SquigglySlider(
-                        value = autoTimeoutIndex.toFloat(),
-                        onValueChange = { v ->
-                            val idx = (v + 0.5f).toInt().coerceIn(0, 4)
-                            autoTimeoutIndex = idx
-                            setAutoTimeoutSecs(autoTimeouts[idx].seconds)
-                        },
-                        valueRange = 0f..4f,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 8.dp)
-                    )
-                    Text(
-                        stringResource(R.string.aod_auto_2m_short),
-                        style = MaterialTheme.typography.labelSmall,
+                        stringResource(R.string.aod_auto_activation_description),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    stringResource(R.string.aod_auto_activation_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        // ── SECCIÓN: Estilo visual ────────────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_style_title)) {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(176.dp)
-            ) {
-                items(AodStyle.entries) { style ->
-                    AodStyleCard(
-                        style = style,
-                        selected = style == currentStyle,
-                        onClick = { setRawStyle(style.name) }
-                    )
-                }
             }
 
-            // Opciones extra sólo para SPOTLIGHT
-            AnimatedVisibility(
-                visible = currentStyle == AodStyle.SPOTLIGHT,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut(),
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    // Intensidad
-                    AodSliderRow(
-                        label = stringResource(R.string.aod_spotlight_intensity_label),
-                        valueLabel = "${(spotlightInt * 100).toInt()}%",
-                        value = spotlightInt,
-                        onValueChange = setSpotlightInt,
-                        valueRange = 0.15f..1.0f,
-                        startLabel = stringResource(R.string.aod_spotlight_intensity_low),
-                        endLabel = stringResource(R.string.aod_spotlight_intensity_high),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    AodSwitchRow(
-                        icon = R.drawable.timer,
-                        title = stringResource(R.string.aod_spotlight_pulse_label),
-                        checked = spotlightPulse,
-                        onChanged = setSpotlightPulse,
-                    )
-                }
-            }
-        }
-
-// ── SECCIÓN: Forma de la portada ──────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_shape_title)) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp)
-            ) {
-                items(AodArtShape.entries) { shape ->
-                    AodShapeCard(
-                        artShape = shape,
-                        selected = shape == currentShape,
-                        onClick = { setRawShape(shape.name) }
-                    )
-                }
-            }
-        }
-
-        // ── SECCIÓN: Controles ────────────────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_controls_title)) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Text(
-                    stringResource(R.string.aod_controls_style_label),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(Modifier.height(10.dp))
+            AodSettingsSection(title = stringResource(R.string.aod_style_title)) {
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(end = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(176.dp)
                 ) {
-                    items(AodControlStyle.entries) { cs ->
-                        ControlStyleChip(
-                            style = cs,
-                            selected = cs == currentControlStyle,
-                            onClick = { setRawControlStyle(cs.name) }
+                    items(AodStyle.entries) { style ->
+                        AodStyleCard(
+                            style = style,
+                            selected = style == currentStyle,
+                            onClick = { setRawStyle(style.name) }
+                        )
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = currentStyle == AodStyle.SPOTLIGHT,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut(),
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        AodSliderRow(
+                            label = stringResource(R.string.aod_spotlight_intensity_label),
+                            valueLabel = "${(spotlightInt * 100).toInt()}%",
+                            value = spotlightInt,
+                            onValueChange = setSpotlightInt,
+                            valueRange = 0.15f..1.0f,
+                            startLabel = stringResource(R.string.aod_spotlight_intensity_low),
+                            endLabel = stringResource(R.string.aod_spotlight_intensity_high),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        AodSwitchRow(
+                            icon = R.drawable.timer,
+                            title = stringResource(R.string.aod_spotlight_pulse_label),
+                            checked = spotlightPulse,
+                            onChanged = setSpotlightPulse,
                         )
                     }
                 }
             }
-        }
 
-        // ── SECCIÓN: Tipografía ───────────────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_typography_title)) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                AodSliderRow(
-                    label = stringResource(R.string.aod_art_size_label),
-                    valueLabel = "${(artSize * 100).toInt()}%",
-                    value = artSize,
-                    onValueChange = setArtSize,
-                    valueRange = 0.40f..1.0f,
-                    startLabel = "40%",
-                    endLabel = "100%",
-                    description = stringResource(R.string.aod_art_size_description),
-                )
-                Spacer(Modifier.height(12.dp))
-                AodSliderRow(
-                    label = stringResource(R.string.aod_text_size_label),
-                    valueLabel = "${(textScale * 100).roundToInt()}%",
-                    value = textScale,
-                    onValueChange = setTextScale,
-                    valueRange = 0.75f..1.40f,
-                    startLabel = "75%",
-                    endLabel = "140%",
-                    description = stringResource(R.string.aod_text_size_description),
-                )
+            AodSettingsSection(title = stringResource(R.string.aod_shape_title)) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp)
+                ) {
+                    items(AodArtShape.entries) { shape ->
+                        AodShapeCard(
+                            artShape = shape,
+                            selected = shape == currentShape,
+                            onClick = { setRawShape(shape.name) }
+                        )
+                    }
+                }
             }
-        }
 
-        // ── SECCIÓN: Fondo y brillo ───────────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_darkness_title)) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                AodSliderRow(
-                    label = stringResource(R.string.aod_darkness_label),
-                    valueLabel = "${(darkness * 100).toInt()}%",
-                    value = darkness,
-                    onValueChange = setDarkness,
-                    valueRange = 0f..1f,
-                    startLabel = "0%",
-                    endLabel = "100%",
-                    description = stringResource(R.string.aod_darkness_description),
-                )
+            AodSettingsSection(title = stringResource(R.string.aod_controls_title)) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Text(
+                        stringResource(R.string.aod_controls_style_label),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(end = 4.dp),
+                    ) {
+                        items(AodControlStyle.entries) { cs ->
+                            ControlStyleChip(
+                                style = cs,
+                                selected = cs == currentControlStyle,
+                                onClick = { setRawControlStyle(cs.name) }
+                            )
+                        }
+                    }
+                }
             }
-        }
 
-        // ── SECCIÓN: Transiciones ─────────────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_transitions_title)) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                AodSliderRow(
-                    label = stringResource(R.string.aod_transition_duration_label),
-                    valueLabel = "${transitionDur}ms",
-                    value = transitionDur.toFloat(),
-                    onValueChange = { setTransitionDur(it.roundToInt()) },
-                    valueRange = 200f..1500f,
-                    startLabel = stringResource(R.string.aod_transition_duration_fast),
-                    endLabel = stringResource(R.string.aod_transition_duration_slow),
-                    description = stringResource(R.string.aod_transition_duration_description),
-                )
+            AodSettingsSection(title = stringResource(R.string.aod_typography_title)) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    AodSliderRow(
+                        label = stringResource(R.string.aod_art_size_label),
+                        valueLabel = "${(artSize * 100).toInt()}%",
+                        value = artSize,
+                        onValueChange = setArtSize,
+                        valueRange = 0.40f..1.0f,
+                        startLabel = "40%",
+                        endLabel = "100%",
+                        description = stringResource(R.string.aod_art_size_description),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    AodSliderRow(
+                        label = stringResource(R.string.aod_text_size_label),
+                        valueLabel = "${(textScale * 100).roundToInt()}%",
+                        value = textScale,
+                        onValueChange = setTextScale,
+                        valueRange = 0.75f..1.40f,
+                        startLabel = "75%",
+                        endLabel = "140%",
+                        description = stringResource(R.string.aod_text_size_description),
+                    )
+                }
             }
-        }
 
-        // ── SECCIÓN: Reloj del sistema ────────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_system_clock_title)) {
-            AodSwitchRow(
-                icon = R.drawable.timer,
-                title = stringResource(R.string.aod_show_clock_label),
-                description = stringResource(R.string.aod_show_clock_description),
-                checked = showClock,
-                onChanged = setShowClock,
-            )
-            AnimatedVisibility(
-                visible = showClock,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut(),
-            ) {
+            AodSettingsSection(title = stringResource(R.string.aod_darkness_title)) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    AodSliderRow(
+                        label = stringResource(R.string.aod_darkness_label),
+                        valueLabel = "${(darkness * 100).toInt()}%",
+                        value = darkness,
+                        onValueChange = setDarkness,
+                        valueRange = 0f..1f,
+                        startLabel = "0%",
+                        endLabel = "100%",
+                        description = stringResource(R.string.aod_darkness_description),
+                    )
+                }
+            }
+
+            AodSettingsSection(title = stringResource(R.string.aod_transitions_title)) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    AodSliderRow(
+                        label = stringResource(R.string.aod_transition_duration_label),
+                        valueLabel = "${transitionDur}ms",
+                        value = transitionDur.toFloat(),
+                        onValueChange = { setTransitionDur(it.roundToInt()) },
+                        valueRange = 200f..1500f,
+                        startLabel = stringResource(R.string.aod_transition_duration_fast),
+                        endLabel = stringResource(R.string.aod_transition_duration_slow),
+                        description = stringResource(R.string.aod_transition_duration_description),
+                    )
+                }
+            }
+
+            AodSettingsSection(title = stringResource(R.string.aod_system_clock_title)) {
                 AodSwitchRow(
                     icon = R.drawable.timer,
-                    title = stringResource(R.string.aod_clock_format_24h_label),
-                    description = stringResource(R.string.aod_clock_format_24h_description),
-                    checked = clockFormat24h,
-                    onChanged = setClockFormat24h,
+                    title = stringResource(R.string.aod_show_clock_label),
+                    description = stringResource(R.string.aod_show_clock_description),
+                    checked = showClock,
+                    onChanged = setShowClock,
+                )
+                AnimatedVisibility(
+                    visible = showClock,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut(),
+                ) {
+                    AodSwitchRow(
+                        icon = R.drawable.timer,
+                        title = stringResource(R.string.aod_clock_format_24h_label),
+                        description = stringResource(R.string.aod_clock_format_24h_description),
+                        checked = clockFormat24h,
+                        onChanged = setClockFormat24h,
+                    )
+                }
+            }
+
+            AodSettingsSection(title = stringResource(R.string.aod_visible_elements_title)) {
+                AodSwitchRow(
+                    icon = R.drawable.text_fields,
+                    title = stringResource(R.string.aod_show_title),
+                    checked = showTitle,
+                    onChanged = setShowTitle,
+                )
+                AodSwitchRow(
+                    icon = R.drawable.artist,
+                    title = stringResource(R.string.aod_show_artist),
+                    checked = showArtist,
+                    onChanged = setShowArtist,
+                )
+                AodSwitchRow(
+                    icon = R.drawable.timer,
+                    title = stringResource(R.string.aod_show_time),
+                    description = stringResource(R.string.aod_show_time_description),
+                    checked = showTime,
+                    onChanged = setShowTime,
+                )
+                AodSwitchRow(
+                    icon = R.drawable.sliders,
+                    title = stringResource(R.string.aod_show_progress),
+                    checked = showProgress,
+                    onChanged = setShowProgress,
+                )
+                AodSwitchRow(
+                    icon = R.drawable.queue_music,
+                    title = stringResource(R.string.aod_show_controls),
+                    description = stringResource(R.string.aod_show_controls_description),
+                    checked = showControls,
+                    onChanged = setShowControls,
                 )
             }
         }
-
-        // ── SECCIÓN: Elementos visibles ───────────────────────────────────
-        AodSettingsSection(title = stringResource(R.string.aod_visible_elements_title)) {
-            AodSwitchRow(
-                icon = R.drawable.text_fields,
-                title = stringResource(R.string.aod_show_title),
-                checked = showTitle,
-                onChanged = setShowTitle,
-            )
-            AodSwitchRow(
-                icon = R.drawable.artist,
-                title = stringResource(R.string.aod_show_artist),
-                checked = showArtist,
-                onChanged = setShowArtist,
-            )
-            AodSwitchRow(
-                icon = R.drawable.timer,
-                title = stringResource(R.string.aod_show_time),
-                description = stringResource(R.string.aod_show_time_description),
-                checked = showTime,
-                onChanged = setShowTime,
-            )
-            AodSwitchRow(
-                icon = R.drawable.sliders,
-                title = stringResource(R.string.aod_show_progress),
-                checked = showProgress,
-                onChanged = setShowProgress,
-            )
-            AodSwitchRow(
-                icon = R.drawable.queue_music,
-                title = stringResource(R.string.aod_show_controls),
-                description = stringResource(R.string.aod_show_controls_description),
-                checked = showControls,
-                onChanged = setShowControls,
-            )
-        }
-
-        Spacer(Modifier.height(24.dp))
     }
+}
 
-    TopAppBar(
-        title = { Text(stringResource(R.string.aod_screen_title)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
-            }
-        },
-        scrollBehavior = scrollBehavior,
+@Composable
+private fun AodOverviewCard(
+    currentStyle: AodStyle,
+    currentShape: AodArtShape,
+    autoTimeoutSecs: Int,
+    fullscreen: Boolean,
+    onFullscreenChange: (Boolean) -> Unit,
+    showClock: Boolean,
+    onShowClockChange: (Boolean) -> Unit,
+) {
+    val heroBrush = Brush.linearGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
     )
+    val uncheckedColors = ToggleButtonDefaults.toggleButtonColors(
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    )
+    val checkedColors = ToggleButtonDefaults.toggleButtonColors(
+        checkedContainerColor = MaterialTheme.colorScheme.primary,
+        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    )
+    val secondaryCheckedColors = ToggleButtonDefaults.toggleButtonColors(
+        checkedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        checkedContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    )
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(32.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 6.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .background(heroBrush)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(
+                    modifier = Modifier.size(92.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    color = Color(0xFF070707),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(12.dp)
+                            .clip(currentShape.toShape()),
+                    ) {
+                        AodStylePreview(style = currentStyle)
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.aod_screen_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = aodStyleLabel(currentStyle),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = stringResource(R.string.aod_auto_activation_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ExpressivePill(text = aodShapeLabel(currentShape))
+                ExpressivePill(text = stringResource(aodTimeoutLabelRes(autoTimeoutSecs)))
+                ExpressivePill(text = stringResource(R.string.aod_controls_title))
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ToggleButton(
+                    checked = fullscreen,
+                    onCheckedChange = onFullscreenChange,
+                    modifier = Modifier.weight(1f),
+                    shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+                    colors = if (fullscreen) checkedColors else uncheckedColors,
+                ) {
+                    AodHeroToggleLabel(
+                        icon = R.drawable.fullscreen,
+                        text = stringResource(R.string.aod_fullscreen_label),
+                    )
+                }
+                ToggleButton(
+                    checked = showClock,
+                    onCheckedChange = onShowClockChange,
+                    modifier = Modifier.weight(1f),
+                    shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                    colors = if (showClock) secondaryCheckedColors else uncheckedColors,
+                ) {
+                    AodHeroToggleLabel(
+                        icon = R.drawable.timer,
+                        text = stringResource(R.string.aod_show_clock_label),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AodHeroToggleLabel(
+    icon: Int,
+    text: String,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun aodStyleLabel(style: AodStyle): String = when (style) {
+    AodStyle.CLASSIC -> stringResource(R.string.aod_style_classic)
+    AodStyle.BACKGROUND -> stringResource(R.string.aod_style_background)
+    AodStyle.MINIMAL -> stringResource(R.string.aod_style_minimal)
+    AodStyle.LARGE -> stringResource(R.string.aod_style_large)
+    AodStyle.SPOTLIGHT -> stringResource(R.string.aod_style_spotlight)
+}
+
+@Composable
+private fun aodShapeLabel(shape: AodArtShape): String = when (shape) {
+    AodArtShape.ROUNDED -> stringResource(R.string.aod_shape_rounded)
+    AodArtShape.CIRCLE -> stringResource(R.string.aod_shape_circle)
+    AodArtShape.SQUIRCLE -> stringResource(R.string.aod_shape_squircle)
+    AodArtShape.DIAMOND -> stringResource(R.string.aod_shape_diamond)
+    AodArtShape.HEXAGON -> stringResource(R.string.aod_shape_hexagon)
+    AodArtShape.STAR -> stringResource(R.string.aod_shape_star)
+    AodArtShape.ARCH -> stringResource(R.string.aod_shape_arch)
+    AodArtShape.PETAL -> stringResource(R.string.aod_shape_petal)
+}
+
+private fun aodTimeoutLabelRes(seconds: Int): Int = when (seconds) {
+    15 -> R.string.aod_auto_15s
+    30 -> R.string.aod_auto_30s
+    60 -> R.string.aod_auto_1m
+    120 -> R.string.aod_auto_2m
+    else -> R.string.aod_auto_never
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

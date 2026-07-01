@@ -218,7 +218,7 @@ fun BottomSheetPlayer(
 
 
 
-    val (aodAutoTimeoutSeconds) = rememberPreference(AodAutoActivationKey, 30)
+    val (aodAutoTimeoutSeconds) = rememberPreference(AodAutoActivationKey, 0)
 
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var isAodActive by remember { mutableStateOf(false) }
