@@ -3,6 +3,8 @@ package com.arturo254.opentune.ui.player
 import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +42,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.arturo254.opentune.R
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun V8DeviceSelector(
     textBackgroundColor: Color,
@@ -63,7 +66,7 @@ fun V8DeviceSelector(
                 activeDevice?.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
                 activeDevice?.type == AudioDeviceInfo.TYPE_BLE_HEADSET -> R.drawable.bluetooth
 
-        else -> R.drawable.speaker
+        else -> R.drawable.airplay
     }
 
     val isBluetooth = activeDevice?.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
@@ -165,11 +168,11 @@ fun DeviceSelectionBottomSheet(
                         AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
                         AudioDeviceInfo.TYPE_BLE_HEADSET -> R.drawable.bluetooth
 
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> R.drawable.speaker
+                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> R.drawable.airplay
                         AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
-                        AudioDeviceInfo.TYPE_WIRED_HEADSET -> R.drawable.speaker
+                        AudioDeviceInfo.TYPE_WIRED_HEADSET -> R.drawable.airplay
 
-                        else -> R.drawable.speaker
+                        else -> R.drawable.airplay
                     }
 
                     Surface(

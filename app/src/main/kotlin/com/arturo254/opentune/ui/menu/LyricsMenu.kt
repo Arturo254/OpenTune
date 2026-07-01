@@ -76,6 +76,9 @@ import androidx.glance.appwidget.components.FilledButton
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.arturo254.opentune.LocalDatabase
@@ -454,11 +457,15 @@ fun LyricsMenu(
                 }
                 Spacer(Modifier.width(8.dp))
                 if (isTranslating) {
-                    CircularProgressIndicator(
+                    val density = LocalDensity.current
+
+                    CircularWavyProgressIndicator(
                         modifier = Modifier
                             .size(20.dp)
                             .align(Alignment.CenterVertically),
-                        strokeWidth = 2.dp
+                        stroke = Stroke(
+                            width = with(density) { 2.dp.toPx() }
+                        )
                     )
                 } else {
                     TextButton(onClick = {
