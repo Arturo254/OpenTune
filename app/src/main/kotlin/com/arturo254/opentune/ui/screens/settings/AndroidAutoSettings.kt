@@ -9,6 +9,7 @@
 package com.arturo254.opentune.ui.screens.settings
 
 import android.content.Context
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -269,6 +271,8 @@ private fun AndroidAutoHeroCard(
     onSimplifiedModeChange: (Boolean) -> Unit,
     itemLimit: Int,
 ) {
+    val view = LocalView.current
+
     val heroBrush = Brush.linearGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
@@ -276,16 +280,19 @@ private fun AndroidAutoHeroCard(
             MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
     )
+
     val uncheckedColors = ToggleButtonDefaults.toggleButtonColors(
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
         contentColor = MaterialTheme.colorScheme.onSurface,
     )
+
     val checkedColors = ToggleButtonDefaults.toggleButtonColors(
         checkedContainerColor = MaterialTheme.colorScheme.primary,
         checkedContentColor = MaterialTheme.colorScheme.onPrimary,
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
         contentColor = MaterialTheme.colorScheme.onSurface,
     )
+
     val simplifiedColors = ToggleButtonDefaults.toggleButtonColors(
         checkedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
         checkedContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -334,6 +341,7 @@ private fun AndroidAutoHeroCard(
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold,
                     )
+
                     Text(
                         text = stringResource(R.string.android_auto_enable_desc),
                         style = MaterialTheme.typography.bodyMedium,
@@ -352,18 +360,25 @@ private fun AndroidAutoHeroCard(
                 ) {
                     Text(
                         text = stringResource(R.string.android_auto_simplified_mode),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(
+                            horizontal = 12.dp,
+                            vertical = 8.dp,
+                        ),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
                 }
+
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surfaceContainerLowest,
                 ) {
                     Text(
                         text = "$itemLimit items",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(
+                            horizontal = 12.dp,
+                            vertical = 8.dp,
+                        ),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -372,24 +387,45 @@ private fun AndroidAutoHeroCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                horizontalArrangement = Arrangement.spacedBy(
+                    ButtonGroupDefaults.ConnectedSpaceBetween
+                ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 ToggleButton(
                     checked = androidAutoEnabled,
-                    onCheckedChange = onAndroidAutoEnabledChange,
+                    onCheckedChange = {
+                        view.performHapticFeedback(
+                            HapticFeedbackConstants.CONTEXT_CLICK,
+                            HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
+                        )
+
+                        onAndroidAutoEnabledChange(it)
+                    },
                     modifier = Modifier.weight(1f),
                     shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
                     colors = if (androidAutoEnabled) checkedColors else uncheckedColors,
                 ) {
                     ToggleButtonLabel(
-                        icon = if (androidAutoEnabled) R.drawable.check else R.drawable.close,
+                        icon = if (androidAutoEnabled) {
+                            R.drawable.check
+                        } else {
+                            R.drawable.close
+                        },
                         text = stringResource(R.string.android_auto_enable),
                     )
                 }
+
                 ToggleButton(
                     checked = simplifiedMode,
-                    onCheckedChange = onSimplifiedModeChange,
+                    onCheckedChange = {
+                        view.performHapticFeedback(
+                            HapticFeedbackConstants.CONTEXT_CLICK,
+                            HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
+                        )
+
+                        onSimplifiedModeChange(it)
+                    },
                     modifier = Modifier.weight(1f),
                     shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
                     colors = if (simplifiedMode) simplifiedColors else uncheckedColors,

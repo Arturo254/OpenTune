@@ -91,6 +91,7 @@ import com.arturo254.opentune.constants.OpenTuneCanvasKey
 import com.arturo254.opentune.constants.ThumbnailCornerRadiusKey
 import com.arturo254.opentune.constants.CropThumbnailToSquareKey
 import com.arturo254.opentune.constants.DisableBlurKey
+import com.arturo254.opentune.constants.EnableHapticFeedbackKey
 import com.arturo254.opentune.constants.LiquidGlassNavBarKey
 import com.arturo254.opentune.constants.PlayerFullscreenKey
 import com.arturo254.opentune.constants.UseLyricsV2Key
@@ -246,6 +247,11 @@ fun AppearanceSettings(
         defaultValue = false
     )
 
+    val (hapticEnabled, onHapticEnabledChange) = rememberPreference(
+        EnableHapticFeedbackKey,
+        defaultValue = true
+    )
+
 
     val isSystemInDarkTheme = isSystemInDarkTheme()
     val useDarkTheme =
@@ -333,6 +339,13 @@ fun AppearanceSettings(
             icon = { Icon(painterResource(R.drawable.fullscreen), null) },
             checked = playerFullscreen,
             onCheckedChange = onPlayerFullscreenChange,
+        )
+
+        SwitchPreference(
+            title = { Text("Haptic feedback") },
+            icon = { Icon(painterResource(R.drawable.haptic), null) },
+            checked = hapticEnabled,
+            onCheckedChange = onHapticEnabledChange,
         )
 
         AnimatedVisibility(visible = !dynamicTheme || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {

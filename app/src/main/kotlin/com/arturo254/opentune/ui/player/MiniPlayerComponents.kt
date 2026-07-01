@@ -8,6 +8,8 @@
 
 package com.arturo254.opentune.ui.player
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -82,12 +84,15 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import com.arturo254.opentune.R
+import com.arturo254.opentune.constants.EnableHapticFeedbackKey
 import com.arturo254.opentune.constants.MiniPlayerHeight
 import com.arturo254.opentune.extensions.togglePlayPause
 import com.arturo254.opentune.models.MediaMetadata
 import com.arturo254.opentune.playback.PlayerConnection
 import com.arturo254.opentune.together.TogetherSessionState
 import com.arturo254.opentune.ui.component.BottomSheetState
+import com.arturo254.opentune.utils.rememberHaptic
+import com.arturo254.opentune.utils.rememberPreference
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -369,6 +374,7 @@ private fun MiniPlayerTransportButton(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 private fun MiniPlayerTransportControls(
     isPlaying: Boolean,
@@ -378,6 +384,8 @@ private fun MiniPlayerTransportControls(
     canSkipNext: Boolean,
     playerConnection: PlayerConnection
 ) {
+    val haptic = rememberHaptic()
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -405,6 +413,7 @@ private fun MiniPlayerTransportControls(
                     if (isPlaying && playbackState != Player.STATE_ENDED) "Pause" else it
                 },
                 onClick = {
+                    haptic.click()
                     if (playbackState == Player.STATE_ENDED) {
                         playerConnection.player.seekTo(0, 0)
                         playerConnection.player.playWhenReady = true
@@ -569,9 +578,12 @@ private fun MiniPlayerPlayPauseButton(
     )
 
     val animationKey by rememberUpdatedState(isPlaying)
+    val (enableHaptic) = rememberPreference(EnableHapticFeedbackKey, true)
+    val haptic = rememberHaptic(enabled = enableHaptic)
 
     FilledIconButton(
         onClick = {
+            haptic.click()
             if (!isLoading) playerConnection.player.togglePlayPause()
         },
         modifier = Modifier

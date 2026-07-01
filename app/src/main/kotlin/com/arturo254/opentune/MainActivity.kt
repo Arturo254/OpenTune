@@ -111,9 +111,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -271,6 +274,7 @@ import kotlin.random.Random
 import kotlin.time.Duration.Companion.days
 import androidx.core.graphics.toColorInt
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import com.arturo254.opentune.constants.EnableHapticFeedbackKey
 import com.arturo254.opentune.constants.PlayerFullscreenKey
 
 @Suppress("DEPRECATION", "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
@@ -693,6 +697,19 @@ class MainActivity : ComponentActivity() {
                     val currentRoute = navBackStackEntry?.destination?.route
                     val isYearInMusicScreen = currentRoute == "year_in_music"
                     val isAlwaysOnDisplayScreen = currentRoute == "always_on_display"
+
+
+                    val haptic = LocalHapticFeedback.current
+                    val (enableHapticFeedback) = rememberPreference(EnableHapticFeedbackKey, true)
+                    val customHaptic = remember(haptic, enableHapticFeedback) {
+                        object : HapticFeedback {
+                            override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) {
+                                if (enableHapticFeedback) {
+                                    haptic.performHapticFeedback(hapticFeedbackType)
+                                }
+                            }
+                        }
+                    }
 
                     val navigationItems = remember { Screens.MainScreens }
                     val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
@@ -1133,6 +1150,7 @@ class MainActivity : ComponentActivity() {
                     CompositionLocalProvider(
                         LocalDatabase provides database,
                         LocalContentColor provides if (pureBlack) Color.White else contentColorFor(MaterialTheme.colorScheme.surface),
+                        LocalHapticFeedback provides customHaptic,
                         LocalPlayerConnection provides playerConnection,
                         LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
                         LocalDownloadUtil provides downloadUtil,
