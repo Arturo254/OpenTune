@@ -23,6 +23,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -31,10 +32,13 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -56,6 +60,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -70,6 +75,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.core.content.ContextCompat
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
@@ -111,7 +117,11 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -259,6 +269,7 @@ import java.util.Locale
 import javax.inject.Inject
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.days
+import androidx.core.graphics.toColorInt
 
 @Suppress("DEPRECATION", "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
 @AndroidEntryPoint
@@ -397,8 +408,12 @@ class MainActivity : ComponentActivity() {
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.R)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+    @OptIn(
+        ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class,
+        ExperimentalTextApi::class
+    )
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.decorView.layoutDirection = View.LAYOUT_DIRECTION_LTR
@@ -510,7 +525,7 @@ class MainActivity : ComponentActivity() {
                     .verticalScroll(rememberScrollState())
                 ) {
                     val notes = releaseNotesState.value
-                    if (notes != null && notes.isNotBlank()) {
+                    if (!notes.isNullOrBlank()) {
                         Markdown(
                             content = notes,
                             modifier = Modifier
@@ -591,7 +606,7 @@ class MainActivity : ComponentActivity() {
                 if (customThemeColorValue.startsWith("#")) {
                     try {
                         val colorString = customThemeColorValue.removePrefix("#")
-                        Color(android.graphics.Color.parseColor("#$colorString"))
+                        Color("#$colorString".toColorInt())
                     } catch (e: Exception) {
                         DefaultThemeColor
                     }
@@ -644,6 +659,7 @@ class MainActivity : ComponentActivity() {
             OpenTuneTheme(
                 darkTheme = useDarkTheme,
                 pureBlack = pureBlack,
+                motionScheme = MotionScheme.expressive(),
                 themeColor = themeColor,
                 seedPalette = if (!enableDynamicTheme) customThemeSeedPalette else null,
                 useSystemFont = useSystemFont,
@@ -1194,59 +1210,118 @@ class MainActivity : ComponentActivity() {
                                             }
 
                                             TopAppBar(
-                                                windowInsets = WindowInsets.safeDrawing.only((if(useRail) {
-                                                    WindowInsetsSides.Right
-                                                } else WindowInsetsSides.Horizontal) + WindowInsetsSides.Top),
+                                                windowInsets = WindowInsets.safeDrawing.only(
+                                                    (if (useRail) {
+                                                        WindowInsetsSides.Right
+                                                    } else {
+                                                        WindowInsetsSides.Horizontal
+                                                    }) + WindowInsetsSides.Top
+                                                ),
                                                 title = {
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        // app icon
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.opentune),
-                                                            contentDescription = null,
-                                                            modifier = Modifier
-                                                                .size(35.dp)
-                                                                .padding(end = 3.dp)
+                                                    val googleSans = FontFamily(
+                                                        Font(
+                                                            R.font.anybody,
+                                                            variationSettings = FontVariation.Settings(
+                                                                FontVariation.weight(650),
+                                                                FontVariation.width(110f),
+                                                                FontVariation.slant(-4f)
+                                                            )
                                                         )
+                                                    )
+
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(
+                                                            6.dp
+                                                        )
+                                                    ) {
+
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(40.dp)
+                                                                .clip(RoundedCornerShape(14.dp))
+                                                                .background(
+                                                                    MaterialTheme.colorScheme.secondaryContainer.copy(
+                                                                        alpha = 0.5f
+                                                                    )
+                                                                ),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Icon(
+                                                                painter = painterResource(R.drawable.opentune),
+                                                                contentDescription = null,
+                                                                tint = Color.Unspecified,
+                                                                modifier = Modifier.size(28.dp)
+                                                            )
+                                                        }
 
                                                         Text(
                                                             text = stringResource(R.string.app_name),
-                                                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                                            style = MaterialTheme.typography.headlineSmallEmphasized.copy(
+                                                                fontFamily = googleSans,
+                                                                fontWeight = FontWeight.ExtraBold
+                                                            ),
                                                             maxLines = 1,
                                                             overflow = TextOverflow.Ellipsis
                                                         )
                                                     }
                                                 },
                                                 actions = {
-                                                    IconButton(onClick = { navController.navigate("history") }) {
+
+                                                    IconButton(
+                                                        modifier = Modifier.size(40.dp),
+                                                        onClick = { navController.navigate("history") }
+                                                    ) {
                                                         Icon(
                                                             painter = painterResource(R.drawable.history),
-                                                            contentDescription = stringResource(R.string.history)
+                                                            contentDescription = stringResource(R.string.history),
+                                                            modifier = Modifier.size(22.dp)
                                                         )
                                                     }
-                                                    IconButton(onClick = { navController.navigate("stats") }) {
+
+                                                    IconButton(
+                                                        modifier = Modifier.size(40.dp),
+                                                        onClick = { navController.navigate("stats") }
+                                                    ) {
                                                         Icon(
                                                             painter = painterResource(R.drawable.stats),
-                                                            contentDescription = stringResource(R.string.stats)
+                                                            contentDescription = stringResource(R.string.stats),
+                                                            modifier = Modifier.size(22.dp)
                                                         )
                                                     }
-                                                    IconButton(onClick = { navController.navigate("new_release") }) {
+
+                                                    IconButton(
+                                                        modifier = Modifier.size(40.dp),
+                                                        onClick = { navController.navigate("new_release") }
+                                                    ) {
                                                         Icon(
                                                             painter = painterResource(R.drawable.notifications),
-                                                            contentDescription = stringResource(R.string.new_release_albums)
+                                                            contentDescription = stringResource(R.string.new_release_albums),
+                                                            modifier = Modifier.size(22.dp)
                                                         )
                                                     }
-                                                    IconButton(onClick = { showAccountDialog = true }) {
-                                                        BadgedBox(badge = {
-                                                            if (!Updater.isSameVersion(latestVersionName, BuildConfig.VERSION_NAME)) {
-                                                                Badge()
+
+                                                    IconButton(
+                                                        modifier = Modifier.size(40.dp),
+                                                        onClick = { showAccountDialog = true }
+                                                    ) {
+                                                        BadgedBox(
+                                                            badge = {
+                                                                if (!Updater.isSameVersion(
+                                                                        latestVersionName,
+                                                                        BuildConfig.VERSION_NAME
+                                                                    )
+                                                                ) {
+                                                                    Badge()
+                                                                }
                                                             }
-                                                        }) {
+                                                        ) {
                                                             if (accountImageUrl != null) {
                                                                 AsyncImage(
                                                                     model = accountImageUrl,
                                                                     contentDescription = stringResource(R.string.account),
                                                                     modifier = Modifier
-                                                                        .size(24.dp)
+                                                                        .size(30.dp)
                                                                         .clip(CircleShape)
                                                                 )
                                                             } else {
@@ -1259,10 +1334,26 @@ class MainActivity : ComponentActivity() {
                                                         }
                                                     }
                                                 },
-                                                scrollBehavior = if (shouldUseFloatingTopBar) searchBarScrollBehavior else topAppBarScrollBehavior,
+                                                scrollBehavior = if (shouldUseFloatingTopBar) {
+                                                    searchBarScrollBehavior
+                                                } else {
+                                                    topAppBarScrollBehavior
+                                                },
                                                 colors = TopAppBarDefaults.topAppBarColors(
-                                                    containerColor = if (shouldUseFloatingTopBar) Color.Transparent else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface,
-                                                    scrolledContainerColor = if (shouldUseFloatingTopBar) Color.Transparent else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface,
+                                                    containerColor = if (shouldUseFloatingTopBar) {
+                                                        Color.Transparent
+                                                    } else if (pureBlack) {
+                                                        Color.Black
+                                                    } else {
+                                                        MaterialTheme.colorScheme.surface
+                                                    },
+                                                    scrolledContainerColor = if (shouldUseFloatingTopBar) {
+                                                        Color.Transparent
+                                                    } else if (pureBlack) {
+                                                        Color.Black
+                                                    } else {
+                                                        MaterialTheme.colorScheme.surface
+                                                    },
                                                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                                                     actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1622,35 +1713,86 @@ class MainActivity : ComponentActivity() {
                                         else -> Screens.Home
                                     }.route,
                                     enterTransition = {
-                                        if (initialState.destination.route in topLevelScreens && targetState.destination.route in topLevelScreens) {
-                                            fadeIn(tween(250))
+                                        if (
+                                            initialState.destination.route in topLevelScreens &&
+                                            targetState.destination.route in topLevelScreens
+                                        ) {
+                                            fadeIn(
+                                                animationSpec = tween(250)
+                                            )
                                         } else {
-                                            fadeIn(tween(250)) + slideInHorizontally { it / 2 }
+                                            fadeIn(
+                                                animationSpec = tween(300)
+                                            ) + scaleIn(
+                                                initialScale = 0.95f,
+                                                animationSpec = spring(
+                                                    dampingRatio = 0.85f,
+                                                    stiffness = 400f
+                                                )
+                                            )
                                         }
                                     },
                                     exitTransition = {
-                                        if (initialState.destination.route in topLevelScreens && targetState.destination.route in topLevelScreens) {
-                                            fadeOut(tween(200))
+                                        if (
+                                            initialState.destination.route in topLevelScreens &&
+                                            targetState.destination.route in topLevelScreens
+                                        ) {
+                                            fadeOut(
+                                                animationSpec = tween(200)
+                                            )
                                         } else {
-                                            fadeOut(tween(200)) + slideOutHorizontally { -it / 2 }
+                                            fadeOut(
+                                                animationSpec = tween(200)
+                                            ) + scaleOut(
+                                                targetScale = 0.98f,
+                                                animationSpec = tween(200)
+                                            )
                                         }
                                     },
                                     popEnterTransition = {
-                                        if ((initialState.destination.route in topLevelScreens || initialState.destination.route?.startsWith("search/") == true) && targetState.destination.route in topLevelScreens) {
-                                            fadeIn(tween(250))
+                                        if (
+                                            (initialState.destination.route in topLevelScreens ||
+                                                    initialState.destination.route?.startsWith("search/") == true) &&
+                                            targetState.destination.route in topLevelScreens
+                                        ) {
+                                            fadeIn(
+                                                animationSpec = tween(250)
+                                            )
                                         } else {
-                                            fadeIn(tween(250)) + slideInHorizontally { -it / 2 }
+                                            fadeIn(
+                                                animationSpec = tween(300)
+                                            ) + scaleIn(
+                                                initialScale = 0.98f,
+                                                animationSpec = spring(
+                                                    dampingRatio = 0.85f,
+                                                    stiffness = 400f
+                                                )
+                                            )
                                         }
                                     },
                                     popExitTransition = {
-                                        if ((initialState.destination.route in topLevelScreens || initialState.destination.route?.startsWith("search/") == true) && targetState.destination.route in topLevelScreens) {
-                                            fadeOut(tween(200))
+                                        if (
+                                            (initialState.destination.route in topLevelScreens ||
+                                                    initialState.destination.route?.startsWith("search/") == true) &&
+                                            targetState.destination.route in topLevelScreens
+                                        ) {
+                                            fadeOut(
+                                                animationSpec = tween(200)
+                                            )
                                         } else {
-                                            fadeOut(tween(200)) + slideOutHorizontally { it / 2 }
+                                            fadeOut(
+                                                animationSpec = tween(200)
+                                            ) + scaleOut(
+                                                targetScale = 0.95f,
+                                                animationSpec = tween(200)
+                                            )
                                         }
                                     },
                                     modifier = Modifier.nestedScroll(
-                                        if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } ||
+                                        if (
+                                            navigationItems.fastAny {
+                                                it.route == navBackStackEntry?.destination?.route
+                                            } ||
                                             navBackStackEntry?.destination?.route?.startsWith("search/") == true
                                         ) {
                                             searchBarScrollBehavior.nestedScrollConnection

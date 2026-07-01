@@ -53,6 +53,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import android.content.res.Configuration
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.Player.STATE_BUFFERING
@@ -109,10 +111,12 @@ fun LyricsScreen(
     lyricsSyncOffset: Int,
     modifier: Modifier = Modifier
 ) {
+
+    var showLyricsMenu by remember { mutableStateOf(false) }
+
     val playerConnection = LocalPlayerConnection.current ?: return
     val player = playerConnection.player
     val context = LocalContext.current
-    val menuState = LocalMenuState.current
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -334,7 +338,7 @@ fun LyricsScreen(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        
+
                         // More button (right)
                         Box(
                             modifier = Modifier
@@ -346,13 +350,7 @@ fun LyricsScreen(
                                         radius = 16.dp
                                     )
                                 ) {
-                                    menuState.show {
-                                        LyricsMenu(
-                                            lyricsProvider = { currentLyrics },
-                                            mediaMetadataProvider = { mediaMetadata },
-                                            onDismiss = menuState::dismiss
-                                        )
-                                    }
+                                    showLyricsMenu = true
                                 },
                             contentAlignment = Alignment.Center
                         ) {
@@ -644,7 +642,7 @@ fun LyricsScreen(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        
+
                         // More button (right)
                         Box(
                             modifier = Modifier
@@ -656,13 +654,7 @@ fun LyricsScreen(
                                         radius = 16.dp
                                     )
                                 ) {
-                                    menuState.show {
-                                        LyricsMenu(
-                                            lyricsProvider = { currentLyrics },
-                                            mediaMetadataProvider = { mediaMetadata },
-                                            onDismiss = menuState::dismiss
-                                        )
-                                    }
+                                    showLyricsMenu = true
                                 },
                             contentAlignment = Alignment.Center
                         ) {
@@ -887,6 +879,21 @@ fun LyricsScreen(
                     }
                 }
             }
+        }
+    }
+    if (showLyricsMenu) {
+        Dialog(
+            onDismissRequest = { showLyricsMenu = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            )
+        ) {
+            LyricsMenu(
+                lyricsProvider = { currentLyrics },
+                mediaMetadataProvider = { mediaMetadata },
+                onDismiss = { showLyricsMenu = false }
+            )
         }
     }
 }
