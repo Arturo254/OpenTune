@@ -240,6 +240,7 @@ dependencies {
     implementation(libs.backdrop)
     implementation(libs.kashif.mehmood.km.backdrop)
     implementation(libs.dev.haze)
+    implementation(libs.compose.markdown)
     compileOnly("androidx.compose.ui:ui-tooling-preview:${libs.versions.compose.get()}")
     debugImplementation("androidx.compose.ui:ui-tooling-preview:${libs.versions.compose.get()}")
     debugImplementation(libs.compose.ui.tooling)

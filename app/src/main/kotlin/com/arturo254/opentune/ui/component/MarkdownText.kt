@@ -11,9 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import com.mikepenz.markdown.m3.Markdown
-import com.mikepenz.markdown.m3.markdownColor
-import com.mikepenz.markdown.m3.markdownTypography
+import androidx.compose.ui.unit.sp
+import dev.jeziellago.compose.markdowntext.MarkdownText as ComposeMarkdownText
 
 @Composable
 fun MarkdownText(
@@ -21,16 +20,17 @@ fun MarkdownText(
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
     color: Color = MaterialTheme.colorScheme.onSurface,
+    linkColor: Color = MaterialTheme.colorScheme.primary,
+    isTextSelectable: Boolean = false,
 ) {
-    Markdown(
-        content = markdown,
+    ComposeMarkdownText(
+        markdown = markdown,
         modifier = modifier,
-        colors = markdownColor(
-            text = color,
-            codeBackground = MaterialTheme.colorScheme.surfaceVariant,
+        style = style.copy(
+            color = color,
+            fontSize = style.fontSize.takeIf { it.value > 0f } ?: 16.sp
         ),
-        typography = markdownTypography(
-            text = style
-        )
+        linkColor = linkColor,
+        isTextSelectable = isTextSelectable,
     )
 }

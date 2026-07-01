@@ -34,10 +34,10 @@ import org.jsoup.Jsoup
 
 @Composable
 fun ReleaseNotesCard() {
-    var releaseNotes by remember { mutableStateOf<List<String>>(emptyList()) }
+    var markdownContent by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        releaseNotes = fetchReleaseNotesText()
+        markdownContent = fetchReleaseNotesMarkdown()
     }
 
     Card(
@@ -57,35 +57,81 @@ fun ReleaseNotesCard() {
                 style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.height(8.dp))
-            releaseNotes.forEach { note ->
-                Text(
-                    text = "• $note",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                )
-            }
+
+            // Usar el componente MarkdownText que acabamos de crear
+            MarkdownText(
+                markdown = markdownContent,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                linkColor = MaterialTheme.colorScheme.primary,
+                isTextSelectable = true
+            )
         }
     }
     Spacer(modifier = Modifier.height(16.dp))
 }
 
-suspend fun fetchReleaseNotesText(): List<String> {
+suspend fun fetchReleaseNotesMarkdown(): String {
     return withContext(Dispatchers.IO) {
         try {
             val document =
                 Jsoup.connect("https://github.com/Arturo254/OpenTune/releases/latest").get()
+            // Obtener el contenido HTML del release
             val changelogElement = document.selectFirst(".markdown-body")
-            val htmlContent = changelogElement?.html() ?: "No release notes found"
 
-            val textContent = htmlContent
-                .replace(Regex("<br.*?>|</p>"), "\n")
-                .replace(Regex("<.*?>"), "")
+            if (changelogElement != null) {
+                // Jsoup no convierte HTML a Markdown directamente,
+                // pero podemos obtener el texto con formato básico
+                val html = changelogElement.html()
 
-            textContent.split("\n")
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
+                // Convertir HTML a formato Markdown simple
+                htmlToMarkdown(html)
+            } else {
+                "No release notes available"
+            }
         } catch (e: Exception) {
-            listOf("Error loading release notes")
+            "Error loading release notes:\n\n${e.message}"
         }
     }
+}
+
+// Función auxiliar para convertir HTML básico a Markdown
+private fun htmlToMarkdown(html: String): String {
+    var markdown = html
+
+    // Headers
+    markdown = markdown.replace(Regex("<h1>(.*?)</h1>"), "# $1")
+    markdown = markdown.replace(Regex("<h2>(.*?)</h2>"), "## $1")
+    markdown = markdown.replace(Regex("<h3>(.*?)</h3>"), "### $1")
+
+    // Listas
+    markdown = markdown.replace(Regex("<li>(.*?)</li>"), "- $1")
+    markdown = markdown.replace(Regex("<ul>(.*?)</ul>"), "$1")
+    markdown = markdown.replace(Regex("<ol>(.*?)</ol>"), "$1")
+
+    // Enlaces
+    markdown = markdown.replace(Regex("<a href=\"(.*?)\">(.*?)</a>"), "[$2]($1)")
+
+    // Negritas y cursivas
+    markdown = markdown.replace(Regex("<strong>(.*?)</strong>"), "**$1**")
+    markdown = markdown.replace(Regex("<b>(.*?)</b>"), "**$1**")
+    markdown = markdown.replace(Regex("<em>(.*?)</em>"), "*$1*")
+    markdown = markdown.replace(Regex("<i>(.*?)</i>"), "*$1*")
+
+    // Código
+    markdown = markdown.replace(Regex("<code>(.*?)</code>"), "`$1`")
+    markdown = markdown.replace(Regex("<pre><code>(.*?)</code></pre>"), "```\n$1\n```")
+
+    // Párrafos y saltos de línea
+    markdown = markdown.replace(Regex("<p>(.*?)</p>"), "$1\n\n")
+    markdown = markdown.replace(Regex("<br\\s*/?>"), "\n")
+
+    // Eliminar etiquetas HTML restantes
+    markdown = markdown.replace(Regex("<[^>]*>"), "")
+
+    // Limpiar espacios extra
+    markdown = markdown.replace(Regex("\\n{3,}"), "\n\n")
+
+    return markdown.trim()
 }
