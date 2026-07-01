@@ -79,8 +79,13 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Surface
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -465,60 +470,122 @@ fun BottomSheetPlayer(
         AlertDialog(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             onDismissRequest = { showSleepTimerDialog = false },
+
             icon = {
-                Icon(
-                    painter = painterResource(R.drawable.bedtime),
-                    contentDescription = null
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.bedtime),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .size(28.dp)
+                    )
+                }
+            },
+
+            title = {
+                Text(
+                    text = stringResource(R.string.sleep_timer),
+                    style = MaterialTheme.typography.headlineSmallEmphasized
                 )
             },
-            title = { Text(stringResource(R.string.sleep_timer)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showSleepTimerDialog = false
-                        playerConnection.service.sleepTimer.start(sleepTimerValue.roundToInt())
-                    },
-                    shapes = ButtonDefaults.shapes(),
-                ) {
-                    Text(stringResource(android.R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showSleepTimerDialog = false },
-                    shapes = ButtonDefaults.shapes(),
-                ) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
+
             text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Text(
+                        text = sleepTimerValue.roundToInt().toString(),
+                        style = MaterialTheme.typography.displayMediumEmphasized,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
                     Text(
                         text = pluralStringResource(
                             R.plurals.minute,
                             sleepTimerValue.roundToInt(),
                             sleepTimerValue.roundToInt()
                         ),
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.titleMedium
                     )
+
+                    Spacer(Modifier.height(20.dp))
 
                     Slider(
                         value = sleepTimerValue,
                         onValueChange = { sleepTimerValue = it },
                         valueRange = 5f..120f,
                         steps = (120 - 5) / 5 - 1,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
-                    OutlinedIconButton(
-                        onClick = {
+                    Spacer(Modifier.height(20.dp))
+
+                    ToggleButton(
+                        checked = false,
+                        onCheckedChange = {
                             showSleepTimerDialog = false
                             playerConnection.service.sleepTimer.start(-1)
-                        },
+                        }
                     ) {
+                        Icon(
+                            painter = painterResource(R.drawable.music_note),
+                            contentDescription = null
+                        )
+
+                        Spacer(Modifier.width(ToggleButtonDefaults.IconSpacing))
+
                         Text(stringResource(R.string.end_of_song))
                     }
                 }
             },
+
+            dismissButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(
+                        ButtonGroupDefaults.ConnectedSpaceBetween
+                    )
+                ) {
+
+                    ToggleButton(
+                        checked = false,
+                        onCheckedChange = {
+                            showSleepTimerDialog = false
+                        },
+                        shapes = ButtonGroupDefaults.connectedLeadingButtonShapes()
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+
+                    ToggleButton(
+                        checked = false,
+                        onCheckedChange = {
+                            showSleepTimerDialog = false
+
+                            playerConnection.service.sleepTimer.start(
+                                sleepTimerValue.roundToInt()
+                            )
+                        },
+                        shapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.play),
+                            contentDescription = null
+                        )
+
+                        Spacer(Modifier.width(ToggleButtonDefaults.IconSpacing))
+
+                        Text(stringResource(android.R.string.ok))
+                    }
+                }
+            },
+
+            confirmButton = {}
         )
     }
 

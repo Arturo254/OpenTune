@@ -45,13 +45,17 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonGroup
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -236,6 +240,7 @@ fun ActionPromptDialog(
     onConfirm: () -> Unit,
     onReset: (() -> Unit)? = null,
     onCancel: (() -> Unit)? = null,
+    confirmButton: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
     Dialog(
@@ -251,8 +256,9 @@ fun ActionPromptDialog(
             Column(
                 modifier = Modifier.padding(24.dp)
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    // title
+                Column(
+                    modifier = Modifier.padding(12.dp)
+                ) {
                     if (titleBar != null) {
                         Row {
                             titleBar()
@@ -264,38 +270,45 @@ fun ActionPromptDialog(
                             maxLines = 1,
                             style = MaterialTheme.typography.headlineSmall,
                         )
+
                         Spacer(Modifier.height(16.dp))
                     }
 
-                    content() // body
+                    content()
                 }
 
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (onReset != null) {
-                        Row(modifier = Modifier.weight(1f)) {
-                            TextButton(
-                                onClick = { onReset() },
+                if (confirmButton != null) {
+                    confirmButton()
+                } else {
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (onReset != null) {
+                            Row(
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Text(stringResource(R.string.reset))
+                                TextButton(
+                                    onClick = onReset
+                                ) {
+                                    Text(stringResource(R.string.reset))
+                                }
                             }
                         }
-                    }
 
-                    if (onCancel != null) {
-                        TextButton(
-                            onClick = { onCancel() }
-                        ) {
-                            Text(stringResource(android.R.string.cancel))
+                        if (onCancel != null) {
+                            TextButton(
+                                onClick = onCancel
+                            ) {
+                                Text(stringResource(android.R.string.cancel))
+                            }
                         }
-                    }
 
-                    TextButton(
-                        onClick = { onConfirm() }
-                    ) {
-                        Text(stringResource(android.R.string.ok))
+                        TextButton(
+                            onClick = onConfirm
+                        ) {
+                            Text(stringResource(android.R.string.ok))
+                        }
                     }
                 }
             }

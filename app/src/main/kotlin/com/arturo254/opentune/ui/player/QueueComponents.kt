@@ -34,9 +34,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -267,7 +269,9 @@ fun CurrentSongHeader(
             ToggleButton(
                 checked = shuffleModeEnabled,
                 onCheckedChange = { onShuffleClick() },
-                modifier = Modifier.weight(1f).size(48.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .size(48.dp),
                 shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
                 colors = if (shuffleModeEnabled) checkedColors else uncheckedColors,
             ) {
@@ -281,7 +285,9 @@ fun CurrentSongHeader(
             ToggleButton(
                 checked = repeatMode != Player.REPEAT_MODE_OFF,
                 onCheckedChange = { onRepeatClick() },
-                modifier = Modifier.weight(1f).size(48.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .size(48.dp),
                 shapes = ButtonGroupDefaults.connectedMiddleButtonShapes(),
                 colors = if (repeatMode != Player.REPEAT_MODE_OFF) checkedColors else uncheckedColors,
             ) {
@@ -301,7 +307,9 @@ fun CurrentSongHeader(
             ToggleButton(
                 checked = infiniteQueueEnabled,
                 onCheckedChange = { onInfiniteQueueClick() },
-                modifier = Modifier.weight(1f).size(48.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .size(48.dp),
                 shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
                 colors = infiniteCheckedColors,
             ) {
@@ -342,6 +350,7 @@ fun CurrentSongHeader(
 /**
  * Shared Sleep Timer Dialog component used in both Queue and Player.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SleepTimerDialog(
     onDismiss: () -> Unit,
@@ -353,15 +362,29 @@ fun SleepTimerDialog(
 
     ActionPromptDialog(
         titleBar = {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.bedtime),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(14.dp)
+                            .size(28.dp),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
                 Text(
                     text = stringResource(R.string.sleep_timer),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineMediumEmphasized
                 )
             }
         },
@@ -374,17 +397,30 @@ fun SleepTimerDialog(
             sleepTimerValue = 30f
         },
         content = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = pluralStringResource(
-                        R.plurals.minute,
-                        sleepTimerValue.roundToInt(),
-                        sleepTimerValue.roundToInt()
-                    ),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
 
-                Spacer(Modifier.height(16.dp))
+                Surface(
+                    shape = RoundedCornerShape(28.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.minute,
+                            sleepTimerValue.roundToInt(),
+                            sleepTimerValue.roundToInt()
+                        ),
+                        style = MaterialTheme.typography.displaySmall,
+                        modifier = Modifier.padding(
+                            horizontal = 24.dp,
+                            vertical = 12.dp
+                        )
+                    )
+                }
+
+                Spacer(Modifier.height(24.dp))
 
                 Slider(
                     value = sleepTimerValue,
@@ -394,11 +430,46 @@ fun SleepTimerDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(20.dp))
 
-                OutlinedButton(onClick = onEndOfSong, shapes = ButtonDefaults.shapes()) {
-                    Text(stringResource(R.string.end_of_song))
+                FilledTonalButton(
+                    onClick = onEndOfSong,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.music_note),
+                        contentDescription = null
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Text(
+                        text = stringResource(R.string.end_of_song),
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
+            }
+        },
+        confirmButton = {
+            val cancelText = stringResource(android.R.string.cancel)
+            val okText = stringResource(android.R.string.ok)
+
+            ButtonGroup(
+                overflowIndicator = {
+                    ButtonGroupDefaults.OverflowIndicator(it)
+                }
+            ) {
+                clickableItem(
+                    onClick = onDismiss,
+                    label = cancelText
+                )
+
+                clickableItem(
+                    onClick = {
+                        onConfirm(sleepTimerValue.roundToInt())
+                    },
+                    label = okText
+                )
             }
         }
     )
