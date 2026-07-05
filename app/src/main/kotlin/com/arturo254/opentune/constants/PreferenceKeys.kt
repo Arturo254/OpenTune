@@ -44,6 +44,22 @@ val MiniPlayerLastAnchorKey = intPreferencesKey("miniPlayerLastAnchor")
 val EnableHapticFeedbackKey = booleanPreferencesKey("enableHapticFeedback")
 val PlayerFullscreenKey = booleanPreferencesKey("player_fullscreen")
 
+val ProviderOrderKey = stringPreferencesKey("lyrics_provider_order")
+
+val DefaultProviderOrder = listOf(
+    PreferredLyricsProvider.LRCLIB,
+    PreferredLyricsProvider.KUGOU,
+    PreferredLyricsProvider.BETTER_LYRICS,
+    PreferredLyricsProvider.SIMPMUSIC,
+)
+
+fun PreferredLyricsProvider.displayName(): String = when (this) {
+    PreferredLyricsProvider.LRCLIB -> "LrcLib"
+    PreferredLyricsProvider.KUGOU -> "KuGou"
+    PreferredLyricsProvider.BETTER_LYRICS -> "BetterLyrics"
+    PreferredLyricsProvider.SIMPMUSIC -> "SimpMusic"
+}
+
 enum class SliderStyle {
     Standard,
     Wavy,

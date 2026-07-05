@@ -21,6 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -74,6 +78,15 @@ fun ContentSettings(
     val (queueLyricsPreloadCount, onQueueLyricsPreloadCountChange) = rememberPreference(QueueLyricsPreloadCountKey, defaultValue = 1)
     val (lengthTop, onLengthTopChange) = rememberPreference(key = TopSize, defaultValue = "50")
     val (quickPicks, onQuickPicksChange) = rememberEnumPreference(key = QuickPicksKey, defaultValue = QuickPicks.QUICK_PICKS)
+
+
+    var showProviderOrderDialog by remember { mutableStateOf(false) }
+
+    val (providerOrder, onProviderOrderChange) = rememberPreference(
+        key = ProviderOrderKey,
+        defaultValue = DefaultProviderOrder.joinToString(",") { it.name },
+    )
+
 
     Column(
         Modifier
@@ -235,26 +248,47 @@ fun ContentSettings(
             checked = enableSimpMusicLyrics,
             onCheckedChange = onEnableSimpMusicLyricsChange,
         )
-        ListPreference(
-            title = { Text(stringResource(R.string.set_first_lyrics_provider)) },
-            icon = { Icon(painterResource(R.drawable.lyrics), null) },
-            selectedValue = preferredProvider,
-            values = listOf(
-                PreferredLyricsProvider.LRCLIB,
-                PreferredLyricsProvider.KUGOU,
-                PreferredLyricsProvider.BETTER_LYRICS,
-                PreferredLyricsProvider.SIMPMUSIC,
-            ),
-            valueText = {
-                when (it) {
-                    PreferredLyricsProvider.LRCLIB -> "LrcLib"
-                    PreferredLyricsProvider.KUGOU -> "KuGou"
-                    PreferredLyricsProvider.BETTER_LYRICS -> "BetterLyrics"
-                    PreferredLyricsProvider.SIMPMUSIC -> "SimpMusic"
-                }
+
+        val savedOrder = remember(providerOrder) {
+            val parsed = providerOrder.split(",")
+                .mapNotNull { name -> PreferredLyricsProvider.entries.find { it.name == name } }
+
+            val missing = DefaultProviderOrder.filterNot { it in parsed }
+            (parsed + missing).ifEmpty { DefaultProviderOrder }
+        }
+
+        PreferenceEntry(
+            title = {
+                Text(stringResource(R.string.lyrics_provider_order))
             },
-            onValueSelected = onPreferredProviderChange,
+            subtitle = {
+                Text(
+                    stringResource(
+                        R.string.lyrics_provider_priority,
+                        savedOrder.joinToString(" → ") { it.displayName() }
+                    )
+                )
+            },
+            icon = { Icon(painterResource(R.drawable.lyrics), null) },
+            onClick = { showProviderOrderDialog = true },
         )
+
+        if (showProviderOrderDialog) {
+            DragDropLyricsProviderDialog(
+                providers = savedOrder,
+                selectedProvider = preferredProvider,
+                onDismiss = { showProviderOrderDialog = false },
+                onOrderConfirmed = { newOrder ->
+                    onProviderOrderChange(newOrder.joinToString(",") { it.name })
+
+                    val newPreferred = newOrder.firstOrNull() ?: PreferredLyricsProvider.LRCLIB
+                    if (newPreferred != preferredProvider) {
+                        onPreferredProviderChange(newPreferred)
+                    }
+                },
+                valueText = { it.displayName() },
+            )
+        }
         SwitchPreference(
             title = { Text(stringResource(R.string.lyrics_romanize_japanese)) },
             icon = { Icon(painterResource(R.drawable.lyrics), null) },

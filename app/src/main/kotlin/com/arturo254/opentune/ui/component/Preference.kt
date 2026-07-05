@@ -75,6 +75,7 @@ val LocalPreferenceInGroup = compositionLocalOf { false }
 fun PreferenceEntry(
     modifier: Modifier = Modifier,
     title: @Composable () -> Unit,
+    subtitle: (@Composable () -> Unit)? = null,
     description: String? = null,
     content: (@Composable () -> Unit)? = null,
     icon: (@Composable () -> Unit)? = null,
@@ -111,7 +112,9 @@ fun PreferenceEntry(
                         .align(Alignment.CenterVertically)
                         .size(36.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        ),
                     contentAlignment = Alignment.Center,
                 ) {
                     icon()
@@ -123,9 +126,25 @@ fun PreferenceEntry(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.weight(1f),
             ) {
-                ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)) {
+                ProvideTextStyle(
+                    MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium,
+                    ),
+                ) {
                     title()
                 }
+
+                subtitle?.let {
+                    Spacer(Modifier.height(2.dp))
+                    ProvideTextStyle(
+                        MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                    ) {
+                        it()
+                    }
+                }
+
                 if (description != null) {
                     Spacer(Modifier.height(2.dp))
                     Text(
@@ -134,12 +153,15 @@ fun PreferenceEntry(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+
                 content?.invoke()
             }
 
             if (trailingContent != null) {
                 Spacer(Modifier.width(12.dp))
-                Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+                Box(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                ) {
                     trailingContent()
                 }
             }
@@ -158,7 +180,10 @@ fun PreferenceEntry(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 3.dp)
-                .graphicsLayer { scaleX = scale; scaleY = scale },
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
         ) {
             rowContent()
         }

@@ -134,7 +134,7 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 
-newpipe-extractor = { module = "com.github.teamnewpipe:NewPipeExtractor", version = "v0.26.0" }
+newpipe-extractor = { module = "com.github.teamnewpipe:NewPipeExtractor", version = "v0.26.3" }
 #newpipe-extractor = { module = "com.github.libre-tube:NewPipeExtractor", version = "70be3a4" }
 #newpipe-extractor = { module = "com.github.teamnewpipe:NewPipeExtractor", version = "master-SNAPSHOT" }
 

@@ -833,4 +833,8 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="no_visitor_data">No visitor data available. Tokens cannot be generated.</string>
     <string name="extracting_from_url">Extracting tokens from URL…</string>
     <string name="contributors">Contributors</string>
+    <string name="reorder_lyrics_providers_description">Press and hold, then drag to change the priority order</string>
+    <string name="reorder_lyrics_providers">Reorder Lyrics Providers</string>
+    <string name="lyrics_provider_order">Lyrics Provider Order</string>
+    <string name="lyrics_provider_priority">Priority: %1$s</string>
 </resources>
