@@ -1,4 +1,4 @@
-package com.arturo254.opentune.ui.player
+package com.arturo254.opentune.ui.component
 
 import android.content.Context
 import android.media.AudioDeviceInfo
@@ -6,7 +6,6 @@ import android.media.AudioManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

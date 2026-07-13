@@ -95,10 +95,13 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.Player.STATE_ENDED
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import coil3.compose.rememberAsyncImagePainter
 import me.saket.squiggles.SquigglySlider
 import com.arturo254.opentune.R
+import com.arturo254.opentune.canvas.models.CanvasArtwork
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerDesignStyle
 import com.arturo254.opentune.constants.PlayerHorizontalPadding
@@ -116,10 +119,12 @@ import com.arturo254.opentune.ui.component.ResizableIconButton
 import com.arturo254.opentune.ui.menu.PlayerMenu
 import com.arturo254.opentune.ui.theme.PlayerBackgroundColorUtils
 import com.arturo254.opentune.ui.component.PlayerSliderColors
+import com.arturo254.opentune.ui.component.V8DeviceSelector
 import com.arturo254.opentune.ui.utils.ShowMediaInfo
 import com.arturo254.opentune.ui.utils.highRes
 import com.arturo254.opentune.utils.makeTimeString
 import com.skydoves.cloudy.cloudy
+import timber.log.Timber
 
 @Composable
 fun PlayerTitleSection(
@@ -2727,6 +2732,8 @@ fun PlayerBackground(
 @Composable
 fun V8PlayerBackdrop(
     thumbnailUrl: String?,
+    canvasArtwork: CanvasArtwork? = null,
+    isPlaying: Boolean = false,
     disableBlur: Boolean,
     label: String,
     modifier: Modifier = Modifier,
@@ -2750,48 +2757,97 @@ fun V8PlayerBackdrop(
         ) { artworkUrl ->
             if (artworkUrl != null) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    AsyncImage(
-                        model = artworkUrl.highRes(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer {
-                                scaleX = baseArtworkScale
-                                scaleY = baseArtworkScale
-                                alpha = baseArtworkAlpha
-                            }
-                    )
-
-                    if (!disableBlur) {
+                    if (canvasArtwork != null && !canvasArtwork.preferredAnimationUrl.isNullOrBlank()) {
+                        // ✅ Canvas con RESIZE_MODE_COVER (igual que la imagen estática)
+                        CanvasArtworkPlayer(
+                            primaryUrl = canvasArtwork.animated,
+                            fallbackUrl = canvasArtwork.videoUrl,
+                            isPlaying = isPlaying,
+                            modifier = Modifier.fillMaxSize(),
+                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL  // ← FILL para cubrir todo el espacio
+                        )
+                        // Overlay con gradiente
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colorStops = arrayOf(
+                                            0f to Color.Transparent,
+                                            0.15f to Color.Black.copy(alpha = 0.05f),
+                                            0.45f to Color.Black.copy(alpha = 0.25f),
+                                            0.70f to Color.Black.copy(alpha = 0.50f),
+                                            1f to Color.Black.copy(alpha = 0.85f),
+                                        )
+                                    )
+                                )
+                        )
+                    } else {
+                        // Imagen estática (fallback)
                         AsyncImage(
                             model = artworkUrl.highRes(),
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .cloudy(radius = cloudyRadius)
-                                .drawWithCache {
-                                    val blurMask = Brush.verticalGradient(
-                                        colorStops = arrayOf(
-                                            0f to Color.Transparent,
-                                            blurMaskStart to Color.Transparent,
-                                            blurMaskMid to Color.Black.copy(alpha = 0.5f),
-                                            blurMaskSolid to Color.Black,
-                                            1f to Color.Black,
-                                        )
-                                    )
-
-                                    onDrawWithContent {
-                                        drawContent()
-
-                                        drawRect(
-                                            brush = blurMask,
-                                            blendMode = BlendMode.DstIn
-                                        )
-                                    }
+                                .graphicsLayer {
+                                    scaleX = baseArtworkScale
+                                    scaleY = baseArtworkScale
+                                    alpha = baseArtworkAlpha
                                 }
                         )
+
+                        val painter = rememberAsyncImagePainter(
+                            model = artworkUrl.highRes()
+                        )
+
+                        val imageSize = painter.intrinsicSize
+
+                        val contentScale = remember(imageSize) {
+                            if (imageSize.width <= 0 || imageSize.height <= 0) {
+                                ContentScale.Crop
+                            } else {
+                                val aspectRatio = imageSize.width / imageSize.height
+
+                                when {
+                                    aspectRatio > 1.35f -> ContentScale.FillHeight
+                                    aspectRatio < 0.75f -> ContentScale.FillWidth
+                                    else -> ContentScale.Crop
+                                }
+                            }
+                        }
+
+                        if (!disableBlur) {
+                            Image(
+                                painter = painter,
+                                contentDescription = null,
+                                contentScale = contentScale,
+                                alignment = Alignment.Center,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .cloudy(radius = cloudyRadius)
+                                    .drawWithCache {
+                                        val blurMask = Brush.verticalGradient(
+                                            colorStops = arrayOf(
+                                                0f to Color.Transparent,
+                                                blurMaskStart to Color.Transparent,
+                                                blurMaskMid to Color.Black.copy(alpha = 0.5f),
+                                                blurMaskSolid to Color.Black,
+                                                1f to Color.Black
+                                            )
+                                        )
+
+                                        onDrawWithContent {
+                                            drawContent()
+
+                                            drawRect(
+                                                brush = blurMask,
+                                                blendMode = BlendMode.DstIn
+                                            )
+                                        }
+                                    }
+                            )
+                        }
                     }
                 }
             } else {
@@ -2803,7 +2859,7 @@ fun V8PlayerBackdrop(
             }
         }
 
-        // Gradiente más pronunciado como Apple Music
+        // Gradiente siempre presente
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -2811,10 +2867,10 @@ fun V8PlayerBackdrop(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
                             0f to Color.Transparent,
-                            0.15f to Color.Black.copy(alpha = 0.05f),
-                            0.45f to Color.Black.copy(alpha = 0.25f),
-                            0.70f to Color.Black.copy(alpha = 0.50f),
-                            1f to Color.Black.copy(alpha = 0.85f),
+                            0.20f to Color.Transparent,
+                            0.50f to Color.Black.copy(alpha = 0.15f),
+                            0.75f to Color.Black.copy(alpha = 0.35f),
+                            1f to Color.Black.copy(alpha = 0.70f),
                         )
                     )
                 )

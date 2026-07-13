@@ -1,6 +1,20 @@
 plugins {
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlin.jvm)
+}
+
+android {
+    namespace = "com.arturo254.opentune.canvas"
+    compileSdk = 36
+
+    defaultConfig {
+        minSdk = 26
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
 }
 
 kotlin {
@@ -13,5 +27,6 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.json)
     implementation(libs.ktor.client.encoding)
+    implementation(libs.timber)
     testImplementation(libs.junit)
 }

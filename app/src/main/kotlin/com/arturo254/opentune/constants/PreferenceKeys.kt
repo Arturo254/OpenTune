@@ -680,6 +680,7 @@ enum class CanvasSource {
     AUTO,
     APPLE_MUSIC,
     TIDAL,
+    CUSTOM
 }
 
 // Home Screen Widget (OpenTunePlayerWidget)
@@ -707,3 +708,6 @@ val SpotifyAccountNameKey = stringPreferencesKey("spotify_account_name")
 val SpotifyAccountAvatarUrlKey = stringPreferencesKey("spotify_account_avatar_url")
 val ShowSpotifyPlaylistsKey = booleanPreferencesKey("show_spotify_playlists")
 val SpotifyLibraryPlaylistsCacheKey = stringPreferencesKey("spotify_library_playlists_cache")
+
+val CustomCanvasEnabledKey = booleanPreferencesKey("custom_canvas_enabled")
+val CustomCanvasApiUrlKey = stringPreferencesKey("custom_canvas_api_url")

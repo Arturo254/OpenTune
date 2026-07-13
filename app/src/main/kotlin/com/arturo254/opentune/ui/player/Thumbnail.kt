@@ -4,17 +4,15 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
-
-
 package com.arturo254.opentune.ui.player
 
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.Orientation
@@ -23,9 +21,9 @@ import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -40,6 +38,7 @@ import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,8 +60,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
@@ -72,11 +72,17 @@ import androidx.compose.ui.util.fastForEach
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.ui.AspectRatioFrameLayout
 import coil3.compose.AsyncImage
-import androidx.compose.material3.Icon
+import coil3.compose.rememberAsyncImagePainter
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
 import com.arturo254.opentune.canvas.models.CanvasArtwork
+import com.arturo254.opentune.constants.CanvasSource
+import com.arturo254.opentune.constants.CropThumbnailToSquareKey
+import com.arturo254.opentune.constants.HidePlayerThumbnailKey
+import com.arturo254.opentune.constants.MaxCanvasCacheSizeKey
+import com.arturo254.opentune.constants.OpenTuneCanvasKey
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
 import com.arturo254.opentune.constants.PlayerDesignStyle
@@ -84,11 +90,7 @@ import com.arturo254.opentune.constants.PlayerDesignStyleKey
 import com.arturo254.opentune.constants.PlayerHorizontalPadding
 import com.arturo254.opentune.constants.SeekExtraSeconds
 import com.arturo254.opentune.constants.SwipeThumbnailKey
-import com.arturo254.opentune.constants.OpenTuneCanvasKey
-import com.arturo254.opentune.constants.MaxCanvasCacheSizeKey
 import com.arturo254.opentune.constants.ThumbnailCornerRadiusKey
-import com.arturo254.opentune.constants.CropThumbnailToSquareKey
-import com.arturo254.opentune.constants.HidePlayerThumbnailKey
 import com.arturo254.opentune.extensions.metadata
 import com.arturo254.opentune.extensions.toMediaItem
 import com.arturo254.opentune.ui.utils.highRes
@@ -105,12 +107,8 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.File
-import java.util.LinkedHashMap
 import java.util.Locale
 import kotlin.math.abs
-import androidx.compose.ui.platform.LocalView
-import android.content.Context
-import android.view.HapticFeedbackConstants
 
 object CanvasArtworkPlaybackCache {
     private const val defaultMaxSize = 256
@@ -252,7 +250,7 @@ private data class ThumbnailPage(
 fun Thumbnail(
     sliderPositionProvider: () -> Long?,
     modifier: Modifier = Modifier,
-    isPlayerExpanded: Boolean = true, // Add parameter to control swipe based on player state
+    isPlayerExpanded: Boolean = true,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
@@ -348,11 +346,8 @@ fun Thumbnail(
     } else null
 
     val currentMediaItem = remember(mediaMetadata) {
-        // Fallback to player's current item if mediaMetadata is null,
-        // but prefer mediaMetadata for immediate updates during crossfade.
         val metadata = mediaMetadata
         if (metadata != null) {
-            // Use extension to convert metadata to a proper MediaItem with all fields (uri, artwork, tag)
             metadata.toMediaItem()
         } else {
             try {
@@ -528,7 +523,7 @@ fun Thumbnail(
                         state = thumbnailLazyGridState,
                         rows = GridCells.Fixed(1),
                         flingBehavior = rememberSnapFlingBehavior(thumbnailSnapLayoutInfoProvider),
-                        userScrollEnabled = swipeThumbnail && isPlayerExpanded, // Only allow swipe when player is expanded
+                        userScrollEnabled = swipeThumbnail && isPlayerExpanded,
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(
@@ -553,9 +548,12 @@ fun Thumbnail(
                                 }
                             val shouldAnimateCanvas =
                                 archiveTuneCanvasEnabled &&
-                                        playerDesignStyle != PlayerDesignStyle.V7 &&
+                                        (playerDesignStyle == PlayerDesignStyle.V7 ||
+                                                playerDesignStyle == PlayerDesignStyle.V8 ||
+                                                playerDesignStyle != PlayerDesignStyle.V6) &&
                                         item.mediaId.isNotBlank() &&
                                         item.mediaId == currentMediaItem?.mediaId
+
                             var canvasArtwork by remember(item.mediaId) { mutableStateOf<CanvasArtwork?>(null) }
                             var canvasFetchedAtMs by remember(item.mediaId) { mutableLongStateOf(0L) }
                             var canvasFetchInFlight by remember(item.mediaId) { mutableStateOf(false) }
@@ -568,8 +566,15 @@ fun Thumbnail(
                                 }
                             }
 
+                            // En Thumbnail.kt, dentro del LaunchedEffect
+
                             LaunchedEffect(shouldAnimateCanvas, item.mediaId) {
-                                if (!shouldAnimateCanvas) return@LaunchedEffect
+                                if (!shouldAnimateCanvas) {
+                                    canvasArtwork = null
+                                    canvasFetchedAtMs = 0L
+                                    canvasFetchInFlight = false
+                                    return@LaunchedEffect
+                                }
 
                                 CanvasArtworkPlaybackCache.get(item.mediaId)?.let { cached ->
                                     canvasArtwork = cached
@@ -578,32 +583,38 @@ fun Thumbnail(
                                     return@LaunchedEffect
                                 }
 
-                                val songTitleRaw =
-                                    itemMetadata?.title
-                                        ?.takeIf { it.isNotBlank() }
-                                        ?: item.mediaMetadata.title?.toString()
-                                        ?: return@LaunchedEffect
+                                val songTitleRaw = itemMetadata?.title
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?: item.mediaMetadata.title?.toString()
+                                    ?: return@LaunchedEffect
 
-                                val artistNameRaw =
-                                    itemMetadata?.artists?.firstOrNull()?.name
-                                        ?.takeIf { it.isNotBlank() }
-                                        ?: item.mediaMetadata.artist?.toString()
-                                        ?: item.mediaMetadata.subtitle?.toString()
-                                        ?: ""
+                                val artistNameRaw = itemMetadata?.artists?.firstOrNull()?.name
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?: item.mediaMetadata.artist?.toString()
+                                    ?: item.mediaMetadata.subtitle?.toString()
+                                    ?: ""
+
+                                // ✅ CORREGIDO: Obtener el álbum correctamente (sin albumName)
+                                val albumName = runCatching {
+                                    // Primero intentar desde item.metadata (OpenTune MediaMetadata)
+                                    itemMetadata?.album?.title
+                                    // Luego desde item.mediaMetadata (Media3)
+                                        ?: item.mediaMetadata.albumTitle?.toString()
+                                }.getOrNull()
 
                                 val now = System.currentTimeMillis()
                                 if (canvasFetchInFlight) return@LaunchedEffect
                                 canvasFetchInFlight = true
 
-                                val fetched =
-                                    withContext(Dispatchers.IO) {
-                                        fetchCanvasArtworkForPlayback(
-                                            songTitleRaw = songTitleRaw,
-                                            artistNameRaw = artistNameRaw,
-                                            storefront = storefront,
-                                        )
-                                    }
-                                canvasArtwork = fetched as CanvasArtwork?
+                                val fetched = withContext(Dispatchers.IO) {
+                                    fetchCanvasArtworkForPlayback(
+                                        songTitleRaw = songTitleRaw,
+                                        artistNameRaw = artistNameRaw,
+                                        albumName = albumName,
+                                        source = CanvasSource.AUTO
+                                    )
+                                }
+                                canvasArtwork = fetched
                                 canvasFetchedAtMs = now
                                 if (fetched != null) {
                                     CanvasArtworkPlaybackCache.put(item.mediaId, fetched)
@@ -657,7 +668,6 @@ fun Thumbnail(
                                                         skipAmount / 1000
                                                     )
                                                 }
-                                                // If a user double-tap skip lands on a new media item, restart presence manager to pick up artwork quickly
                                                 if (com.arturo254.opentune.ui.screens.settings.DiscordPresenceManager.isRunning()) {
                                                     try {
                                                         com.arturo254.opentune.ui.screens.settings.DiscordPresenceManager.restart()
@@ -671,13 +681,14 @@ fun Thumbnail(
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
+
                                 Box(
                                     modifier = Modifier
                                         .size(containerMaxWidth - (PlayerHorizontalPadding * 2))
                                         .clip(RoundedCornerShape(thumbnailCornerRadius.dp))
                                 ) {
                                     if (hidePlayerThumbnail) {
-                                        // Show app logo when thumbnail is hidden
+
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
@@ -697,41 +708,88 @@ fun Thumbnail(
 
                                         val shouldCropArtwork =
                                             cropThumbnailToSquare &&
-                                                    playerDesignStyle != PlayerDesignStyle.V7
+                                                    playerDesignStyle != PlayerDesignStyle.V7 &&
+                                                    playerDesignStyle != PlayerDesignStyle.V8
 
-                                        AsyncImage(
-                                            model = item.metadata?.thumbnailUrl?.highRes()
-                                                ?: item.mediaMetadata.artworkUri?.toString(),
-                                            contentDescription = null,
-                                            contentScale = ContentScale.FillBounds,
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .let { if (shouldCropArtwork) it.aspectRatio(1f) else it }
-                                                .graphicsLayer(
-                                                    renderEffect = BlurEffect(
-                                                        radiusX = 60f,
-                                                        radiusY = 60f
-                                                    ),
-                                                    alpha = 0.6f
-                                                )
+                                        val artworkModel = item.metadata?.thumbnailUrl?.highRes()
+                                            ?: item.mediaMetadata.artworkUri?.toString()
+
+                                        // FONDO BLUR
+                                        if (playerDesignStyle == PlayerDesignStyle.V7 ||
+                                            playerDesignStyle == PlayerDesignStyle.V8
+                                        ) {
+                                            AsyncImage(
+                                                model = artworkModel,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .graphicsLayer(
+                                                        renderEffect = BlurEffect(
+                                                            radiusX = 60f,
+                                                            radiusY = 60f
+                                                        ),
+                                                        alpha = 0.7f
+                                                    )
+                                            )
+                                        }
+
+                                        // PORTADA PRINCIPAL
+                                        val painter = rememberAsyncImagePainter(
+                                            model = artworkModel
                                         )
 
-                                        AsyncImage(
-                                            model = item.metadata?.thumbnailUrl?.highRes()
-                                                ?: item.mediaMetadata.artworkUri?.toString(),
+                                        val imageSize = painter.intrinsicSize
+
+                                        val adaptiveScale = remember(imageSize) {
+                                            if (imageSize.width <= 0 || imageSize.height <= 0) {
+                                                ContentScale.Fit
+                                            } else {
+                                                val ratio = imageSize.width / imageSize.height
+
+                                                when {
+                                                    ratio > 1.35f -> ContentScale.FillHeight
+                                                    ratio < 0.75f -> ContentScale.FillWidth
+                                                    else -> ContentScale.Crop
+                                                }
+                                            }
+                                        }
+
+                                        Image(
+                                            painter = painter,
                                             contentDescription = null,
-                                            contentScale = if (shouldCropArtwork) ContentScale.Crop else ContentScale.Fit,
+                                            contentScale = when {
+                                                playerDesignStyle == PlayerDesignStyle.V7 ||
+                                                        playerDesignStyle == PlayerDesignStyle.V8 -> adaptiveScale
+
+                                                shouldCropArtwork -> ContentScale.Crop
+
+                                                else -> ContentScale.Fit
+                                            },
+                                            alignment = Alignment.Center,
                                             modifier = Modifier
                                                 .fillMaxSize()
-                                                .let { if (shouldCropArtwork) it.aspectRatio(1f) else it }
+                                                .let {
+                                                    if (shouldCropArtwork) {
+                                                        it.aspectRatio(1f)
+                                                    } else {
+                                                        it
+                                                    }
+                                                }
                                         )
 
-                                        if (shouldAnimateCanvas && (!primaryCanvasUrl.isNullOrBlank() || !fallbackCanvasUrl.isNullOrBlank())) {
+
+                                        // CANVAS ANIMADO
+                                        if (shouldAnimateCanvas &&
+                                            (!primaryCanvasUrl.isNullOrBlank() ||
+                                                    !fallbackCanvasUrl.isNullOrBlank())
+                                        ) {
                                             CanvasArtworkPlayer(
                                                 primaryUrl = primaryCanvasUrl,
                                                 fallbackUrl = fallbackCanvasUrl,
                                                 isPlaying = isPlaying,
                                                 modifier = Modifier.fillMaxSize(),
+                                                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                                             )
                                         }
                                     }
@@ -770,7 +828,6 @@ fun Thumbnail(
         }
     }
 }
-
 
 /*
  * Copyright (C) OuterTune Project

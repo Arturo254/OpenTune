@@ -9,7 +9,7 @@
 
 package com.arturo254.opentune.canvas.providers
 
-import com.arturo254.opentune.canvas.CanvasArtwork
+import com.arturo254.opentune.canvas.models.CanvasArtwork  // ← Import CORRECTO
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp

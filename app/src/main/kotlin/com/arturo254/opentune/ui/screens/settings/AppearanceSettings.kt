@@ -487,8 +487,9 @@ fun AppearanceSettings(
             values = CanvasSource.entries,
             valueText = { source ->
                 when (source) {
-                    CanvasSource.AUTO -> "Automático"
+                    CanvasSource.AUTO -> "Auto"
                     CanvasSource.APPLE_MUSIC -> "Apple Music"
+                    CanvasSource.CUSTOM -> "Custom by OpenTune"
                     CanvasSource.TIDAL -> "Tidal"
                 }
             },

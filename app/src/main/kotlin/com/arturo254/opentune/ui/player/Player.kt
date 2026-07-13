@@ -162,9 +162,11 @@ import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import coil3.compose.AsyncImage
+import com.arturo254.opentune.canvas.models.CanvasArtwork
 import com.arturo254.opentune.constants.AodAutoActivationKey
 import com.arturo254.opentune.constants.AodFullscreenKey
 import com.arturo254.opentune.constants.BlurRadiusKey
+import com.arturo254.opentune.constants.CanvasSource
 import com.arturo254.opentune.constants.SeekExtraSeconds
 import com.arturo254.opentune.ui.component.COLLAPSED_ANCHOR
 import com.my.kizzy.gateway.entities.presence.Activity
@@ -173,6 +175,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -228,6 +231,44 @@ fun BottomSheetPlayer(
     val (incrementalSeekSkipEnabled) = rememberPreference(SeekExtraSeconds, defaultValue = false)
     var keyboardSkipMultiplier by remember { mutableStateOf(1) }
     var lastKeyboardTapTime by remember { mutableLongStateOf(0L) }
+    val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
+
+    // ============================================================
+// 🎯 CANVAS ARTWORK - Colocar DESPUÉS de mediaMetadata
+// ============================================================
+    var canvasArtwork by remember { mutableStateOf<CanvasArtwork?>(null) }
+    var canvasFetchInFlight by remember { mutableStateOf(false) }
+
+    LaunchedEffect(mediaMetadata?.id) {
+        val metadata = mediaMetadata ?: return@LaunchedEffect
+
+        val songTitle = metadata.title.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+        val artistName = metadata.artists.joinToString { it.name }.takeIf { it.isNotBlank() }
+            ?: return@LaunchedEffect
+        val albumName = metadata.album?.title
+
+        if (canvasFetchInFlight) return@LaunchedEffect
+        canvasFetchInFlight = true
+
+        try {
+            val fetched = withContext(Dispatchers.IO) {
+                fetchCanvasArtworkForPlayback(
+                    songTitleRaw = songTitle,
+                    artistNameRaw = artistName,
+                    albumName = albumName,
+                    source = CanvasSource.AUTO
+                )
+            }
+            // ✅ LOG PARA VERIFICAR
+            Timber.d("🎵 Player - Canvas cargado: ${fetched?.preferredAnimationUrl}")
+            canvasArtwork = fetched
+        } catch (e: Exception) {
+            Timber.e("🎵 Player - Error cargando canvas: ${e.message}")
+            canvasArtwork = null
+        } finally {
+            canvasFetchInFlight = false
+        }
+    }
 
     val (playerFullscreen) = rememberPreference(
         booleanPreferencesKey("player_fullscreen"),
@@ -312,7 +353,6 @@ fun BottomSheetPlayer(
 
     val playbackState by playerConnection.playbackState.collectAsState()
     val isPlaying by playerConnection.isPlaying.collectAsState()
-    val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
     val currentSongLiked = currentSong?.song?.liked == true
     val currentFormat by playerConnection.currentFormat.collectAsState(initial = null)
@@ -1057,8 +1097,10 @@ fun BottomSheetPlayer(
                     ) {
                         V8PlayerBackdrop(
                             thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                            canvasArtwork = canvasArtwork,
+                            isPlaying = isPlaying,
                             disableBlur = disableBlur,
-                            label = "v8BackdropLandscape"
+                            label = "v8BackdropPortrait"
                         )
 
                         Column(
@@ -1265,6 +1307,8 @@ fun BottomSheetPlayer(
                     ) {
                         V8PlayerBackdrop(
                             thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                            canvasArtwork = canvasArtwork,
+                            isPlaying = isPlaying,
                             disableBlur = disableBlur,
                             label = "v8BackdropPortrait"
                         )
