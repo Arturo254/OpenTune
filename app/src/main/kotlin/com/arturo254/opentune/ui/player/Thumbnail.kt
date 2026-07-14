@@ -777,9 +777,6 @@ fun Thumbnail(
                                                     }
                                                 }
                                         )
-
-
-                                        // CANVAS ANIMADO
                                         if (shouldAnimateCanvas &&
                                             (!primaryCanvasUrl.isNullOrBlank() ||
                                                     !fallbackCanvasUrl.isNullOrBlank())
@@ -789,7 +786,7 @@ fun Thumbnail(
                                                 fallbackUrl = fallbackCanvasUrl,
                                                 isPlaying = isPlaying,
                                                 modifier = Modifier.fillMaxSize(),
-                                                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                                             )
                                         }
                                     }

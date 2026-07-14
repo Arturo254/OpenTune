@@ -2758,13 +2758,13 @@ fun V8PlayerBackdrop(
             if (artworkUrl != null) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     if (canvasArtwork != null && !canvasArtwork.preferredAnimationUrl.isNullOrBlank()) {
-                        // ✅ Canvas con RESIZE_MODE_COVER (igual que la imagen estática)
+                        // ✅ Canvas con RESIZE_MODE_ZOOM para mantener aspecto sin estiramiento
                         CanvasArtworkPlayer(
                             primaryUrl = canvasArtwork.animated,
                             fallbackUrl = canvasArtwork.videoUrl,
                             isPlaying = isPlaying,
                             modifier = Modifier.fillMaxSize(),
-                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL  // ← FILL para cubrir todo el espacio
+                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM  // ← ZOOM mantiene aspecto
                         )
                         // Overlay con gradiente
                         Box(

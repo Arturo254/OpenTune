@@ -132,31 +132,61 @@ object CustomCanvasProvider {
         val normAlbum = normalize(album)
         val normSong = song?.let { normalize(it) }
 
-        // Filtro base: artista + álbum deben coincidir.
-        // Si "album" viene vacío (no se pudo resolver el álbum real), no se
-        // fuerza ningún match para evitar falsos positivos.
+        // Filtro base: artista debe coincidir
         val candidates = entries.filter { entry ->
-            artistMatches(normArtist, normalize(entry.artist)) &&
-                    albumMatches(normAlbum, normalize(entry.album))
+            artistMatches(normArtist, normalize(entry.artist))
         }
 
         if (candidates.isEmpty()) {
-            Timber.d("🎵 CustomCanvas - Sin coincidencias artist/album")
+            Timber.d("🎵 CustomCanvas - Sin coincidencias de artista")
             return null
         }
 
-        // Prioriza la entrada que además matchea la canción específica.
-        // Si ninguna entrada tiene "song" o no matchea, cae a la primera
-        // coincidencia de artista+álbum (canvas a nivel de álbum completo).
-        val best = candidates.firstOrNull { entry ->
-            !normSong.isNullOrBlank() && entry.song.isNotBlank() &&
-                    (normalize(entry.song) == normSong ||
-                            normalize(entry.song).contains(normSong) ||
-                            normSong.contains(normalize(entry.song)))
-        } ?: candidates.first()
+        // Si tenemos álbum, filtrar por álbum
+        val albumCandidates = if (normAlbum.isNotBlank()) {
+            candidates.filter { entry ->
+                albumMatches(normAlbum, normalize(entry.album))
+            }
+        } else {
+            // Si no tenemos álbum, intentar matchear por canción primero
+            if (!normSong.isNullOrBlank()) {
+                val songMatches = candidates.filter { entry ->
+                    entry.song.isNotBlank() &&
+                            (normalize(entry.song) == normSong ||
+                                    normalize(entry.song).contains(normSong) ||
+                                    normSong.contains(normalize(entry.song)))
+                }
+                if (songMatches.isNotEmpty()) {
+                    return createArtwork(songMatches.first(), "canción (sin álbum)")
+                }
+            }
+            // Si no hay match por canción, usar todos los candidatos
+            candidates
+        }
 
-        val matchType =
-            if (best.song.isBlank()) "álbum (sin canción específica)" else "canción exacta"
+        if (albumCandidates.isEmpty()) {
+            Timber.d("🎵 CustomCanvas - Sin coincidencias de álbum")
+            return null
+        }
+
+        // Priorizar la entrada que matchea la canción específica
+        val best = if (!normSong.isNullOrBlank()) {
+            albumCandidates.firstOrNull { entry ->
+                entry.song.isNotBlank() &&
+                        (normalize(entry.song) == normSong ||
+                                normalize(entry.song).contains(normSong) ||
+                                normSong.contains(normalize(entry.song)))
+            } ?: albumCandidates.first()
+        } else {
+            albumCandidates.first()
+        }
+
+        val matchType = when {
+            best.song.isBlank() -> "álbum (sin canción específica)"
+            !normSong.isNullOrBlank() && normalize(best.song) == normSong -> "canción exacta"
+            else -> "álbum (con canción: ${best.song})"
+        }
+
         Timber.d("🎵 CustomCanvas - ✅ Encontrado por $matchType: ${best.url} (artista=${best.artist}, album=${best.album})")
 
         return CanvasArtwork(
@@ -165,6 +195,17 @@ object CustomCanvasProvider {
             albumName = best.album,
             animated = best.url,
             videoUrl = best.url,
+        )
+    }
+
+    private fun createArtwork(entry: CanvasEntry, matchType: String): CanvasArtwork {
+        Timber.d("🎵 CustomCanvas - ✅ Encontrado por $matchType: ${entry.url}")
+        return CanvasArtwork(
+            name = entry.song.takeIf { it.isNotBlank() },
+            artist = entry.artist,
+            albumName = entry.album,
+            animated = entry.url,
+            videoUrl = entry.url,
         )
     }
 
@@ -282,14 +323,21 @@ object CustomCanvasProvider {
 
     /**
      * Compara álbumes. Si "normRequested" viene vacío (no se pudo resolver el
-     * álbum real desde el reproductor), solo matchea si la entrada tampoco
-     * tiene álbum — evita adivinar y generar falsos positivos.
+     * álbum real desde el reproductor), intenta matchear por canción o
+     * simplemente usa el álbum de la entrada.
      */
     private fun albumMatches(normRequested: String, normEntry: String): Boolean {
-        if (normEntry.isBlank() || normRequested.isBlank()) return normEntry.isBlank() == normRequested.isBlank()
-        return normEntry == normRequested || normEntry.contains(normRequested) || normRequested.contains(
-            normEntry
-        )
+        // Si la entrada no tiene álbum, solo matchea si el requested también está vacío
+        if (normEntry.isBlank()) return normRequested.isBlank()
+
+        // Si el requested está vacío (no tenemos álbum real), consideramos que
+        // cualquier entrada con álbum puede ser válida, siempre que el artista coincida
+        if (normRequested.isBlank()) return true
+
+        // Matcheo normal
+        return normEntry == normRequested ||
+                normEntry.contains(normRequested) ||
+                normRequested.contains(normEntry)
     }
 
     private fun cacheKey(artist: String, album: String, song: String?): String =
