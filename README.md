@@ -151,7 +151,14 @@
 <td><strong>🖼️ Exportación de Portadas</strong></td>
 <td>Guarda imágenes de álbumes en alta resolución</td>
 </tr>
+  <tr>
+<td><strong>  Portadas Animadas</strong></td>
+<td>Guarda Portadas de canciones animadas *1</td>
+</tr>
 </table>
+
+*1  Las portadas animadas se basan en la api de Apple Music Y la api de OpenTune. algunas no pueden estar disponibles. 
+puedes ver su disponibilidad en la web de la API de OpenTune: https://canvas-opentune.netlify.app/
 
 ---
 
