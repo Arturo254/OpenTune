@@ -6,11 +6,25 @@
 
 package com.arturo254.opentune.ui.component
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -18,6 +32,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,24 +40,29 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -55,6 +75,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -71,6 +96,27 @@ import kotlin.math.roundToInt
 
 val LocalPreferenceInGroup = compositionLocalOf { false }
 
+private val expressiveCardShape: Shape = RoundedCornerShape(
+    topStart = 24.dp,
+    topEnd = 24.dp,
+    bottomStart = 16.dp,
+    bottomEnd = 16.dp
+)
+
+private val expressiveBadgeShape: Shape = RoundedCornerShape(
+    topStart = 16.dp,
+    topEnd = 16.dp,
+    bottomStart = 8.dp,
+    bottomEnd = 8.dp
+)
+
+private val expressiveBottomSheetShape: Shape = RoundedCornerShape(
+    topStart = 32.dp,
+    topEnd = 32.dp,
+    bottomStart = 0.dp,
+    bottomEnd = 0.dp
+)
+
 @Composable
 fun PreferenceEntry(
     modifier: Modifier = Modifier,
@@ -82,15 +128,30 @@ fun PreferenceEntry(
     trailingContent: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     isEnabled: Boolean = true,
+    elevation: Float = 0f,
 ) {
     val inGroup = LocalPreferenceInGroup.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+
     val scale by animateFloatAsState(
-        targetValue = if (isPressed && !inGroup) 0.98f else 1f,
-        animationSpec = spring(stiffness = Spring.StiffnessHigh),
-        label = "prefScale",
+        targetValue = when {
+            !inGroup && isPressed -> 0.97f
+            !inGroup && onClick != null -> 0.99f
+            else -> 1f
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "prefScale"
     )
+
+    val containerColor = if (inGroup) {
+        Color.Transparent
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
 
     val rowContent: @Composable () -> Unit = {
         Row(
@@ -107,15 +168,8 @@ fun PreferenceEntry(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
         ) {
             if (icon != null) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                        ),
-                    contentAlignment = Alignment.Center,
+                IconContainer(
+                    modifier = Modifier.align(Alignment.CenterVertically)
                 ) {
                     icon()
                 }
@@ -171,22 +225,85 @@ fun PreferenceEntry(
     if (inGroup) {
         rowContent()
     } else {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        Surface(
+            shape = expressiveCardShape,
+            color = containerColor,
+            tonalElevation = elevation.dp,
+            shadowElevation = if (isPressed) 4.dp else 2.dp,
             modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 3.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                },
+                }
+                .shadow(
+                    elevation = if (isPressed) 8.dp else 4.dp,
+                    shape = expressiveCardShape,
+                    clip = false
+                ),
         ) {
             rowContent()
         }
+    }
+}
+
+@Composable
+fun IconContainer(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val ghostishShape = MaterialShapes.Ghostish.toShape()
+
+    Box(
+        modifier = modifier
+            .size(48.dp)
+            .clip(ghostishShape)
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.06f)
+                    ),
+                    start = Offset(0f, 0f),
+                    end = Offset(100f, 100f)
+                )
+            )
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                shape = ghostishShape
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun Badge(
+    text: String,
+    color: Color = MaterialTheme.colorScheme.primary,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = expressiveBadgeShape,
+        color = color.copy(alpha = 0.12f),
+        border = BorderStroke(
+            1.dp,
+            color.copy(alpha = 0.2f)
+        ),
+        modifier = modifier
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Medium,
+                fontSize = 10.sp
+            ),
+            color = color,
+        )
     }
 }
 
@@ -201,38 +318,19 @@ fun <T> ListPreference(
     onValueSelected: (T) -> Unit,
     isEnabled: Boolean = true,
 ) {
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
-    if (showDialog) {
-        ListDialog(
-            onDismiss = { showDialog = false },
-        ) {
-            items(values) { value ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showDialog = false
-                                onValueSelected(value)
-                            }
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                ) {
-                    RadioButton(
-                        selected = value == selectedValue,
-                        onClick = null,
-                    )
+    var showBottomSheet by remember { mutableStateOf(false) }
 
-                    Text(
-                        text = valueText(value),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 16.dp),
-                    )
-                }
+    if (showBottomSheet) {
+        ExpressiveListBottomSheet(
+            onDismiss = { showBottomSheet = false },
+            values = values,
+            selectedValue = selectedValue,
+            valueText = valueText,
+            onValueSelected = {
+                showBottomSheet = false
+                onValueSelected(it)
             }
-        }
+        )
     }
 
     PreferenceEntry(
@@ -240,7 +338,7 @@ fun <T> ListPreference(
         title = title,
         description = valueText(selectedValue),
         icon = icon,
-        onClick = { showDialog = true },
+        onClick = { showBottomSheet = true },
         isEnabled = isEnabled,
     )
 }
@@ -277,6 +375,25 @@ fun SwitchPreference(
     onCheckedChange: (Boolean) -> Unit,
     isEnabled: Boolean = true,
 ) {
+    val rotation by animateFloatAsState(
+        targetValue = if (checked) 0f else 180f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "switchRotation"
+    )
+
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        },
+        animationSpec = tween(300),
+        label = "trackColor"
+    )
+
     PreferenceEntry(
         modifier = modifier,
         title = title,
@@ -287,13 +404,30 @@ fun SwitchPreference(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 enabled = isEnabled,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = trackColor,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.surfaceVariant,
+                    uncheckedTrackColor = trackColor,
+                    checkedBorderColor = Color.Transparent,
+                    uncheckedBorderColor = Color.Transparent,
+                ),
                 thumbContent = {
                     Icon(
                         painter = painterResource(
                             id = if (checked) R.drawable.check else R.drawable.close
                         ),
                         contentDescription = null,
-                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                        modifier = Modifier
+                            .size(SwitchDefaults.IconSize)
+                            .graphicsLayer {
+                                rotationZ = rotation
+                            },
+                        tint = if (checked) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        }
                     )
                 }
             )
@@ -314,21 +448,18 @@ fun EditTextPreference(
     isInputValid: (String) -> Boolean = { it.isNotEmpty() },
     isEnabled: Boolean = true,
 ) {
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
+    var showBottomSheet by remember { mutableStateOf(false) }
 
-    if (showDialog) {
-        TextFieldDialog(
-            initialTextFieldValue =
-                TextFieldValue(
-                    text = value,
-                    selection = TextRange(value.length),
-                ),
+    if (showBottomSheet) {
+        ExpressiveTextFieldBottomSheet(
+            initialTextFieldValue = TextFieldValue(
+                text = value,
+                selection = TextRange(value.length),
+            ),
             singleLine = singleLine,
             isInputValid = isInputValid,
             onDone = onValueChange,
-            onDismiss = { showDialog = false },
+            onDismiss = { showBottomSheet = false },
         )
     }
 
@@ -337,7 +468,7 @@ fun EditTextPreference(
         title = title,
         description = value,
         icon = icon,
-        onClick = { showDialog = true },
+        onClick = { showBottomSheet = true },
         isEnabled = isEnabled,
     )
 }
@@ -352,16 +483,11 @@ fun SliderPreference(
     onValueChange: (Float) -> Unit,
     isEnabled: Boolean = true,
 ) {
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var sliderValue by remember { mutableFloatStateOf(value) }
 
-    var sliderValue by remember {
-        mutableFloatStateOf(value)
-    }
-
-    if (showDialog) {
-        ActionPromptDialog(
+    if (showBottomSheet) {
+        ExpressiveActionBottomSheet(
             titleBar = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -371,18 +497,24 @@ fun SliderPreference(
                         text = stringResource(R.string.history_duration),
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             },
-            onDismiss = { showDialog = false },
+            onDismiss = {
+                sliderValue = value
+                showBottomSheet = false
+            },
             onConfirm = {
-                showDialog = false
+                showBottomSheet = false
                 onValueChange.invoke(sliderValue)
             },
             onCancel = {
                 sliderValue = value
-                showDialog = false
+                showBottomSheet = false
             },
             onReset = {
                 sliderValue = 30f
@@ -395,7 +527,10 @@ fun SliderPreference(
                             sliderValue.roundToInt(),
                             sliderValue.roundToInt()
                         ),
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        ),
                     )
 
                     Spacer(Modifier.height(16.dp))
@@ -416,23 +551,22 @@ fun SliderPreference(
         title = title,
         description = value.roundToInt().toString(),
         icon = icon,
-        onClick = { showDialog = true },
+        onClick = { showBottomSheet = true },
         isEnabled = isEnabled,
     )
 }
 
-@Composable
 @OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun CrossfadeSliderPreference(
     modifier: Modifier = Modifier,
     value: Int,
     onValueChange: (Int) -> Unit,
     isEnabled: Boolean = true,
 ) {
-    var showDialog by remember { mutableStateOf(false) }
+    var showBottomSheet by remember { mutableStateOf(false) }
     var localValue by remember { mutableFloatStateOf(value.toFloat()) }
 
-    // Actualizar localValue cuando value cambia desde fuera
     androidx.compose.runtime.LaunchedEffect(value) {
         localValue = value.toFloat()
     }
@@ -445,38 +579,60 @@ fun CrossfadeSliderPreference(
         else -> pluralStringResource(R.plurals.seconds, displayValue, displayValue)
     }
 
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = {
+    if (showBottomSheet) {
+        ExpressiveActionBottomSheet(
+            titleBar = {
                 Text(
                     text = stringResource(R.string.audio_crossfade_title),
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxWidth()
                 )
             },
-            text = {
+            onDismiss = {
+                localValue = value.toFloat()
+                showBottomSheet = false
+            },
+            onConfirm = {
+                val finalValue = localValue.roundToInt().coerceIn(0, 10)
+                onValueChange(finalValue)
+                showBottomSheet = false
+            },
+            onCancel = {
+                localValue = value.toFloat()
+                showBottomSheet = false
+            },
+            content = {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Valor actual
+                    val valueColor by animateColorAsState(
+                        targetValue = if (isCrossfadeEnabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        animationSpec = tween(300),
+                        label = "valueColor"
+                    )
+
                     Text(
                         text = if (displayValue == 0) {
                             stringResource(R.string.dark_theme_off)
                         } else {
                             pluralStringResource(R.plurals.seconds, displayValue, displayValue)
                         },
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isCrossfadeEnabled)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = valueColor,
                     )
 
                     Spacer(Modifier.height(24.dp))
 
-                    // Slider
                     SquigglySlider(
                         value = localValue,
                         onValueChange = {
@@ -490,44 +646,24 @@ fun CrossfadeSliderPreference(
 
                     Spacer(Modifier.height(8.dp))
 
-                    // Marcas del slider
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         listOf(0, 2, 4, 6, 8, 10).forEach { mark ->
-                            Text(
+                            val isActive = displayValue >= mark && mark > 0
+                            Badge(
                                 text = "${mark}s",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (displayValue >= mark && mark > 0)
+                                color = if (isActive) {
                                     MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                fontSize = 10.sp,
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                },
+                                modifier = Modifier
+                                    .alpha(if (isActive) 1f else 0.5f)
                             )
                         }
                     }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val finalValue = localValue.roundToInt().coerceIn(0, 10)
-                        onValueChange(finalValue)
-                        showDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.save))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        localValue = value.toFloat()
-                        showDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -542,35 +678,26 @@ fun CrossfadeSliderPreference(
             ) {
                 Text(stringResource(R.string.audio_crossfade_title))
                 if (isCrossfadeEnabled) {
-                    CrossfadeBadge(duration = displayValue)
+                    Badge(
+                        text = "${displayValue}s",
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         },
         description = descriptionText,
-        icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
-        onClick = { if (isEnabled) showDialog = true },
+        icon = {
+            IconContainer {
+                Icon(
+                    painterResource(R.drawable.graphic_eq),
+                    null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        onClick = { if (isEnabled) showBottomSheet = true },
         isEnabled = isEnabled,
     )
-}
-
-@Composable
-private fun CrossfadeBadge(duration: Int) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-        modifier = Modifier
-            .padding(start = 8.dp)
-            .size(width = 48.dp, height = 24.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = "${duration}s",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Medium,
-            )
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -586,16 +713,11 @@ fun NumberPickerPreference(
     valueText: (Int) -> String = { it.toString() },
     isEnabled: Boolean = true,
 ) {
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var sliderValue by remember { mutableFloatStateOf(value.toFloat()) }
 
-    var sliderValue by remember {
-        mutableFloatStateOf(value.toFloat())
-    }
-
-    if (showDialog) {
-        ActionPromptDialog(
+    if (showBottomSheet) {
+        ExpressiveActionBottomSheet(
             titleBar = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -604,16 +726,19 @@ fun NumberPickerPreference(
                     title()
                 }
             },
-            onDismiss = { showDialog = false },
+            onDismiss = {
+                sliderValue = value.toFloat()
+                showBottomSheet = false
+            },
             onConfirm = {
                 val rounded = sliderValue.roundToInt().coerceIn(minValue, maxValue)
                 sliderValue = rounded.toFloat()
-                showDialog = false
+                showBottomSheet = false
                 onValueChange.invoke(rounded)
             },
             onCancel = {
                 sliderValue = value.toFloat()
-                showDialog = false
+                showBottomSheet = false
             },
             onReset = {
                 sliderValue = minValue.toFloat()
@@ -623,7 +748,10 @@ fun NumberPickerPreference(
                     val rounded = sliderValue.roundToInt().coerceIn(minValue, maxValue)
                     Text(
                         text = valueText(rounded),
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        ),
                     )
 
                     Spacer(Modifier.height(16.dp))
@@ -638,6 +766,28 @@ fun NumberPickerPreference(
                         valueRange = minValue.toFloat()..maxValue.toFloat(),
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        val step = (maxValue - minValue) / 4
+                        (0..4).map { minValue + (it * step) }.forEach { mark ->
+                            if (mark in minValue..maxValue) {
+                                Text(
+                                    text = mark.toString(),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 10.sp
+                                    ),
+                                    color = if (rounded >= mark) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
             }
         )
@@ -648,7 +798,7 @@ fun NumberPickerPreference(
         title = title,
         description = valueText(value),
         icon = icon,
-        onClick = { if (isEnabled) showDialog = true },
+        onClick = { if (isEnabled) showBottomSheet = true },
         isEnabled = isEnabled,
     )
 }
@@ -663,22 +813,33 @@ fun PreferenceGroup(
         if (title != null) {
             Text(
                 text = title.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.2.sp
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
             )
         }
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            modifier = Modifier.fillMaxWidth(),
+
+        Surface(
+            shape = expressiveCardShape,
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 2.dp,
+            shadowElevation = 4.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 4.dp,
+                    shape = expressiveCardShape,
+                    clip = false
+                ),
         ) {
             CompositionLocalProvider(LocalPreferenceInGroup provides true) {
-                Column(content = content)
+                Column(
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    content = content
+                )
             }
         }
     }
@@ -686,11 +847,27 @@ fun PreferenceGroup(
 
 @Composable
 fun PreferenceGroupDivider(modifier: Modifier = Modifier) {
-    HorizontalDivider(
-        modifier = modifier.padding(start = 60.dp),
-        thickness = 0.5.dp,
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-    )
+    Column {
+        HorizontalDivider(
+            modifier = modifier.padding(start = 60.dp),
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .padding(start = 60.dp)
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+    }
 }
 
 @Composable
@@ -700,8 +877,477 @@ fun PreferenceGroupTitle(
 ) {
     Text(
         text = title.uppercase(),
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.labelLarge.copy(
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.2.sp
+        ),
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier.padding(horizontal = 20.dp, vertical = 10.dp),
     )
+}
+
+// ── BOTTOM SHEETS EXPRESIVOS ────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExpressiveActionBottomSheet(
+    titleBar: @Composable () -> Unit,
+    content: @Composable () -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    onReset: (() -> Unit)? = null,
+) {
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = expressiveBottomSheetShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 6.dp,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .size(36.dp, 4.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+            )
+        },
+        modifier = Modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Spacer(Modifier.height(8.dp))
+
+            titleBar()
+
+            Spacer(Modifier.height(24.dp))
+
+            content()
+
+            Spacer(Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = if (onReset != null) {
+                    Arrangement.SpaceBetween
+                } else {
+                    Arrangement.End
+                },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (onReset != null) {
+                    TextButton(
+                        onClick = onReset,
+                    ) {
+                        Text(
+                            stringResource(R.string.reset),
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = onCancel,
+                    ) {
+                        Text(
+                            stringResource(R.string.cancel),
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    TextButton(
+                        onClick = onConfirm,
+                    ) {
+                        Text(
+                            stringResource(R.string.save),
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> ExpressiveListBottomSheet(
+    onDismiss: () -> Unit,
+    values: List<T>,
+    selectedValue: T,
+    valueText: @Composable (T) -> String,
+    onValueSelected: (T) -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = expressiveBottomSheetShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 6.dp,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .size(36.dp, 4.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+            )
+        },
+        modifier = Modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(R.string.select_option),
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            ExpressiveList(
+                items = values,
+                selectedValue = selectedValue,
+                valueText = valueText,
+                onItemSelected = onValueSelected
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                ) {
+                    Text(
+                        stringResource(R.string.close),
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExpressiveTextFieldBottomSheet(
+    initialTextFieldValue: TextFieldValue,
+    singleLine: Boolean,
+    isInputValid: (String) -> Boolean,
+    onDone: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var textFieldValue by remember { mutableStateOf(initialTextFieldValue) }
+    val isValid = isInputValid(textFieldValue.text)
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = expressiveBottomSheetShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 6.dp,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .size(36.dp, 4.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+            )
+        },
+        modifier = Modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(R.string.enter_value),
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            TextField(
+                value = textFieldValue,
+                onValueChange = { textFieldValue = it },
+                singleLine = singleLine,
+                shape = expressiveCardShape,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                isError = !isValid && textFieldValue.text.isNotEmpty()
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                ) {
+                    Text(
+                        stringResource(R.string.cancel),
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(
+                    onClick = {
+                        if (isValid) {
+                            onDone(textFieldValue.text)
+                            onDismiss()
+                        }
+                    },
+                    enabled = isValid,
+                ) {
+                    Text(
+                        stringResource(R.string.save),
+                        fontWeight = FontWeight.Medium,
+                        color = if (isValid) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> ExpressiveList(
+    items: List<T>,
+    selectedValue: T?,
+    valueText: @Composable (T) -> String,
+    onItemSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(
+            horizontal = 4.dp,
+            vertical = 8.dp
+        )
+    ) {
+        items(
+            items = items,
+            key = { it.hashCode() }
+        ) { item ->
+
+            val isSelected = item == selectedValue
+
+            val animatedContainerColor by animateColorAsState(
+                targetValue = if (isSelected) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerLow
+                },
+                animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+                label = "containerColor"
+            )
+
+            val animatedContentColor by animateColorAsState(
+                targetValue = if (isSelected) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+                label = "contentColor"
+            )
+
+            val animatedScale by animateFloatAsState(
+                targetValue = if (isSelected) 1.015f else 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                ),
+                label = "scale"
+            )
+
+            val animatedCornerRadius by animateDpAsState(
+                targetValue = if (isSelected) 28.dp else 20.dp,
+                animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+                label = "cornerRadius"
+            )
+
+            Surface(
+                onClick = {
+                    onItemSelected(item)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        scaleX = animatedScale
+                        scaleY = animatedScale
+                    },
+                shape = RoundedCornerShape(
+                    topStart = animatedCornerRadius,
+                    topEnd = 20.dp,
+                    bottomStart = 20.dp,
+                    bottomEnd = animatedCornerRadius
+                ),
+                color = animatedContainerColor,
+                contentColor = animatedContentColor,
+                tonalElevation = if (isSelected) 3.dp else 0.dp,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 18.dp,
+                            vertical = 14.dp
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    // Indicador expresivo de selección
+                    AnimatedContent(
+                        targetState = isSelected,
+                        transitionSpec = {
+                            scaleIn(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                )
+                            ) + fadeIn() togetherWith
+                                    scaleOut() + fadeOut()
+                        },
+                        label = "selectionIndicator"
+                    ) { selected ->
+
+                        if (selected) {
+                            Surface(
+                                modifier = Modifier.size(44.dp),
+                                shape = RoundedCornerShape(
+                                    topStart = 16.dp,
+                                    topEnd = 16.dp,
+                                    bottomStart = 8.dp,
+                                    bottomEnd = 16.dp
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(
+                                            R.drawable.check
+                                        ),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            Surface(
+                                modifier = Modifier.size(44.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(10.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                MaterialTheme.colorScheme
+                                                    .onSurfaceVariant
+                                                    .copy(alpha = 0.45f)
+                                            )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(
+                        modifier = Modifier.width(16.dp)
+                    )
+
+                    Text(
+                        text = valueText(item),
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = if (isSelected) {
+                                FontWeight.SemiBold
+                            } else {
+                                FontWeight.Normal
+                            }
+                        )
+                    )
+
+                    AnimatedVisibility(
+                        visible = isSelected,
+                        enter = fadeIn() + expandHorizontally(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ),
+                        exit = fadeOut() + shrinkHorizontally()
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.check),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

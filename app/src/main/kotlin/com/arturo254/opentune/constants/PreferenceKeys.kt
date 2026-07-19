@@ -709,5 +709,4 @@ val SpotifyAccountAvatarUrlKey = stringPreferencesKey("spotify_account_avatar_ur
 val ShowSpotifyPlaylistsKey = booleanPreferencesKey("show_spotify_playlists")
 val SpotifyLibraryPlaylistsCacheKey = stringPreferencesKey("spotify_library_playlists_cache")
 
-val CustomCanvasEnabledKey = booleanPreferencesKey("custom_canvas_enabled")
-val CustomCanvasApiUrlKey = stringPreferencesKey("custom_canvas_api_url")
+val JossRedMultimediaKey = booleanPreferencesKey("JossRedMultimedia")

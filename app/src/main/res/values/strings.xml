@@ -837,4 +837,6 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="reorder_lyrics_providers">Reorder Lyrics Providers</string>
     <string name="lyrics_provider_order">Lyrics Provider Order</string>
     <string name="lyrics_provider_priority">Priority: %1$s</string>
+    <string name="select_option">Select</string>
+    <string name="enter_value">Enter Value</string>
 </resources>

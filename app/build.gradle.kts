@@ -295,6 +295,8 @@ dependencies {
     implementation("com.github.Kyant0:m3color:2025.4")
     implementation(libs.compose.cloudy)
 
+    implementation(project(":jossredconnect"))
+
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.serialization.json)

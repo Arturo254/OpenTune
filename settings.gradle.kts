@@ -1,5 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
+include(":jossredconnect")
+
+
 
 pluginManagement {
     repositories {

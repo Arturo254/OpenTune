@@ -188,6 +188,10 @@ import com.arturo254.opentune.constants.TogetherClientIdKey
 import com.arturo254.opentune.widget.PlayerWidgetActions
 import com.arturo254.opentune.widget.PlayerWidgetState
 import com.arturo254.opentune.widget.PlayerWidgetUpdater
+import com.arturo254.jossredconnect.JossRedClient
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
+import okhttp3.Request
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -231,6 +235,7 @@ import android.app.Notification
 import android.os.Build
 import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationCompat
+import com.arturo254.opentune.constants.JossRedMultimediaKey
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @AndroidEntryPoint
@@ -4322,7 +4327,7 @@ class MusicService :
             if (requiredCachedLength != null) {
                 val isFullyCached =
                     downloadCache.isCached(mediaId, dataSpec.position, requiredCachedLength) ||
-                        playerCache.isCached(mediaId, dataSpec.position, requiredCachedLength)
+                            playerCache.isCached(mediaId, dataSpec.position, requiredCachedLength)
                 if (isFullyCached) {
                     scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
                     return@Factory dataSpec
@@ -4335,59 +4340,61 @@ class MusicService :
                 return@Factory dataSpec.withUri(it.first.toUri()).subrange(dataSpec.uriPositionOffset, length)
             }
 
-            val playbackData = runBlocking(Dispatchers.IO) {
-                YTPlayerUtils.playerResponseForPlayback(
-                    mediaId,
-                    audioQuality = audioQuality,
-                    connectivityManager = connectivityManager,
-                    preferredStreamClient = preferredStreamClient,
-                    avoidCodecs = avoidStreamCodecs,
-                )
-            }.getOrElse { throwable ->
-                when (throwable) {
-                    is YTPlayerUtils.LoginRequiredForPlaybackException -> {
-                        promptLoginRecovery(mediaId, throwable.targetUrl)
-                        throw PlaybackException(
-                            getString(R.string.playback_requires_youtube_music_confirmation),
+            // Intentar obtener playback data de YouTube (fuente primaria)
+            try {
+                val playbackData = runBlocking(Dispatchers.IO) {
+                    YTPlayerUtils.playerResponseForPlayback(
+                        mediaId,
+                        audioQuality = audioQuality,
+                        connectivityManager = connectivityManager,
+                        preferredStreamClient = preferredStreamClient,
+                        avoidCodecs = avoidStreamCodecs,
+                    )
+                }.getOrElse { throwable ->
+                    when (throwable) {
+                        is YTPlayerUtils.LoginRequiredForPlaybackException -> {
+                            promptLoginRecovery(mediaId, throwable.targetUrl)
+                            throw PlaybackException(
+                                getString(R.string.playback_requires_youtube_music_confirmation),
+                                throwable,
+                                PlaybackException.ERROR_CODE_REMOTE_ERROR
+                            )
+                        }
+
+                        is PlaybackException -> throw throwable
+
+                        is java.net.ConnectException, is java.net.UnknownHostException -> {
+                            throw PlaybackException(
+                                getString(R.string.error_no_internet),
+                                throwable,
+                                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
+                            )
+                        }
+
+                        is java.net.SocketTimeoutException -> {
+                            throw PlaybackException(
+                                getString(R.string.error_timeout),
+                                throwable,
+                                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT
+                            )
+                        }
+
+                        else -> throw PlaybackException(
+                            getString(R.string.error_unknown),
                             throwable,
                             PlaybackException.ERROR_CODE_REMOTE_ERROR
                         )
                     }
-
-                    is PlaybackException -> throw throwable
-
-                    is java.net.ConnectException, is java.net.UnknownHostException -> {
-                        throw PlaybackException(
-                            getString(R.string.error_no_internet),
-                            throwable,
-                            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
-                        )
-                    }
-
-                    is java.net.SocketTimeoutException -> {
-                        throw PlaybackException(
-                            getString(R.string.error_timeout),
-                            throwable,
-                            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT
-                        )
-                    }
-
-                    else -> throw PlaybackException(
-                        getString(R.string.error_unknown),
-                        throwable,
-                        PlaybackException.ERROR_CODE_REMOTE_ERROR
-                    )
                 }
-            }
 
-            val nonNullPlayback = requireNotNull(playbackData) {
-                getString(R.string.error_unknown)
-            }
-            run {
+                val nonNullPlayback = requireNotNull(playbackData) {
+                    getString(R.string.error_unknown)
+                }
+
                 val format = nonNullPlayback.format
                 val loudnessDb = nonNullPlayback.audioConfig?.loudnessDb
                 val perceptualLoudnessDb = nonNullPlayback.audioConfig?.perceptualLoudnessDb
-                
+
                 Timber.tag("AudioNormalization").d("Storing format for $mediaId with loudnessDb: $loudnessDb, perceptualLoudnessDb: $perceptualLoudnessDb")
                 if (loudnessDb == null && perceptualLoudnessDb == null) {
                     Timber.tag("AudioNormalization").w("No loudness data available from YouTube for video: $mediaId")
@@ -4412,11 +4419,115 @@ class MusicService :
                 scope.launch(Dispatchers.IO) { recoverSong(mediaId, nonNullPlayback) }
 
                 val streamUrl = nonNullPlayback.streamUrl
-
                 playbackUrlCache[mediaId] =
                     streamUrl to System.currentTimeMillis() + (nonNullPlayback.streamExpiresInSeconds * 1000L)
                 val length = if (dataSpec.length >= 0) minOf(dataSpec.length, CHUNK_LENGTH) else CHUNK_LENGTH
                 return@Factory dataSpec.withUri(streamUrl.toUri()).subrange(dataSpec.uriPositionOffset, length)
+
+            } catch (e: Exception) {
+                // Si YouTube falla, intentar con JossRed como fallback
+                Timber.e(e, "YouTube playback error for $mediaId, trying JossRed as fallback")
+
+                // Verificar si la fuente alternativa está habilitada en preferencias
+                val useAlternativeSource = runBlocking(Dispatchers.IO) {
+                    try {
+                        dataStore.data.first()[JossRedMultimediaKey] ?: false
+                    } catch (ex: Exception) {
+                        Timber.e(ex, "Error reading JossRed preference, defaulting to false")
+                        false
+                    }
+                }
+
+                // Si la fuente alternativa está deshabilitada, lanzar la excepción original
+                if (!useAlternativeSource) {
+                    Timber.d("JossRed fallback disabled by user preference")
+                    throw e
+                }
+
+                // Intentar obtener URL desde JossRed
+                try {
+                    val alternativeUrl = runCatching {
+                        runBlocking(Dispatchers.IO) {
+                            withTimeout(5000L) { // Timeout de 5 segundos
+                                JossRedClient.getStreamingUrl(mediaId)
+                            }
+                        }
+                    }.getOrNull()
+
+                    if (alternativeUrl != null) {
+                        // Verificar accesibilidad con una petición HEAD
+                        val client = OkHttpClient.Builder()
+                            .connectTimeout(2, java.util.concurrent.TimeUnit.SECONDS)
+                            .readTimeout(2, java.util.concurrent.TimeUnit.SECONDS)
+                            .build()
+
+                        val request = Request.Builder()
+                            .url(alternativeUrl)
+                            .head()
+                            .build()
+
+                        try {
+                            val response = client.newCall(request).execute()
+                            if (response.isSuccessful) {
+                                Timber.i("Using JossRed URL as fallback for $mediaId: $alternativeUrl")
+
+                                // Guardar URL en caché con expiración de 5 minutos
+                                playbackUrlCache[mediaId] =
+                                    alternativeUrl to System.currentTimeMillis() + 300_000L
+
+                                // Recuperar información de la canción en segundo plano
+                                scope.launch(Dispatchers.IO) {
+                                    try {
+                                        recoverSong(mediaId)
+                                    } catch (recoverEx: Exception) {
+                                        Timber.e(
+                                            recoverEx,
+                                            "Error recovering song from JossRed fallback"
+                                        )
+                                    }
+                                }
+
+                                val length = if (dataSpec.length >= 0) minOf(
+                                    dataSpec.length,
+                                    CHUNK_LENGTH
+                                ) else CHUNK_LENGTH
+                                return@Factory dataSpec.withUri(alternativeUrl.toUri())
+                                    .subrange(dataSpec.uriPositionOffset, length)
+                            } else {
+                                Timber.w("JossRed URL unreachable for $mediaId (HTTP ${response.code}), throwing original error")
+                                response.close()
+                                throw e
+                            }
+                        } catch (jrException: Exception) {
+                            Timber.e(
+                                jrException,
+                                "Error verifying JossRed URL for $mediaId, throwing original error"
+                            )
+                            throw e
+                        }
+                    } else {
+                        Timber.w("JossRed returned null URL for $mediaId, throwing original error")
+                        throw e
+                    }
+                } catch (jrException: Exception) {
+                    when (jrException) {
+                        is JossRedClient.JossRedException -> {
+                            Timber.w("JossRed error for $mediaId: ${jrException.message}, throwing original error")
+                        }
+
+                        is TimeoutCancellationException -> {
+                            Timber.w("JossRed timeout for $mediaId, throwing original error")
+                        }
+
+                        else -> {
+                            Timber.e(
+                                jrException,
+                                "JossRed unexpected error for $mediaId, throwing original error"
+                            )
+                        }
+                    }
+                    throw e
+                }
             }
         }
     }

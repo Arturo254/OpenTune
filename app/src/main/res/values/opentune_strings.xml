@@ -471,4 +471,8 @@
     <string name="your_artists">your artist</string>
     <string name="more_label">more</string>
     <string name="player_fullscreen">Player fullscreen</string>
+
+    <string name="playback">Playback</string>
+    <string name="jossred_fallback_label">Use alternative source</string>
+    <string name="jossred_fallback_description">Attempt to play from JossRed if YouTube fails</string>
 </resources>

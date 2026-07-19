@@ -139,6 +139,10 @@ fun ContentSettings(
         key = QuickPicksKey,
         defaultValue = QuickPicks.QUICK_PICKS
     )
+    val (jossRedEnabled, onJossRedEnabledChange) = rememberPreference(
+        key = JossRedMultimediaKey,
+        defaultValue = true
+    )
 
     var showLanguageSelector by remember { mutableStateOf(false) }
 
@@ -219,6 +223,7 @@ fun ContentSettings(
             checked = hideVideo,
             onCheckedChange = onHideVideoChange,
         )
+
         PreferenceGroupTitle(title = stringResource(R.string.app_language))
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -388,6 +393,16 @@ fun ContentSettings(
                 valueText = { if (it == 0) "Off" else it.toString() },
             )
         }
+
+        PreferenceGroupTitle(title = stringResource(R.string.playback))
+
+        SwitchPreference(
+            title = { Text(stringResource(R.string.jossred_fallback_label)) },
+            description = stringResource(R.string.jossred_fallback_description),
+            icon = { Icon(painterResource(R.drawable.cloud_off), null) },
+            checked = jossRedEnabled,
+            onCheckedChange = onJossRedEnabledChange,
+        )
 
         PreferenceGroupTitle(title = stringResource(R.string.misc))
 
