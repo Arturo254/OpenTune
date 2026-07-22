@@ -225,12 +225,14 @@ private fun ToolbarItemsContainer(
         modifier = Modifier
             .let {
                 if (enableLiquidGlass && backdrop != null) {
-                    it.drawBackdropCustomShape(
-                        backdrop = backdrop,
-                        layer = layer,
-                        luminanceAnimation = luminanceAnimation.value,
-                        shape = CircleShape
-                    )
+                    it
+                        .drawBackdropCustomShape(
+                            backdrop = backdrop,
+                            layer = layer,
+                            luminanceAnimation = luminanceAnimation.value,
+                            shape = CircleShape
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 } else it
             }
             .height(IntrinsicSize.Min)
