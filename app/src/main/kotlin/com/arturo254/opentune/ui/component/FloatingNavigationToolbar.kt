@@ -108,10 +108,21 @@ fun FloatingNavigationToolbar(
     val hasOverflowAction = onShuffleClick != null && shuffleIconRes != null
     val hasFabAction = onFabClick != null && fabIconRes != null
 
+    val layer = rememberGraphicsLayer()
+    val luminanceAnimation = remember { Animatable(0.3f) }
+    val backdrop = LocalBackdrop.current
+
     val toolbarModifier = Modifier
         .widthIn(max = 480.dp)
         .let {
-            if (enableLiquidGlass) it.graphicsLayer { shadowElevation = 0f } else it
+            if (enableLiquidGlass && backdrop != null) {
+                it.drawBackdropCustomShape(
+                    backdrop = backdrop,
+                    layer = layer,
+                    luminanceAnimation = luminanceAnimation.value,
+                    shape = CircleShape
+                )
+            } else it
         }
 
     BoxWithConstraints(
@@ -176,7 +187,14 @@ fun FloatingNavigationToolbar(
                 modifier = Modifier
                     .widthIn(max = 420.dp)
                     .let {
-                        if (enableLiquidGlass) it.graphicsLayer { shadowElevation = 0f } else it
+                        if (enableLiquidGlass && backdrop != null) {
+                            it.drawBackdropCustomShape(
+                                backdrop = backdrop,
+                                layer = layer,
+                                luminanceAnimation = luminanceAnimation.value,
+                                shape = CircleShape
+                            )
+                        } else it
                     },
                 colors = toolbarColors,
                 scrollBehavior = scrollBehavior,
@@ -227,27 +245,7 @@ private fun ToolbarItemsContainer(
         label = "pillOffset"
     )
 
-    val enableLiquidGlass by rememberPreference(EnableLiquidGlassKey, defaultValue = false)
-    val layer = rememberGraphicsLayer()
-    val luminanceAnimation = remember { Animatable(0.3f) }
-    val backdrop = LocalBackdrop.current
-
-    Box(
-        modifier = Modifier
-            .let {
-                if (enableLiquidGlass && backdrop != null) {
-                    it
-                        .drawBackdropCustomShape(
-                            backdrop = backdrop,
-                            layer = layer,
-                            luminanceAnimation = luminanceAnimation.value,
-                            shape = CircleShape
-                        )
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                } else it
-            }
-            .height(IntrinsicSize.Min)
-    ) {
+    Box(modifier = Modifier.height(IntrinsicSize.Min)) {
         if (targetWidth > 0.dp) {
             Box(
                 modifier = Modifier
