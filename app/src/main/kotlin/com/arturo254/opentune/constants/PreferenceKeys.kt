@@ -43,6 +43,7 @@ val BlurRadiusKey = floatPreferencesKey("blurRadius")
 val MiniPlayerLastAnchorKey = intPreferencesKey("miniPlayerLastAnchor")
 val EnableHapticFeedbackKey = booleanPreferencesKey("enableHapticFeedback")
 val PlayerFullscreenKey = booleanPreferencesKey("player_fullscreen")
+val EnableLiquidGlassKey = booleanPreferencesKey("enableLiquidGlass")
 
 val ProviderOrderKey = stringPreferencesKey("lyrics_provider_order")
 
