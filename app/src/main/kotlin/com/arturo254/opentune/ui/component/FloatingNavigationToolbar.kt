@@ -77,7 +77,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.arturo254.opentune.R
 import com.arturo254.opentune.ui.screens.Screens
-import kotlin.text.get
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.animation.core.Animatable
+import com.arturo254.opentune.constants.EnableLiquidGlassKey
+import com.arturo254.opentune.utils.rememberPreference
 
 @Composable
 fun FloatingNavigationToolbar(
@@ -96,7 +99,8 @@ fun FloatingNavigationToolbar(
     isSelected: (Screens) -> Boolean,
     onItemClick: (Screens, Boolean) -> Unit,
 ) {
-    val toolbarContainerColor = floatingToolbarContainerColor(pureBlack = pureBlack)
+    val enableLiquidGlass by rememberPreference(EnableLiquidGlassKey, defaultValue = false)
+    val toolbarContainerColor = if (enableLiquidGlass) Color.Transparent else floatingToolbarContainerColor(pureBlack = pureBlack)
     val toolbarColors = FloatingToolbarDefaults.standardFloatingToolbarColors(
         toolbarContainerColor = toolbarContainerColor,
     )
@@ -212,7 +216,25 @@ private fun ToolbarItemsContainer(
         label = "pillOffset"
     )
 
-    Box(modifier = Modifier.height(IntrinsicSize.Min)) {
+    val enableLiquidGlass by rememberPreference(EnableLiquidGlassKey, defaultValue = false)
+    val layer = rememberGraphicsLayer()
+    val luminanceAnimation = remember { Animatable(0.3f) }
+    val backdrop = LocalBackdrop.current
+
+    Box(
+        modifier = Modifier
+            .let {
+                if (enableLiquidGlass && backdrop != null) {
+                    it.drawBackdropCustomShape(
+                        backdrop = backdrop,
+                        layer = layer,
+                        luminanceAnimation = luminanceAnimation.value,
+                        shape = CircleShape
+                    )
+                } else it
+            }
+            .height(IntrinsicSize.Min)
+    ) {
         if (targetWidth > 0.dp) {
             Box(
                 modifier = Modifier

@@ -30,6 +30,13 @@ import com.arturo254.opentune.constants.SwipeSensitivityKey
 import com.arturo254.opentune.ui.component.BottomSheetState
 import com.arturo254.opentune.utils.rememberPreference
 import kotlin.math.roundToInt
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.animation.core.Animatable
+import androidx.compose.runtime.remember
+import com.arturo254.opentune.constants.EnableLiquidGlassKey
+import com.arturo254.opentune.ui.component.LocalBackdrop
+import com.arturo254.opentune.ui.component.drawBackdropCustomShape
 
 
 @Composable
@@ -65,6 +72,13 @@ private fun NewMiniPlayer(
     val coroutineScope = rememberCoroutineScope()
     val swipeSensitivity by rememberPreference(SwipeSensitivityKey, 0.73f)
     val swipeThumbnail by rememberPreference(com.arturo254.opentune.constants.SwipeThumbnailKey, true)
+    val enableLiquidGlass by rememberPreference(EnableLiquidGlassKey, defaultValue = false)
+
+    val layer = rememberGraphicsLayer()
+    val luminanceAnimation = remember { Animatable(0.3f) }
+    val backdrop = LocalBackdrop.current
+
+    val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
 
     SwipeableMiniPlayerBox(
         modifier = modifier,
@@ -81,8 +95,18 @@ private fun NewMiniPlayer(
                 .fillMaxWidth()
                 .height(64.dp)
                 .offset { IntOffset(offsetX.roundToInt(), 0) }
+                .let {
+                    if (enableLiquidGlass && backdrop != null) {
+                        it.drawBackdropCustomShape(
+                            backdrop = backdrop,
+                            layer = layer,
+                            luminanceAnimation = luminanceAnimation.value,
+                            shape = RoundedCornerShape(32.dp)
+                        )
+                    } else it
+                }
                 .clip(RoundedCornerShape(32.dp))
-                .background(color = MaterialTheme.colorScheme.surfaceContainer)
+                .background(color = if (enableLiquidGlass) Color.Transparent else backgroundColor)
         ) {
             NewMiniPlayerContent(
                 pureBlack = pureBlack,

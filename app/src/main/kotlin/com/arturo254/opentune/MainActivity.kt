@@ -179,6 +179,7 @@ import com.arturo254.opentune.constants.FloatingToolbarHeight
 import com.arturo254.opentune.constants.FloatingToolbarHorizontalPadding
 import com.arturo254.opentune.constants.HasPressedStarKey
 import com.arturo254.opentune.constants.LaunchCountKey
+import com.arturo254.opentune.constants.EnableLiquidGlassKey
 import com.arturo254.opentune.constants.LiquidGlassNavBarKey
 import com.arturo254.opentune.constants.LyricsSyncOffsetKey
 import com.arturo254.opentune.constants.MiniPlayerBottomSpacing
@@ -233,6 +234,9 @@ import com.arturo254.opentune.ui.component.BottomSheetPageState
 import com.arturo254.opentune.ui.component.MenuState
 import com.arturo254.opentune.ui.component.TopSearch
 import com.arturo254.opentune.ui.component.rememberBottomSheetState
+import com.arturo254.opentune.ui.component.LocalBackdrop
+import com.arturo254.opentune.ui.component.layerBackdrop
+import com.arturo254.opentune.ui.component.rememberBackdrop
 import com.arturo254.opentune.ui.component.shimmer.ShimmerTheme
 import com.arturo254.opentune.ui.menu.YouTubeSongMenu
 import com.arturo254.opentune.ui.player.BottomSheetPlayer
@@ -578,16 +582,24 @@ class MainActivity : ComponentActivity() {
             val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
             val useSystemFont by rememberPreference(UseSystemFontKey, defaultValue = false)
             val lyricsSyncOffset by rememberPreference(LyricsSyncOffsetKey, defaultValue = 0)
+            val enableLiquidGlass by rememberPreference(EnableLiquidGlassKey, defaultValue = false)
+            val backdrop = rememberBackdrop()
             val isSystemInDarkTheme = isSystemInDarkTheme()
             val useDarkTheme =
-                remember(darkTheme, isSystemInDarkTheme) {
-                    if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+                remember(darkTheme, isSystemInDarkTheme, enableLiquidGlass) {
+                    if (enableLiquidGlass) {
+                        true
+                    } else if (darkTheme == DarkMode.AUTO) {
+                        isSystemInDarkTheme
+                    } else {
+                        darkTheme == DarkMode.ON
+                    }
                 }
             LaunchedEffect(useDarkTheme) {
                 setSystemBarAppearance(useDarkTheme)
             }
             val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
-            val pureBlack = pureBlackEnabled && useDarkTheme
+            val pureBlack = pureBlackEnabled && useDarkTheme && !enableLiquidGlass
 
             val customThemeSeedPalette = remember(customThemeColorValue) {
                 if (customThemeColorValue.startsWith("#")) {
@@ -1158,6 +1170,7 @@ class MainActivity : ComponentActivity() {
                         LocalSyncUtils provides syncUtils,
                         LocalBottomSheetPageState provides bottomSheetPageState,
                         LocalMenuState provides menuState,
+                        LocalBackdrop provides backdrop,
                     ) {
                         Row {
                             AnimatedVisibility(useRail && shouldShowNavigationBar) {
@@ -1739,6 +1752,11 @@ class MainActivity : ComponentActivity() {
                                     .fillMaxSize()
                                     .nestedScroll(searchBarScrollBehavior.nestedScrollConnection)
                             ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .let { if (enableLiquidGlass) it.layerBackdrop(backdrop) else it }
+                                ) {
                                 var transitionDirection =
                                     AnimatedContentTransitionScope.SlideDirection.Left
 
@@ -1866,6 +1884,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
+                        }
                         }
 
                         BottomSheetMenu(
