@@ -274,6 +274,7 @@ import kotlin.random.Random
 import kotlin.time.Duration.Companion.days
 import androidx.core.graphics.toColorInt
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import com.arturo254.opentune.canvas.CanvasCacheManager
 import com.arturo254.opentune.constants.EnableHapticFeedbackKey
 import com.arturo254.opentune.constants.PlayerFullscreenKey
 
@@ -350,6 +351,9 @@ class MainActivity : ComponentActivity() {
 
 
     override fun onStart() {
+
+        CanvasCacheManager.init(this)
+
         super.onStart()
         isMusicServiceBound =
             bindService(

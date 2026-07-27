@@ -11,14 +11,11 @@
  *   { "success": true, "data": { "total": N, "canvases": [ {id, artist, album, song, url, ...}, ... ] } }
  * El matching por artista/álbum/canción se hace en cliente (normalizando
  * acentos y mayúsculas), porque el servidor no filtra.
- *
- * "song" en cada entrada es OPCIONAL: si viene vacío, el canvas aplica a
- * TODO el álbum (ej: subís un canvas para "111XPANTIA" de Fuerza Regida
- * sin especificar canción, y se muestra para cualquier track de ese álbum).
  */
 
 package com.arturo254.opentune.canvas.providers
 
+import com.arturo254.opentune.canvas.CanvasCacheManager
 import com.arturo254.opentune.canvas.models.CanvasArtwork
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -29,6 +26,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.bodyAsBytes
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -157,10 +155,9 @@ object CustomCanvasProvider {
                                     normSong.contains(normalize(entry.song)))
                 }
                 if (songMatches.isNotEmpty()) {
-                    return createArtwork(songMatches.first(), "canción (sin álbum)")
+                    return createArtworkWithCache(songMatches.first(), "canción (sin álbum)")
                 }
             }
-            // Si no hay match por canción, usar todos los candidatos
             candidates
         }
 
@@ -187,19 +184,46 @@ object CustomCanvasProvider {
             else -> "álbum (con canción: ${best.song})"
         }
 
-        Timber.d("🎵 CustomCanvas - ✅ Encontrado por $matchType: ${best.url} (artista=${best.artist}, album=${best.album})")
-
-        return CanvasArtwork(
-            name = best.song.takeIf { it.isNotBlank() },
-            artist = best.artist,
-            albumName = best.album,
-            animated = best.url,
-            videoUrl = best.url,
-        )
+        return createArtworkWithCache(best, matchType)
     }
 
-    private fun createArtwork(entry: CanvasEntry, matchType: String): CanvasArtwork {
-        Timber.d("🎵 CustomCanvas - ✅ Encontrado por $matchType: ${entry.url}")
+    private suspend fun createArtworkWithCache(
+        entry: CanvasEntry,
+        matchType: String
+    ): CanvasArtwork? {
+        val cacheKey = "${entry.artist}|${entry.album}|${entry.song}"
+
+        // ✅ Verificar caché en disco primero
+        val cached = CanvasCacheManager.getCachedCanvas(cacheKey)
+        if (cached != null) {
+            Timber.d("🎵 CustomCanvas - ✅ Cache hit (disco): ${cached.url}")
+            return CanvasArtwork(
+                name = entry.song.takeIf { it.isNotBlank() },
+                artist = entry.artist,
+                albumName = entry.album,
+                animated = cached.url,
+                videoUrl = cached.url,
+            )
+        }
+
+        Timber.d("🎵 CustomCanvas - ✅ Encontrado por $matchType: ${entry.url} (artista=${entry.artist}, album=${entry.album})")
+
+        // ✅ Descargar y cachear el video
+        val videoData = downloadVideo(entry.url)
+        if (videoData != null) {
+            CanvasCacheManager.cacheCanvas(
+                id = cacheKey,
+                artist = entry.artist,
+                album = entry.album,
+                song = entry.song,
+                url = entry.url,
+                videoData = videoData
+            )
+            Timber.d("🎵 CustomCanvas - ✅ Video cacheado: ${entry.url}")
+        } else {
+            Timber.d("🎵 CustomCanvas - ⚠️ No se pudo descargar/cachear video: ${entry.url}")
+        }
+
         return CanvasArtwork(
             name = entry.song.takeIf { it.isNotBlank() },
             artist = entry.artist,
@@ -207,6 +231,22 @@ object CustomCanvasProvider {
             animated = entry.url,
             videoUrl = entry.url,
         )
+    }
+
+    /**
+     * Descarga el video desde la URL
+     */
+    private suspend fun downloadVideo(url: String): ByteArray? {
+        return runCatching {
+            Timber.d("🎵 CustomCanvas - Descargando video: $url")
+            val response = client.get(url)
+            if (response.status == HttpStatusCode.OK) {
+                response.bodyAsBytes()
+            } else {
+                Timber.d("🎵 CustomCanvas - Error descargando video: ${response.status}")
+                null
+            }
+        }.getOrNull()
     }
 
     /**
@@ -232,8 +272,6 @@ object CustomCanvasProvider {
                 val rawBody = response.bodyAsText()
                 val trimmed = rawBody.trimStart()
 
-                // Blindaje: si por algún motivo no llega JSON (ej. mantenimiento
-                // del Worker), evita reventar con excepción de parseo.
                 if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
                     Timber.d(
                         "🎵 CustomCanvas - ⚠️ Respuesta no es JSON. Primeros 200 chars: ${
@@ -297,7 +335,6 @@ object CustomCanvasProvider {
     // Normalización / matching
     // -------------------------------------------------------------------------
 
-    /** Quita acentos, pasa a minúsculas y recorta espacios: "DINASTÍA" -> "dinastia" */
     private fun normalize(input: String): String {
         val decomposed = Normalizer.normalize(input, Normalizer.Form.NFD)
         val withoutAccents = decomposed.replace(Regex("\\p{Mn}+"), "")
@@ -309,7 +346,6 @@ object CustomCanvasProvider {
         RegexOption.IGNORE_CASE,
     )
 
-    /** Compara artistas token por token (soporta "Tito Double P, Peso Pluma" vs "Peso Pluma") */
     private fun artistMatches(normRequested: String, normEntry: String): Boolean {
         if (normRequested == normEntry) return true
         val requestedTokens =
@@ -321,20 +357,9 @@ object CustomCanvasProvider {
         }
     }
 
-    /**
-     * Compara álbumes. Si "normRequested" viene vacío (no se pudo resolver el
-     * álbum real desde el reproductor), intenta matchear por canción o
-     * simplemente usa el álbum de la entrada.
-     */
     private fun albumMatches(normRequested: String, normEntry: String): Boolean {
-        // Si la entrada no tiene álbum, solo matchea si el requested también está vacío
         if (normEntry.isBlank()) return normRequested.isBlank()
-
-        // Si el requested está vacío (no tenemos álbum real), consideramos que
-        // cualquier entrada con álbum puede ser válida, siempre que el artista coincida
         if (normRequested.isBlank()) return true
-
-        // Matcheo normal
         return normEntry == normRequested ||
                 normEntry.contains(normRequested) ||
                 normRequested.contains(normEntry)

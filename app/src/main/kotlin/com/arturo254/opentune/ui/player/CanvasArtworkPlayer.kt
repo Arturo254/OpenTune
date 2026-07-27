@@ -25,9 +25,11 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.arturo254.opentune.canvas.CanvasCacheManager
 import com.arturo254.opentune.innertube.YouTube
 import com.arturo254.opentune.innertube.models.YouTubeClient
 import okhttp3.OkHttpClient
+import timber.log.Timber
 import java.util.Locale
 
 @Composable
@@ -42,8 +44,34 @@ internal fun CanvasArtworkPlayer(
     val primary = primaryUrl?.takeIf { it.isNotBlank() }
     val fallback = fallbackUrl?.takeIf { it.isNotBlank() }
     val initial = primary ?: fallback ?: return
+
     var currentUrl by remember(initial) { mutableStateOf(initial) }
     var isVideoReady by remember(initial) { mutableStateOf(false) }
+    var localFilePath by remember(initial) { mutableStateOf<String?>(null) }
+    var isLocalFile by remember(initial) { mutableStateOf(false) }
+
+    LaunchedEffect(primaryUrl) {
+        if (primaryUrl != null) {
+            val cached = CanvasCacheManager.getCachedCanvasByUrl(primaryUrl)
+            if (cached != null) {
+                localFilePath = cached.filePath
+                isLocalFile = true
+                Timber.d("🎵 CanvasArtworkPlayer - Usando caché local: ${cached.filePath}")
+            } else {
+                localFilePath = null
+                isLocalFile = false
+            }
+        }
+    }
+
+    // ✅ Usar archivo local si existe, sino la URL
+    val finalUri = if (isLocalFile && localFilePath != null) {
+        localFilePath
+    } else {
+        currentUrl
+    }
+
+    if (finalUri == null) return
 
     val okHttpClient =
         remember {
@@ -92,6 +120,7 @@ internal fun CanvasArtworkPlayer(
                 }
                 .build()
         }
+
     val mediaSourceFactory =
         remember(okHttpClient) {
             DefaultMediaSourceFactory(
@@ -101,8 +130,9 @@ internal fun CanvasArtworkPlayer(
                 ),
             )
         }
+
     val exoPlayer =
-        remember(initial, mediaSourceFactory) {
+        remember(finalUri, mediaSourceFactory) {
             ExoPlayer.Builder(context)
                 .setMediaSourceFactory(mediaSourceFactory)
                 .build()
@@ -139,6 +169,7 @@ internal fun CanvasArtworkPlayer(
                     if (!next.isNullOrBlank()) {
                         currentUrl = next
                         isVideoReady = false
+                        isLocalFile = false
                     }
                 }
 
