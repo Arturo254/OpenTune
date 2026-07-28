@@ -135,6 +135,7 @@ import com.arturo254.opentune.constants.PlayerDesignStyleKey
 import com.arturo254.opentune.constants.UseNewMiniPlayerDesignKey
 import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerBackgroundStyleKey
+import com.arturo254.opentune.constants.EnableLiquidGlassKey
 import com.arturo254.opentune.constants.PlayerCustomImageUriKey
 import com.arturo254.opentune.constants.PlayerCustomBlurKey
 import com.arturo254.opentune.constants.PlayerCustomContrastKey
@@ -341,7 +342,12 @@ fun BottomSheetPlayer(
                 if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
             useDarkTheme && pureBlack
         }
-    val backgroundColor = if (useBlackBackground && state.value > state.collapsedBound) {
+    val enableLiquidGlass by rememberPreference(EnableLiquidGlassKey, defaultValue = false)
+    val backgroundColor = if (enableLiquidGlass) {
+        val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
+            .coerceIn(0f, 1f)
+        Color.White.copy(alpha = 0.1f * progress)
+    } else if (useBlackBackground && state.value > state.collapsedBound) {
         val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
             .coerceIn(0f, 1f)
         Color.Black.copy(alpha = progress)

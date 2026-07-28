@@ -93,6 +93,7 @@ import com.arturo254.opentune.constants.CropThumbnailToSquareKey
 import com.arturo254.opentune.constants.DisableBlurKey
 import com.arturo254.opentune.constants.EnableHapticFeedbackKey
 import com.arturo254.opentune.constants.LiquidGlassNavBarKey
+import com.arturo254.opentune.constants.EnableLiquidGlassKey
 import com.arturo254.opentune.constants.PlayerFullscreenKey
 import com.arturo254.opentune.constants.UseLyricsV2Key
 import com.arturo254.opentune.ui.component.DefaultDialog
@@ -127,6 +128,10 @@ fun AppearanceSettings(
     val (darkMode, onDarkModeChange) = rememberEnumPreference(
         DarkModeKey,
         defaultValue = DarkMode.AUTO
+    )
+    val (enableLiquidGlass, onEnableLiquidGlassChange) = rememberPreference(
+        EnableLiquidGlassKey,
+        defaultValue = false
     )
     val (playerDesignStyle, onPlayerDesignStyleChange) = rememberEnumPreference(
         PlayerDesignStyleKey,
@@ -367,26 +372,49 @@ fun AppearanceSettings(
             )
         }
 
+        SwitchPreference(
+            title = { Text(stringResource(R.string.enable_liquid_glass)) },
+            description = stringResource(R.string.enable_liquid_glass_desc),
+            icon = { Icon(painterResource(R.drawable.palette), null) },
+            checked = enableLiquidGlass,
+            onCheckedChange = { newValue ->
+                onEnableLiquidGlassChange(newValue)
+                if (newValue) {
+                    onDarkModeChange(DarkMode.ON)
+                }
+            },
+        )
+
         EnumListPreference(
             title = { Text(stringResource(R.string.dark_theme)) },
             icon = { Icon(painterResource(R.drawable.dark_mode), null) },
-            selectedValue = darkMode,
+            selectedValue = if (enableLiquidGlass) DarkMode.ON else darkMode,
             onValueSelected = onDarkModeChange,
             valueText = {
-                when (it) {
-                    DarkMode.ON -> stringResource(R.string.dark_theme_on)
-                    DarkMode.OFF -> stringResource(R.string.dark_theme_off)
-                    DarkMode.AUTO -> stringResource(R.string.dark_theme_follow_system)
+                if (enableLiquidGlass) {
+                    stringResource(R.string.dark_theme_on)
+                } else {
+                    when (it) {
+                        DarkMode.ON -> stringResource(R.string.dark_theme_on)
+                        DarkMode.OFF -> stringResource(R.string.dark_theme_off)
+                        DarkMode.AUTO -> stringResource(R.string.dark_theme_follow_system)
+                    }
                 }
             },
+            isEnabled = !enableLiquidGlass
         )
 
         AnimatedVisibility(useDarkTheme) {
             SwitchPreference(
                 title = { Text(stringResource(R.string.pure_black)) },
                 icon = { Icon(painterResource(R.drawable.contrast), null) },
-                checked = pureBlack,
-                onCheckedChange = onPureBlackChange,
+                checked = pureBlack && useDarkTheme && !enableLiquidGlass,
+                onCheckedChange = { newValue ->
+                    if (useDarkTheme && !enableLiquidGlass) {
+                        onPureBlackChange(newValue)
+                    }
+                },
+                isEnabled = useDarkTheme && !enableLiquidGlass
             )
         }
 
