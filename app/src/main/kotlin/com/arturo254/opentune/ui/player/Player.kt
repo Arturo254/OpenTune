@@ -423,7 +423,7 @@ fun BottomSheetPlayer(
     }
 
     LaunchedEffect(mediaMetadata?.id, playerBackground, playerDesignStyle) {
-        if (playerDesignStyle == PlayerDesignStyle.SPOTIFY || playerBackground == PlayerBackgroundStyle.GRADIENT || playerBackground == PlayerBackgroundStyle.COLORING || playerBackground == PlayerBackgroundStyle.BLUR_GRADIENT || playerBackground == PlayerBackgroundStyle.GLOW || playerBackground == PlayerBackgroundStyle.GLOW_ANIMATED) {
+        if (playerDesignStyle == PlayerDesignStyle.SPOTIFY || playerBackground == PlayerBackgroundStyle.SPOTIFY || playerBackground == PlayerBackgroundStyle.GRADIENT || playerBackground == PlayerBackgroundStyle.COLORING || playerBackground == PlayerBackgroundStyle.BLUR_GRADIENT || playerBackground == PlayerBackgroundStyle.GLOW || playerBackground == PlayerBackgroundStyle.GLOW_ANIMATED) {
             val currentMetadata = mediaMetadata
             if (currentMetadata != null && currentMetadata.thumbnailUrl != null) {
                 // Check cache first
@@ -488,6 +488,7 @@ fun BottomSheetPlayer(
             PlayerBackgroundStyle.GLOW -> Color.White
             PlayerBackgroundStyle.GLOW_ANIMATED -> Color.White
             PlayerBackgroundStyle.CUSTOM -> Color.White
+            PlayerBackgroundStyle.SPOTIFY -> Color.White
         }
 
     val icBackgroundColor =
@@ -501,6 +502,7 @@ fun BottomSheetPlayer(
             PlayerBackgroundStyle.GLOW -> Color.Black
             PlayerBackgroundStyle.GLOW_ANIMATED -> Color.Black
             PlayerBackgroundStyle.CUSTOM -> Color.Black
+            PlayerBackgroundStyle.SPOTIFY -> Color.Black
         }
 
     val (textButtonColor, iconButtonColor) = when (playerButtonsStyle) {
@@ -1253,6 +1255,10 @@ fun BottomSheetPlayer(
                                     surfaceColor = MaterialTheme.colorScheme.surfaceContainer,
                                     isLiked = currentSongLiked,
                                     onLike = playerConnection::toggleLike,
+                                    onOpenArtist = { artistId ->
+                                        navController.navigate("artist/$artistId")
+                                        state.collapseSoft()
+                                    },
                                     onOpenMenu = {
                                         menuState.show {
                                             PlayerMenu(
@@ -1570,6 +1576,10 @@ fun BottomSheetPlayer(
                                     surfaceColor = MaterialTheme.colorScheme.surfaceContainer,
                                     isLiked = currentSongLiked,
                                     onLike = playerConnection::toggleLike,
+                                    onOpenArtist = { artistId ->
+                                        navController.navigate("artist/$artistId")
+                                        state.collapseSoft()
+                                    },
                                     onOpenMenu = {
                                         menuState.show {
                                             PlayerMenu(

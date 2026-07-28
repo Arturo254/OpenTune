@@ -117,6 +117,7 @@
     <string name="coloring">Coloring</string>
     <string name="blur_gradient">Blur Gradient</string>
     <string name="glow">Glow</string>
+    <string name="player_background_spotify">Spotify Blur</string>
     <string name="player_buttons_style">Player button colors</string>
     <string name="default_style">Default</string>
     <string name="secondary_color_style">Secondary</string>

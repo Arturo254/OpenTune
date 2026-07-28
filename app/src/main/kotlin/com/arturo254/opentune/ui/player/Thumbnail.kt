@@ -298,6 +298,7 @@ fun Thumbnail(
         PlayerBackgroundStyle.GLOW -> Color.White
         PlayerBackgroundStyle.GLOW_ANIMATED -> Color.White
         PlayerBackgroundStyle.CUSTOM -> Color.White
+        PlayerBackgroundStyle.SPOTIFY -> Color.White
     }
 
     LaunchedEffect(maxCanvasCacheSize) {

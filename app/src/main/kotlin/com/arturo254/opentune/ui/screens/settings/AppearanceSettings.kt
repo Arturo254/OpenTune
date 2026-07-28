@@ -488,6 +488,7 @@ fun AppearanceSettings(
                     PlayerBackgroundStyle.BLUR_GRADIENT -> stringResource(R.string.blur_gradient)
                     PlayerBackgroundStyle.GLOW -> stringResource(R.string.glow)
                     PlayerBackgroundStyle.GLOW_ANIMATED -> "Glow Animated"
+                    PlayerBackgroundStyle.SPOTIFY -> stringResource(R.string.player_background_spotify)
                 }
             },
         )

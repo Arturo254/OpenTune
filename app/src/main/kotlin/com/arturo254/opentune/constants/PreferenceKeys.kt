@@ -422,6 +422,7 @@ enum class PlayerBackgroundStyle {
     BLUR_GRADIENT,
     GLOW,
     GLOW_ANIMATED,
+    SPOTIFY
 }
 
 // Keys for customized background

@@ -2731,6 +2731,14 @@ fun PlayerBackground(
                 }
             }
 
+            PlayerBackgroundStyle.SPOTIFY -> {
+                SpotifyPlayerBackdrop(
+                    thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                    accentColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
             else -> {
                 // DEFAULT or other modes - no background
             }
@@ -3444,6 +3452,7 @@ fun SpotifyCollapsedHeader(
     isLiked: Boolean,
     onLike: () -> Unit,
     onOpenMenu: () -> Unit,
+    onOpenArtist: (String) -> Unit = {},
 ) {
     Row(
         modifier = Modifier
@@ -3472,14 +3481,20 @@ fun SpotifyCollapsedHeader(
                 modifier = Modifier.basicMarquee(),
             )
             Spacer(Modifier.height(2.dp))
-            Text(
-                text = mediaMetadata.artists.joinToString { it.name },
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.Normal),
-                color = Color.White.copy(alpha = 0.68f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.basicMarquee(),
-            )
+            Row(modifier = Modifier.basicMarquee()) {
+                mediaMetadata.artists.forEachIndexed { index, artist ->
+                    Text(
+                        text = artist.name + if (index < mediaMetadata.artists.lastIndex) ", " else "",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.Normal),
+                        color = Color.White.copy(alpha = 0.68f),
+                        modifier = Modifier.clickable {
+                            artist.id?.let { artistId ->
+                                if (artistId.isNotBlank()) onOpenArtist(artistId)
+                            }
+                        }
+                    )
+                }
+            }
         }
         Spacer(Modifier.width(16.dp))
         SpotifyRoundIconButton(
@@ -3636,14 +3651,20 @@ fun SpotifyPlayerContent(
                 modifier = Modifier.basicMarquee()
             )
             Spacer(Modifier.height(4.dp))
-            Text(
-                text = artists,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, fontWeight = FontWeight.Normal),
-                color = Color.White.copy(alpha = 0.68f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.basicMarquee()
-            )
+            Row(modifier = Modifier.basicMarquee()) {
+                mediaMetadata.artists.forEachIndexed { index, artist ->
+                    Text(
+                        text = artist.name + if (index < mediaMetadata.artists.lastIndex) ", " else "",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, fontWeight = FontWeight.Normal),
+                        color = Color.White.copy(alpha = 0.68f),
+                        modifier = Modifier.clickable {
+                            artist.id?.let { artistId ->
+                                if (artistId.isNotBlank()) onOpenArtist(artistId)
+                            }
+                        }
+                    )
+                }
+            }
         }
         SpotifyRoundIconButton(
             icon = if (isLiked) R.drawable.favorite else R.drawable.favorite_border,
