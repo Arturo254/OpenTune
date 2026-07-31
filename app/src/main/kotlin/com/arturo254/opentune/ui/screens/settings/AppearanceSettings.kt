@@ -881,6 +881,7 @@ fun AppearanceSettings(
                     LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
                     LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
                     LibraryFilter.SPOTIFY -> stringResource(R.string.spotify)
+                    LibraryFilter.ON_DEVICE -> stringResource(R.string.filter_on_device)
                 }
             },
             onValueSelected = onDefaultChipChange,

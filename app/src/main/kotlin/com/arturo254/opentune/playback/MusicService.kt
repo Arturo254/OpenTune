@@ -4300,6 +4300,12 @@ class MusicService :
 
     private fun createDataSourceFactory(): DataSource.Factory {
         return ResolvingDataSource.Factory(createCacheDataSource()) { dataSpec ->
+            // Local on-device files already carry their real content:// URI (see
+            // Song.toMediaItem()) — skip YouTube stream resolution entirely for them.
+            if (dataSpec.uri.scheme == "content") {
+                return@Factory dataSpec
+            }
+
             val mediaId = dataSpec.key ?: error("No media id")
 
             val requiredCachedLength =
