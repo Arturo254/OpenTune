@@ -14,5 +14,6 @@ enum class LibraryFilter {
     ALBUMS,
     PLAYLISTS,
     LIBRARY,
-    SPOTIFY
+    SPOTIFY,
+    ON_DEVICE
 }

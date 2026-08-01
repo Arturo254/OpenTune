@@ -63,7 +63,8 @@ fun LibraryScreen(navController: NavController) {
                         LibraryFilter.SONGS to stringResource(R.string.filter_songs),
                         LibraryFilter.ALBUMS to stringResource(R.string.filter_albums),
                         LibraryFilter.ARTISTS to stringResource(R.string.filter_artists),
-                        LibraryFilter.SPOTIFY to stringResource(R.string.spotify)
+                        LibraryFilter.SPOTIFY to stringResource(R.string.spotify),
+                        LibraryFilter.ON_DEVICE to stringResource(R.string.filter_on_device)
                     ),
                     currentValue = filterType,
                     onValueUpdate = {
@@ -79,7 +80,8 @@ fun LibraryScreen(navController: NavController) {
                         LibraryFilter.SONGS to R.drawable.music_note,
                         LibraryFilter.ALBUMS to R.drawable.album,
                         LibraryFilter.ARTISTS to R.drawable.person,
-                        LibraryFilter.SPOTIFY to R.drawable.spotify_icon
+                        LibraryFilter.SPOTIFY to R.drawable.spotify_icon,
+                        LibraryFilter.ON_DEVICE to R.drawable.folder
                     ),
                     modifier = Modifier.weight(1f),
                 )
@@ -246,6 +248,11 @@ fun LibraryScreen(navController: NavController) {
                     filterContent = filterContent
                 )
             }
+
+            LibraryFilter.ON_DEVICE -> LocalSongsScreen(
+                navController,
+                { filterType = LibraryFilter.LIBRARY }
+            )
         }
     }
 }

@@ -28,7 +28,7 @@ fun Song.toMediaItem() =
     MediaItem
         .Builder()
         .setMediaId(song.id)
-        .setUri(song.id)
+        .setUri(if (song.isLocal && song.localPath != null) song.localPath.toUri() else song.id.toUri())
         .setCustomCacheKey(song.id)
         .setTag(toMediaMetadata())
         .setMediaMetadata(

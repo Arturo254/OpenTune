@@ -47,21 +47,28 @@ data class SongEntity(
     val inLibrary: LocalDateTime? = null,
     val dateDownload: LocalDateTime? = LocalDateTime.now(),
     @ColumnInfo(name = "isLocal", defaultValue = "0")
-    val isLocal: Boolean = false
+    val isLocal: Boolean = false,
+    @ColumnInfo(name = "localPath")
+    val localPath: String? = null
 ) {
     fun localToggleLike() = copy(
         liked = !liked,
         likedDate = if (!liked) LocalDateTime.now() else null,
     )
 
-    fun toggleLike() = copy(
-        liked = !liked,
-        likedDate = if (!liked) LocalDateTime.now() else null,
-        inLibrary = if (!liked) inLibrary ?: LocalDateTime.now() else inLibrary
-    ).also {
-        CoroutineScope(Dispatchers.IO).launch {
-            YouTube.likeVideo(id, !liked)
-            this.cancel()
+    fun toggleLike(): SongEntity {
+        // Local on-device songs have no YouTube video to like — just flip the flag.
+        if (isLocal) return localToggleLike()
+
+        return copy(
+            liked = !liked,
+            likedDate = if (!liked) LocalDateTime.now() else null,
+            inLibrary = if (!liked) inLibrary ?: LocalDateTime.now() else inLibrary
+        ).also {
+            CoroutineScope(Dispatchers.IO).launch {
+                YouTube.likeVideo(id, !liked)
+                this.cancel()
+            }
         }
     }
 

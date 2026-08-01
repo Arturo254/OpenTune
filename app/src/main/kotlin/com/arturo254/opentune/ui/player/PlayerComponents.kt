@@ -252,7 +252,8 @@ fun PlayerTopActions(
     state: BottomSheetState,
     bottomSheetPageState: BottomSheetPageState,
     context: Context,
-    currentSongLiked: Boolean
+    currentSongLiked: Boolean,
+    isLocalSong: Boolean = false
 ) {
     when (playerDesignStyle) {
         PlayerDesignStyle.V2 -> {
@@ -270,6 +271,7 @@ fun PlayerTopActions(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (!isLocalSong) {
                 Box(
                     modifier = Modifier
                         .size(42.dp)
@@ -295,6 +297,7 @@ fun PlayerTopActions(
                             .align(Alignment.Center)
                             .size(24.dp)
                     )
+                }
                 }
 
                 Box(
@@ -327,6 +330,7 @@ fun PlayerTopActions(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (!isLocalSong) {
                 Box(
                     modifier = Modifier
                         .size(36.dp)
@@ -350,6 +354,7 @@ fun PlayerTopActions(
                         tint = textBackgroundColor.copy(alpha = 0.7f),
                         modifier = Modifier.size(20.dp)
                     )
+                }
                 }
                 Box(
                     modifier = Modifier
@@ -378,6 +383,7 @@ fun PlayerTopActions(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (!isLocalSong) {
                 Surface(
                     onClick = {
                         val intent = Intent().apply {
@@ -404,6 +410,7 @@ fun PlayerTopActions(
                             modifier = Modifier.size(22.dp)
                         )
                     }
+                }
                 }
 
                 Surface(
@@ -469,6 +476,7 @@ fun PlayerTopActions(
         }
 
         PlayerDesignStyle.V1 -> {
+            if (!isLocalSong) {
             Box(
                 modifier =
                     Modifier
@@ -497,6 +505,7 @@ fun PlayerTopActions(
                             .align(Alignment.Center)
                             .size(24.dp),
                 )
+            }
             }
 
             Spacer(modifier = Modifier.size(12.dp))
@@ -539,6 +548,7 @@ fun PlayerTopActions(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (!isLocalSong) {
                 Surface(
                     onClick = {
                         val intent = Intent().apply {
@@ -568,6 +578,7 @@ fun PlayerTopActions(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                }
                 }
 
                 Surface(
@@ -2195,7 +2206,8 @@ fun PlayerControlsContent(
             state = state,
             bottomSheetPageState = bottomSheetPageState,
             context = context,
-            currentSongLiked = currentSongLiked
+            currentSongLiked = currentSongLiked,
+            isLocalSong = currentSong?.song?.isLocal == true
         )
     }
 
