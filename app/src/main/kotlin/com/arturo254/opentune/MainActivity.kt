@@ -136,6 +136,7 @@ import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import android.net.Uri
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -209,6 +210,7 @@ import com.arturo254.opentune.innertube.models.ArtistItem
 import com.arturo254.opentune.innertube.models.PlaylistItem
 import com.arturo254.opentune.innertube.models.SongItem
 import com.arturo254.opentune.extensions.toMediaItem
+import com.arturo254.opentune.utils.LocalMediaScanner
 import com.arturo254.opentune.models.toMediaMetadata
 import com.arturo254.opentune.playback.DownloadUtil
 import com.arturo254.opentune.playback.MusicService
@@ -328,6 +330,39 @@ class MainActivity : ComponentActivity() {
     private data class PendingDeepLinkSong(
         val mediaItem: MediaItem,
     )
+
+    private fun playLocalAudioUri(uri: Uri) {
+        runCatching {
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        lifecycleScope.launch {
+            // Upsert into the library DB (like the "On Device" scanner does) rather than
+            // building a standalone MediaItem: now-playing state, the notification, the queue
+            // UI and duration are all driven off `database.song(mediaId)` lookups in
+            // MusicService, so an item that isn't in the DB shows up with no metadata at all.
+            val song = runCatching {
+                LocalMediaScanner.scanUri(this@MainActivity, database, uri)
+            }.getOrNull()
+
+            val mediaItem = song?.toMediaItem() ?: MediaItem
+                .Builder()
+                .setMediaId("LMOPEN${uri.hashCode()}")
+                .setUri(uri)
+                .setMediaMetadata(
+                    androidx.media3.common.MediaMetadata
+                        .Builder()
+                        .setTitle(uri.lastPathSegment ?: "Unknown")
+                        .setArtist("Unknown artist")
+                        .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
+                        .build(),
+                ).build()
+
+            pendingDeepLinkSong = PendingDeepLinkSong(mediaItem = mediaItem)
+            startMusicServiceSafely()
+            playPendingDeepLinkSongIfReady()
+        }
+    }
 
     private fun playPendingDeepLinkSongIfReady() {
         val pending = pendingDeepLinkSong ?: return
@@ -1958,8 +1993,17 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        val uri = intent.data ?: intent.extras?.getString(Intent.EXTRA_TEXT)?.toUri() ?: return
+        val uri = intent.data
+            ?: (intent.extras?.get(Intent.EXTRA_STREAM) as? Uri)
+            ?: intent.extras?.getString(Intent.EXTRA_TEXT)?.toUri()
+            ?: return
         val coroutineScope = lifecycleScope
+
+        val mimeType = intent.type ?: contentResolver.getType(uri)
+        if ((uri.scheme == "content" || uri.scheme == "file") && mimeType?.startsWith("audio/") == true) {
+            playLocalAudioUri(uri)
+            return
+        }
 
         val authority = uri.authority?.lowercase()
         if (uri.scheme.equals("OpenTune", ignoreCase = true) && authority == "together") {

@@ -151,6 +151,7 @@ fun ColumnScope.PlayerMenu(
     val activityResultLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
     val librarySong by database.song(mediaMetadata.id).collectAsState(initial = null)
+    val isLocalSong = librarySong?.song?.isLocal == true
     val coroutineScope = rememberCoroutineScope()
 
     val download by LocalDownloadUtil.current.getDownload(mediaMetadata.id)
@@ -395,23 +396,28 @@ fun ColumnScope.PlayerMenu(
         // ── Acciones rápidas ─────────────────────────────────────────────────
         item {
             NewActionGrid(
-                actions = listOf(
-                    NewAction(
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.radio),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        text = stringResource(R.string.start_radio),
-                        onClick = {
-                            Toast.makeText(context, context.getString(R.string.starting_radio), Toast.LENGTH_SHORT).show()
-                            playerConnection.startRadioSeamlessly()
-                            onDismiss()
-                        }
-                    ),
+                actions = listOfNotNull(
+                    // Radio and copying a YouTube Music link don't apply to on-device files.
+                    if (isLocalSong) {
+                        null
+                    } else {
+                        NewAction(
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.radio),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            text = stringResource(R.string.start_radio),
+                            onClick = {
+                                Toast.makeText(context, context.getString(R.string.starting_radio), Toast.LENGTH_SHORT).show()
+                                playerConnection.startRadioSeamlessly()
+                                onDismiss()
+                            }
+                        )
+                    },
                     NewAction(
                         icon = {
                             Icon(
@@ -449,27 +455,31 @@ fun ColumnScope.PlayerMenu(
                             onDismiss()
                         }
                     ),
-                    NewAction(
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.link),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        text = stringResource(R.string.copy_link),
-                        onClick = {
-                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                            val clip = android.content.ClipData.newPlainText(
-                                context.getString(R.string.copy_link),
-                                "https://music.youtube.com/watch?v=${mediaMetadata.id}",
-                            )
-                            clipboard.setPrimaryClip(clip)
-                            android.widget.Toast.makeText(context, R.string.link_copied, android.widget.Toast.LENGTH_SHORT).show()
-                            onDismiss()
-                        }
-                    ),
+                    if (isLocalSong) {
+                        null
+                    } else {
+                        NewAction(
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.link),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            text = stringResource(R.string.copy_link),
+                            onClick = {
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                val clip = android.content.ClipData.newPlainText(
+                                    context.getString(R.string.copy_link),
+                                    "https://music.youtube.com/watch?v=${mediaMetadata.id}",
+                                )
+                                clipboard.setPrimaryClip(clip)
+                                android.widget.Toast.makeText(context, R.string.link_copied, android.widget.Toast.LENGTH_SHORT).show()
+                                onDismiss()
+                            }
+                        )
+                    },
                     NewAction(
                         icon = {
                             Icon(
@@ -513,7 +523,7 @@ fun ColumnScope.PlayerMenu(
         item { Spacer(modifier = Modifier.height(12.dp)) }
 
         // ── Artista / Álbum ──────────────────────────────────────────────────
-        if (splitArtists.isNotEmpty() || mediaMetadata.album != null) {
+        if (!isLocalSong && (splitArtists.isNotEmpty() || mediaMetadata.album != null)) {
             item {
                 MenuSurfaceSection(modifier = Modifier.padding(vertical = 6.dp)) {
                     Column {
@@ -564,6 +574,8 @@ fun ColumnScope.PlayerMenu(
         }
 
         // ── Descarga ─────────────────────────────────────────────────────────
+        // Downloading a copy of a file that's already on-device is meaningless.
+        if (!isLocalSong) {
         item {
             MenuSurfaceSection(modifier = Modifier.padding(vertical = 6.dp)) {
                 when (download?.state) {
@@ -639,11 +651,15 @@ fun ColumnScope.PlayerMenu(
                 }
             }
         }
+        }
 
         // ── Detalles / Ecualizador / Tempo ───────────────────────────────────
         item {
             MenuSurfaceSection(modifier = Modifier.padding(vertical = 6.dp)) {
                 Column {
+                    // Format/codec details come from the YouTube stream response and don't
+                    // exist for a local file.
+                    if (!isLocalSong) {
                     ListItem(
                         headlineContent = { Text(text = stringResource(R.string.details)) },
                         leadingContent = { Icon(painter = painterResource(R.drawable.info), contentDescription = null) },
@@ -653,6 +669,7 @@ fun ColumnScope.PlayerMenu(
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     )
+                    }
 
                     if (isQueueTrigger != true) {
                         HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant)
