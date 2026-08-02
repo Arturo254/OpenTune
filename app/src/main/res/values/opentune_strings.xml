@@ -475,4 +475,19 @@
     <string name="playback">Playback</string>
     <string name="jossred_fallback_label">Use alternative source</string>
     <string name="jossred_fallback_description">Attempt to play from JossRed if YouTube fails</string>
+
+    <string name="search_folders">Search folders...</string>
+    <string name="folders">folders</string>
+    <string name="no_folders_found">No folders found</string>
+    <string name="show_all_folders">Show all folders</string>
+    <string name="filter_folders">Filter by folders</string>
+    <string name="filter_by_folders">Filter by folders</string>
+    <string name="select_folders_to_display">Select the folders you want to display</string>
+    <string name="all_folders">All folders</string>
+    <string name="folders_selected">Selected folders</string>
+    <string name="no_songs_in_selected_folders">No songs in the selected folders</string>
+    <string name="apply_filter">Apply</string>
+    <string name="scanning_media">Scanning media</string>
+    <string name="please_wait_scanning">Please wait while we scan your device for music</string>
+    <string name="all_folders_visible">All folders are visible</string>
 </resources>

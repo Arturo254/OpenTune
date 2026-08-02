@@ -4,8 +4,6 @@
  * Licensed Under GPL-3.0 | see git history for contributors
  */
 
-
-
 package com.arturo254.opentune.utils
 
 import android.content.ContentUris
@@ -53,6 +51,7 @@ object LocalMediaScanner {
             MediaStore.Audio.Media.YEAR,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.DATE_MODIFIED,
+            MediaStore.Audio.Media.DATA, // Ruta del archivo
         )
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
 
@@ -73,6 +72,7 @@ object LocalMediaScanner {
             val yearCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
             val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val dateModifiedCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
+            val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
 
             while (cursor.moveToNext()) {
                 val mediaStoreId = cursor.getLong(idCol)
@@ -89,6 +89,7 @@ object LocalMediaScanner {
                 val thumbnailUrl = ContentUris.withAppendedId(ALBUM_ART_URI, albumId).toString()
                 val durationMs = cursor.getLong(durationCol)
                 val dateModifiedSec = cursor.getLong(dateModifiedCol)
+                val filePath = cursor.getString(dataCol)
 
                 // MediaStore's tag indexing misses/mislabels artists on plenty of real-world
                 // files (untagged rips, unusual encoders); fall back to reading ID3/Vorbis/etc
@@ -112,6 +113,13 @@ object LocalMediaScanner {
                     null
                 }
 
+                // Guardar la ruta completa del archivo
+                val localPath = if (!filePath.isNullOrBlank()) {
+                    Uri.fromFile(File(filePath)).toString()
+                } else {
+                    contentUri.toString()
+                }
+
                 upsertLocalSong(
                     database = database,
                     songId = songId,
@@ -122,7 +130,7 @@ object LocalMediaScanner {
                     albumName = albumName,
                     year = year,
                     dateModified = dateModified,
-                    localPath = contentUri.toString(),
+                    localPath = localPath,
                     now = now,
                 )
 
@@ -131,6 +139,59 @@ object LocalMediaScanner {
         }
         count
     }
+
+    /**
+     * Obtiene las carpetas disponibles que contienen música
+     * Usa el campo localPath de SongEntity
+     */
+    suspend fun getAvailableFolders(database: MusicDatabase): List<String> =
+        withContext(Dispatchers.IO) {
+            try {
+                // Obtener todas las canciones locales
+                val allSongs = database.localSongs().first()
+
+                // Extraer carpetas de las rutas de las canciones
+                val folders = allSongs.mapNotNull { songItem ->
+                    // Obtener el localPath directamente de SongEntity
+                    val localPath = songItem.song.localPath
+                    // Verificar que no sea null o vacío
+                    if (!localPath.isNullOrBlank()) {
+                        try {
+                            val uri = android.net.Uri.parse(localPath)
+                            val filePath = uri.path
+                            // Verificar que no sea null o vacío
+                            if (!filePath.isNullOrBlank()) {
+                                val file = File(filePath)
+                                val parent = file.parent
+                                // Verificar que no sea null o vacío
+                                if (!parent.isNullOrBlank()) {
+                                    // Extraer solo el nombre de la última carpeta para mostrar
+                                    val folderName = File(parent).name
+                                    if (folderName.isNotBlank()) {
+                                        folderName
+                                    } else {
+                                        parent
+                                    }
+                                } else {
+                                    null
+                                }
+                            } else {
+                                null
+                            }
+                        } catch (e: Exception) {
+                            null
+                        }
+                    } else {
+                        null
+                    }
+                }.distinct().sorted()
+
+                folders
+            } catch (e: Exception) {
+                // Si hay error, devolver lista vacía
+                emptyList()
+            }
+        }
 
     /**
      * Scans a single, arbitrary content/file [uri] (e.g. from a file manager's "Open with") and
@@ -185,9 +246,9 @@ object LocalMediaScanner {
         now: LocalDateTime,
     ) {
         database.withTransaction {
-            val existing = song(songId).first()
+            val existing = database.song(songId).first()
 
-            upsert(
+            database.upsert(
                 SongEntity(
                     id = songId,
                     title = title,
@@ -196,22 +257,24 @@ object LocalMediaScanner {
                     albumName = albumName,
                     year = year,
                     dateModified = dateModified,
-                    inLibrary = existing?.song?.inLibrary ?: now,
                     liked = existing?.song?.liked ?: false,
                     likedDate = existing?.song?.likedDate,
+                    inLibrary = existing?.song?.inLibrary ?: now,
+                    totalPlayTime = existing?.song?.totalPlayTime ?: 0,
                     isLocal = true,
                     localPath = localPath,
                 ),
             )
 
-            val currentMaps = songArtistMap(songId)
-            val currentArtistNames = currentMaps.mapNotNull { artist(it.artistId).first()?.artist?.name }
+            val currentMaps = database.songArtistMap(songId)
+            val currentArtistNames =
+                currentMaps.mapNotNull { database.artist(it.artistId).first()?.artist?.name }
             if (currentMaps.isEmpty() || currentArtistNames != listOf(artistName)) {
-                currentMaps.forEach { delete(it) }
-                val artistId = artistByName(artistName)?.id
+                currentMaps.forEach { database.delete(it) }
+                val artistId = database.artistByName(artistName)?.id
                     ?: ArtistEntity.generateArtistId()
-                insert(ArtistEntity(id = artistId, name = artistName))
-                insert(SongArtistMap(songId = songId, artistId = artistId, position = 0))
+                database.insert(ArtistEntity(id = artistId, name = artistName))
+                database.insert(SongArtistMap(songId = songId, artistId = artistId, position = 0))
             }
         }
     }
