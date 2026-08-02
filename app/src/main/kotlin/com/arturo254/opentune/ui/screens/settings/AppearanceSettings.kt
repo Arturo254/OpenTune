@@ -82,6 +82,7 @@ import com.arturo254.opentune.constants.ShowDownloadedPlaylistKey
 import com.arturo254.opentune.constants.ShowHomeCategoryChipsKey
 import com.arturo254.opentune.constants.ShowTopPlaylistKey
 import com.arturo254.opentune.constants.ShowCachedPlaylistKey
+import com.arturo254.opentune.constants.ShowLocalPlaylistKey
 import com.arturo254.opentune.constants.ShowTagsInLibraryKey
 import com.arturo254.opentune.constants.SwipeThumbnailKey
 import com.arturo254.opentune.constants.SwipeSensitivityKey
@@ -232,6 +233,10 @@ fun AppearanceSettings(
     )
     val (showCachedPlaylist, onShowCachedPlaylistChange) = rememberPreference(
         ShowCachedPlaylistKey,
+        defaultValue = true
+    )
+    val (showLocalPlaylist, onShowLocalPlaylistChange) = rememberPreference(
+        ShowLocalPlaylistKey,
         defaultValue = true
     )
     val (showTagsInLibrary, onShowTagsInLibraryChange) = rememberPreference(
@@ -975,6 +980,13 @@ fun AppearanceSettings(
             icon = { Icon(painterResource(R.drawable.cached), null) },
             checked = showCachedPlaylist,
             onCheckedChange = onShowCachedPlaylistChange
+        )
+
+        SwitchPreference(
+            title = { Text(stringResource(R.string.filter_on_device)) },
+            icon = { Icon(painterResource(R.drawable.folder), null) },
+            checked = showLocalPlaylist,
+            onCheckedChange = onShowLocalPlaylistChange
         )
     }
 

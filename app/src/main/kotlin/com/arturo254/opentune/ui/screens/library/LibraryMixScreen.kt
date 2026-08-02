@@ -87,6 +87,7 @@ import com.arturo254.opentune.constants.PlaylistTagsFilterKey
 import com.arturo254.opentune.constants.ShowCachedPlaylistKey
 import com.arturo254.opentune.constants.ShowDownloadedPlaylistKey
 import com.arturo254.opentune.constants.ShowLikedPlaylistKey
+import com.arturo254.opentune.constants.ShowLocalPlaylistKey
 import com.arturo254.opentune.constants.ShowSpotifyPlaylistsKey
 import com.arturo254.opentune.constants.ShowTopPlaylistKey
 import com.arturo254.opentune.constants.YtmSyncKey
@@ -168,12 +169,14 @@ fun LibraryMixScreen(
     val (showDownloaded) = rememberPreference(ShowDownloadedPlaylistKey, true)
     val (showTop) = rememberPreference(ShowTopPlaylistKey, true)
     val (showCached) = rememberPreference(ShowCachedPlaylistKey, true)
+    val (showLocal) = rememberPreference(ShowLocalPlaylistKey, true)
 
     val topSize by viewModel.topValue.collectAsState(initial = "50")
     val likedTitle = stringResource(R.string.liked)
     val downloadedTitle = stringResource(R.string.offline)
     val cachedTitle = stringResource(R.string.cached_playlist)
     val topTitle = stringResource(R.string.my_top) + " $topSize"
+    val localTitle = stringResource(R.string.filter_on_device)
 
     val collator = remember {
         Collator.getInstance(Locale.getDefault()).apply {
@@ -244,6 +247,16 @@ fun LibraryMixScreen(
                     title = topTitle,
                     iconRes = R.drawable.trending_up,
                     route = "top_playlist/$topSize",
+                    accentColor = MaterialTheme.colorScheme.secondary,
+                )
+            )
+        }
+        if (showLocal) {
+            add(
+                LibraryShortcutEntry(
+                    title = localTitle,
+                    iconRes = R.drawable.folder,
+                    route = "on_device",
                     accentColor = MaterialTheme.colorScheme.secondary,
                 )
             )
@@ -355,43 +368,73 @@ fun LibraryMixScreen(
                 item(key = "shortcuts") {
                     LibraryShortcutGrid(
                         entries = shortcuts,
-                        onClick = navController::navigate,
+                        onClick = { route ->
+                            if (route == "on_device") {
+                                onTabSelected(LibraryFilter.ON_DEVICE)
+                            } else {
+                                navController.navigate(route)
+                            }
+                        },
                         onPlayPlaylist = { entry ->
                             playerConnection?.let { connection ->
                                 coroutineScope.launch(Dispatchers.IO) {
-                                    // playlistId ahora será un String (ej: "15" o el UUID de la playlist)
-                                    val playlistId = entry.route.extractId()
-                                    database.playlistSongs(playlistId).first()
-                                        .let { playlistSongs ->
-                                            if (playlistSongs.isNotEmpty()) {
+                                    if (entry.route == "on_device") {
+                                        database.localSongs().first().let { songs ->
+                                            if (songs.isNotEmpty()) {
                                                 connection.playQueue(
                                                     ListQueue(
                                                         title = entry.title,
-                                                        items = playlistSongs.map { it.song.toMediaItem() }
+                                                        items = songs.map { it.toMediaItem() }
                                                     )
                                                 )
                                             }
                                         }
+                                    } else {
+                                        val playlistId = entry.route.extractId()
+                                        database.playlistSongs(playlistId).first()
+                                            .let { playlistSongs ->
+                                                if (playlistSongs.isNotEmpty()) {
+                                                    connection.playQueue(
+                                                        ListQueue(
+                                                            title = entry.title,
+                                                            items = playlistSongs.map { it.song.toMediaItem() }
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                    }
                                 }
                             }
                         },
                         onShufflePlaylist = { entry ->
                             playerConnection?.let { connection ->
                                 coroutineScope.launch(Dispatchers.IO) {
-                                    // playlistId ahora será un String
-                                    val playlistId = entry.route.extractId()
-                                    database.playlistSongs(playlistId).first()
-                                        .let { playlistSongs ->
-                                            if (playlistSongs.isNotEmpty()) {
+                                    if (entry.route == "on_device") {
+                                        database.localSongs().first().let { songs ->
+                                            if (songs.isNotEmpty()) {
                                                 connection.playQueue(
                                                     ListQueue(
                                                         title = entry.title,
-                                                        items = playlistSongs.shuffled()
-                                                            .map { it.song.toMediaItem() }
+                                                        items = songs.shuffled().map { it.toMediaItem() }
                                                     )
                                                 )
                                             }
                                         }
+                                    } else {
+                                        val playlistId = entry.route.extractId()
+                                        database.playlistSongs(playlistId).first()
+                                            .let { playlistSongs ->
+                                                if (playlistSongs.isNotEmpty()) {
+                                                    connection.playQueue(
+                                                        ListQueue(
+                                                            title = entry.title,
+                                                            items = playlistSongs.shuffled()
+                                                                .map { it.song.toMediaItem() }
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                    }
                                 }
                             }
                         },

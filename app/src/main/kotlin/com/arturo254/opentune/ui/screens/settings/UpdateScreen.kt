@@ -15,14 +15,19 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,23 +43,30 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -69,11 +81,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
 import com.arturo254.opentune.BuildConfig
 import com.arturo254.opentune.LocalPlayerAwareWindowInsets
 import com.arturo254.opentune.R
@@ -82,6 +94,7 @@ import com.arturo254.opentune.constants.UpdateChannel
 import com.arturo254.opentune.constants.UpdateChannelKey
 import com.arturo254.opentune.ui.component.EnumListPreference
 import com.arturo254.opentune.ui.component.IconButton
+import com.arturo254.opentune.ui.component.MarkdownText
 import com.arturo254.opentune.ui.component.PreferenceGroupTitle
 import com.arturo254.opentune.ui.component.SwitchPreference
 import com.arturo254.opentune.ui.utils.backToMain
@@ -91,11 +104,12 @@ import com.arturo254.opentune.utils.UpdateNotificationManager
 import com.arturo254.opentune.utils.Updater
 import com.arturo254.opentune.utils.rememberEnumPreference
 import com.arturo254.opentune.utils.rememberPreference
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
-
-// ─── Estado de comprobación de actualización ──────────────────────────────────
 
 private sealed interface UpdateCheckState {
     data object Idle : UpdateCheckState
@@ -105,9 +119,7 @@ private sealed interface UpdateCheckState {
     data class Error(val message: String) : UpdateCheckState
 }
 
-// ─── Pantalla ─────────────────────────────────────────────────────────────────
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UpdateScreen(
     navController: NavController,
@@ -134,8 +146,11 @@ fun UpdateScreen(
     var isExpanded by remember { mutableStateOf(true) }
 
     var updateCheckState by remember { mutableStateOf<UpdateCheckState>(UpdateCheckState.Idle) }
-    var showUpdateDialog by remember { mutableStateOf(false) }
+    var showUpdateBottomSheet by remember { mutableStateOf(false) }
     var pendingUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+
+    var downloadProgress by remember { mutableFloatStateOf(0f) }
+    var isDownloading by remember { mutableStateOf(false) }
 
     var showNightlyConfirmDialog by remember { mutableStateOf(false) }
     var showNotifConfirmDialog by remember { mutableStateOf(false) }
@@ -158,7 +173,6 @@ fun UpdateScreen(
         }
     }
 
-    // ── Función de comprobación ───────────────────────────────────────────────
     fun checkForUpdate() {
         if (updateCheckState == UpdateCheckState.Loading) return
         coroutineScope.launch {
@@ -170,7 +184,7 @@ fun UpdateScreen(
                     } else {
                         pendingUpdateInfo = info
                         updateCheckState = UpdateCheckState.UpdateAvailable(info)
-                        showUpdateDialog = true
+                        showUpdateBottomSheet = true
                     }
                 }
                 .onFailure { err ->
@@ -179,14 +193,24 @@ fun UpdateScreen(
         }
     }
 
-    // ── Diálogos ──────────────────────────────────────────────────────────────
-    if (showUpdateDialog) {
+    if (showUpdateBottomSheet) {
         pendingUpdateInfo?.let { info ->
-            UpdateAvailableDialog(
+            UpdateDetailsBottomSheet(
                 info = info,
-                onDownload    = { showUpdateDialog = false; uriHandler.openUri(info.downloadUrl) },
-                onViewRelease = { showUpdateDialog = false; uriHandler.openUri(info.releasePageUrl) },
-                onDismiss     = { showUpdateDialog = false }
+                isDownloading = isDownloading,
+                progress = downloadProgress,
+                onDownload = {
+                    coroutineScope.launch {
+                        isDownloading = true
+                        val destination = File(context.cacheDir, "update.apk")
+                        Updater.downloadApk(info.downloadUrl, destination).collectLatest {
+                            downloadProgress = it
+                        }
+                        isDownloading = false
+                        Updater.installApk(context, destination)
+                    }
+                },
+                onDismiss = { if (!isDownloading) showUpdateBottomSheet = false }
             )
         }
     }
@@ -237,7 +261,6 @@ fun UpdateScreen(
 
     val rotationAngle by animateFloatAsState(if (isExpanded) 180f else 0f, label = "rotation")
 
-    // ── Layout ────────────────────────────────────────────────────────────────
     Scaffold(
         topBar = {
             TopAppBar(
@@ -263,8 +286,6 @@ fun UpdateScreen(
                 )
                 .padding(horizontal = 16.dp)
         ) {
-
-            // ── Tarjeta versión + botón comprobar ─────────────────────────────
             item {
                 Spacer(Modifier.height(8.dp))
                 Card(
@@ -317,13 +338,11 @@ fun UpdateScreen(
 
                         Spacer(Modifier.height(14.dp))
 
-                        // Botón con estado animado
                         UpdateCheckButton(
                             state = updateCheckState,
                             onClick = ::checkForUpdate
                         )
 
-                        // Feedback textual bajo el botón
                         AnimatedVisibility(
                             visible = updateCheckState == UpdateCheckState.UpToDate ||
                                     updateCheckState is UpdateCheckState.Error
@@ -343,7 +362,6 @@ fun UpdateScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            // ── Preferencias ──────────────────────────────────────────────────
             item { PreferenceGroupTitle(title = stringResource(R.string.notification_settings)) }
 
             item {
@@ -394,7 +412,6 @@ fun UpdateScreen(
                 }
             }
 
-            // ── Card nightly ──────────────────────────────────────────────────
             item {
                 AnimatedVisibility(visible = updateChannel == UpdateChannel.NIGHTLY) {
                     val latestHash = commits.firstOrNull()?.sha ?: "—"
@@ -416,7 +433,17 @@ fun UpdateScreen(
                             Spacer(Modifier.height(10.dp))
                             Text(latestHash, style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.height(14.dp))
-                            Button(onClick = { uriHandler.openUri(nightlyInstallUrl) }, modifier = Modifier.fillMaxWidth()) {
+                            Button(onClick = {
+                                pendingUpdateInfo = UpdateInfo(
+                                    tagName = "nightly",
+                                    versionName = latestHash,
+                                    downloadUrl = nightlyInstallUrl,
+                                    releasePageUrl = nightlyInstallUrl,
+                                    releaseNotes = "Nightly Build: $latestHash",
+                                    publishedAt = ""
+                                )
+                                showUpdateBottomSheet = true
+                             }, modifier = Modifier.fillMaxWidth()) {
                                 Text("Install")
                             }
                         }
@@ -424,7 +451,6 @@ fun UpdateScreen(
                 }
             }
 
-            // ── Historial de commits ──────────────────────────────────────────
             item {
                 Spacer(Modifier.height(16.dp))
                 PreferenceGroupTitle(title = stringResource(R.string.commit_history))
@@ -482,8 +508,6 @@ fun UpdateScreen(
     }
 }
 
-// ─── UpdateCheckButton ────────────────────────────────────────────────────────
-
 @Composable
 private fun UpdateCheckButton(
     state: UpdateCheckState,
@@ -502,7 +526,11 @@ private fun UpdateCheckButton(
             }
         )
     ) {
-        AnimatedContent(targetState = state, label = "btnContent") { s ->
+        AnimatedContent(
+            targetState = state,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "btnContent"
+        ) { s ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                 when (s) {
                     UpdateCheckState.Loading -> {
@@ -534,61 +562,130 @@ private fun UpdateCheckButton(
     }
 }
 
-// ─── UpdateAvailableDialog ────────────────────────────────────────────────────
-
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun UpdateAvailableDialog(
+private fun UpdateDetailsBottomSheet(
     info: UpdateInfo,
+    isDownloading: Boolean,
+    progress: Float,
     onDownload: () -> Unit,
-    onViewRelease: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        icon = { Icon(painterResource(R.drawable.update), null, tint = MaterialTheme.colorScheme.primary) },
-        title = { Text("Nueva versión disponible") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Column {
-                        Text("Instalada", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(BuildConfig.VERSION_NAME, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                    }
-                    Column {
-                        Text("Disponible", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(info.versionName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-                if (!info.releaseNotes.isNullOrBlank()) {
-                    HorizontalDivider()
-                    Text("Novedades", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                    val notes = info.releaseNotes.let { if (it.length > 300) it.take(300) + "…" else it }
-                    Text(
-                        text = notes,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.height(120.dp).verticalScroll(rememberScrollState())
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = onDownload) {
-                Icon(painterResource(R.drawable.download), null, Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Descargar APK")
-            }
-        },
-        dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = onViewRelease) { Text("Ver release") }
-                TextButton(onClick = onDismiss)    { Text("Ahora no") }
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 8.dp,
+        dragHandle = {
+            if (!isDownloading) {
+                BottomSheetDefaults.DragHandle()
             }
         }
-    )
-}
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp + LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding())
+        ) {
+            Text(
+                text = "Nueva versión disponible",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Versión ${info.versionName}",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
 
-// ─── BuildChannelInfoDialog ───────────────────────────────────────────────────
+            Spacer(Modifier.height(24.dp))
+
+            if (isDownloading) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Descargando actualización…",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "${(progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    LinearWavyProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth().height(10.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    
+                    Text(
+                        text = "La aplicación se reiniciará al finalizar la descarga.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            } else {
+                Column {
+                    if (!info.releaseNotes.isNullOrBlank()) {
+                        Text(
+                            text = "Novedades",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(250.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                                .padding(16.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            MarkdownText(
+                                markdown = info.releaseNotes,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(28.dp))
+
+                    Button(
+                        onClick = onDownload,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        Icon(painterResource(R.drawable.download), null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Actualizar ahora", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun BuildChannelInfoDialog(
@@ -619,8 +716,6 @@ private fun BuildChannelInfoDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) } }
     )
 }
-
-// ─── CommitItem ───────────────────────────────────────────────────────────────
 
 @Composable
 private fun CommitItem(commit: GitCommit, onClick: () -> Unit) {

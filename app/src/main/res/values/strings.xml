@@ -55,6 +55,7 @@
     <string name="filter_on_device">On device</string>
     <string name="local_music">Local music</string>
     <string name="scan_local_music">Scan for local music</string>
+    <string name="searching_for_media">Searching for media…</string>
     <string name="local_music_permission_rationale">Allow access to your device\'s audio files to add them to your library and play them offline.</string>
     <string name="grant_permission">Grant permission</string>
     <string name="no_local_music_found">No local music found. Pull to refresh or add audio files to your device.</string>

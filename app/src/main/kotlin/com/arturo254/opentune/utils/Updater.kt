@@ -6,6 +6,11 @@
 
 package com.arturo254.opentune.utils
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import androidx.core.content.FileProvider
 import androidx.datastore.preferences.core.edit
 import com.arturo254.opentune.BuildConfig
 import com.arturo254.opentune.App
@@ -16,14 +21,27 @@ import com.arturo254.opentune.constants.GitHubReleasesLastCheckedAtKey
 import com.arturo254.opentune.constants.UpdateChannel
 import com.arturo254.opentune.constants.UpdateChannelKey
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
+import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentLength
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.readAvailable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
 
 data class GitCommit(
     val sha: String,
@@ -48,16 +66,6 @@ data class NightlyInfo(
     val publishedAt: String
 )
 
-/**
- * Resultado de [Updater.checkForUpdate].
- *
- * @param tagName        Tag del release en GitHub (ej. "v1.4.2")
- * @param versionName    Versión normalizada sin prefijo "v" (ej. "1.4.2")
- * @param downloadUrl    URL directa a `app-universal-release.apk` del release
- * @param releasePageUrl URL de la página HTML del release en GitHub
- * @param releaseNotes   Changelog / body del release (puede ser null)
- * @param publishedAt    Fecha de publicación en ISO 8601
- */
 data class UpdateInfo(
     val tagName: String,
     val versionName: String,
@@ -356,12 +364,6 @@ object Updater {
 
     /**
      * Comprueba si hay una versión más reciente que [currentVersionName].
-     *
-     * - Detecta el canal activo automáticamente.
-     * - STABLE: Reutiliza la caché existente (ETag / DataStore).
-     * - NIGHTLY: Consulta el JSON remoto de Cloudflare R2.
-     * - Devuelve `null` dentro del [Result] cuando ya se tiene la versión más
-     *   reciente instalada.
      */
     suspend fun checkForUpdate(currentVersionName: String): Result<UpdateInfo?> =
         runCatching {
@@ -408,11 +410,6 @@ object Updater {
         }
     }
 
-    /**
-     * Consulta los assets del release [tagName] y devuelve la URL de descarga
-     * de `app-universal-release.apk`. Si la llamada falla o el asset no está listado,
-     * usa la URL canónica de GitHub como fallback.
-     */
     private suspend fun resolveApkDownloadUrl(tagName: String): String {
         val fallback =
             "https://github.com/Arturo254/OpenTune/releases/download/$tagName/$APK_ASSET_NAME"
@@ -437,6 +434,47 @@ object Updater {
             }
             fallback
         }.getOrDefault(fallback)
+    }
+
+
+    fun downloadApk(url: String, destinationFile: File): Flow<Float> = flow {
+        client.prepareGet(url).execute { response ->
+            val totalBytes = response.contentLength() ?: -1L
+            val channel: ByteReadChannel = response.bodyAsChannel()
+            var downloadedBytes = 0L
+            val buffer = ByteArray(1024 * 8)
+
+            // Elimina withContext(Dispatchers.IO) - ya estamos en el contexto correcto
+            destinationFile.parentFile?.mkdirs()
+            FileOutputStream(destinationFile).use { output ->
+                while (!channel.isClosedForRead) {
+                    val read = channel.readAvailable(buffer)
+                    if (read == -1) break
+                    output.write(buffer, 0, read)
+                    downloadedBytes += read
+                    if (totalBytes > 0) {
+                        emit(downloadedBytes.toFloat() / totalBytes)
+                    } else {
+                        emit(-1f)
+                    }
+                }
+            }
+        }
+    }.flowOn(Dispatchers.IO)
+
+    fun installApk(context: Context, apkFile: File) {
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.FileProvider",
+            apkFile
+        )
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
     }
 
     // ─────────────────────────────────────────────────────────────────────────

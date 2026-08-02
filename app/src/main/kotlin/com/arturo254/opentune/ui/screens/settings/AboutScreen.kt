@@ -613,6 +613,7 @@ private fun SocialCardExpressive(
 
 // ── Contributor Card (Expresivo) ───────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ContributorCardExpressive(
     contributor: Contributor,
@@ -768,6 +769,7 @@ private fun LicenseFooterExpressive(onLicenseClick: () -> Unit) {
 
 // ── Loading shimmer (Expresivo) ────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ContributorShimmerExpressive() {
     val shimmer = shimmerEffect()
