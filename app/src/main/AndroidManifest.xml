@@ -228,6 +228,22 @@
             android:name=".ui.screens.settings.PoTokenExtractionActivity"
             android:exported="false"
             android:theme="@style/Theme.OpenTune" />
+
+        <!-- OAuth2 redirect target for the official Discord Social SDK account-linking flow.
+             com.discord.socialsdk.AuthenticationActivity is declared (without an intent-filter)
+             by the discord_partner_sdk AAR itself; redeclaring it here with just the
+             intent-filter lets the Gradle manifest merger attach our app-specific redirect
+             scheme to it. -->
+        <activity
+            android:name="com.discord.socialsdk.AuthenticationActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="discord-${discordSocialSdkClientId}" android:path="/authorize/callback" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -80,6 +80,8 @@ android {
     namespace = "com.arturo254.opentune"
     compileSdk = 36
 
+    ndkVersion = "27.1.12297006"
+
     defaultConfig {
         applicationId = "com.Arturo254.opentune"
         minSdk = 26
@@ -90,6 +92,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++20"
+            }
+        }
 
         val lastfmApiKey =
             localProperties.getProperty("LASTFM_API_KEY")
@@ -109,6 +117,13 @@ android {
         buildConfigField("String", "TOGETHER_BEARER_TOKEN", "\"$togetherBearerToken\"")
 
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
+
+        val discordSocialSdkClientId =
+            localProperties.getProperty("DISCORD_SOCIAL_SDK_CLIENT_ID")
+                ?: System.getenv("DISCORD_SOCIAL_SDK_CLIENT_ID")
+                ?: ""
+        buildConfigField("String", "DISCORD_SOCIAL_SDK_CLIENT_ID", "\"$discordSocialSdkClientId\"")
+        manifestPlaceholders["discordSocialSdkClientId"] = discordSocialSdkClientId
     }
 
     flavorDimensions += "abi"
@@ -176,6 +191,14 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        prefab = true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/discord/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     dependenciesInfo {
@@ -220,9 +243,12 @@ ksp {
 }
 
 dependencies {
+    implementation(files("libs/discord_partner_sdk.aar"))
+
     implementation(libs.guava)
     implementation(libs.coroutines.guava)
     implementation(libs.concurrent.futures)
+    implementation(libs.security.crypto)
 
     implementation(libs.activity)
     implementation(libs.navigation)

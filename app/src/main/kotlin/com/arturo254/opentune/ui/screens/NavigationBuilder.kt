@@ -77,6 +77,7 @@ import com.arturo254.opentune.ui.screens.settings.ChangelogScreen
 import com.arturo254.opentune.ui.screens.settings.ContentSettings
 import com.arturo254.opentune.ui.screens.settings.DarkMode
 import com.arturo254.opentune.ui.screens.settings.DiscordLoginScreen
+import com.arturo254.opentune.ui.screens.settings.DiscordSocialLoginScreen
 import com.arturo254.opentune.ui.screens.settings.DiscordSettings
 import com.arturo254.opentune.ui.screens.settings.DebugSettings
 import com.arturo254.opentune.ui.screens.settings.IntegrationScreen
@@ -403,6 +404,9 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable("settings/discord/login") {
         DiscordLoginScreen(navController)
+    }
+    composable("settings/discord/social_login") {
+        DiscordSocialLoginScreen(navController)
     }
     composable("settings/android_auto") {
         AndroidAutoSettings(
