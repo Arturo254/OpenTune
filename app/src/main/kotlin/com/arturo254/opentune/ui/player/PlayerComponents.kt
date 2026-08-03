@@ -83,6 +83,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
@@ -3137,10 +3138,7 @@ fun V8PlayerControlsContent(
                         .clip(RoundedCornerShape(4.dp))
                 )
                 Text(
-                    text = buildString {
-                        append("A continuación: ")
-                        append(nextUpMetadata.title)
-                    },
+                    text = stringResource(R.string.up_next_prefix, nextUpMetadata.title),
                     style = MaterialTheme.typography.labelSmall,
                     color = textBackgroundColor.copy(alpha = 0.55f),
                     maxLines = 1,

@@ -895,7 +895,7 @@ fun AppearanceSettings(
 
         PreferenceEntry(
             title = { Text("Always On Display") },
-            description = "Estilos, formas y opciones de personalización",
+            description = stringResource(R.string.always_on_display_description),
             icon = { Icon(painterResource(R.drawable.dark_mode), null) },
             onClick = { navController.navigate("settings/appearance/always_on_display") }
         )

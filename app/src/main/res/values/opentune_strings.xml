@@ -490,4 +490,73 @@
     <string name="scanning_media">Scanning media</string>
     <string name="please_wait_scanning">Please wait while we scan your device for music</string>
     <string name="all_folders_visible">All folders are visible</string>
+
+    <!-- Lyrics share carousel sheet -->
+    <string name="lyrics_share_layout">Layout</string>
+    <string name="lyrics_share_glass_style">Style</string>
+    <string name="lyrics_share_customization">Customization</string>
+    <string name="lyrics_share_text_size">Text size</string>
+    <string name="lyrics_share_alignment">Alignment</string>
+    <string name="lyrics_share_align_left">Left</string>
+    <string name="lyrics_share_align_center">Center</string>
+    <string name="lyrics_share_align_right">Right</string>
+    <string name="lyrics_share_visibility">Visibility</string>
+    <string name="lyrics_share_show_title">Show title</string>
+    <string name="lyrics_share_show_artist">Show artist</string>
+    <string name="lyrics_share_show_cover">Show cover art</string>
+    <string name="lyrics_share_show_branding">Show OpenTune branding</string>
+    <string name="lyrics_share_spacing">Spacing</string>
+
+    <!-- Lyrics card layout styles -->
+    <string name="lyrics_card_style_glass_card">Glass Card</string>
+    <string name="lyrics_card_style_glass_card_desc">Liquid glass panel</string>
+    <string name="lyrics_card_style_minimal">Minimal</string>
+    <string name="lyrics_card_style_minimal_desc">Clean and distraction-free</string>
+    <string name="lyrics_card_style_cover_focused">Cover Focus</string>
+    <string name="lyrics_card_style_cover_focused_desc">Featured album cover</string>
+    <string name="lyrics_card_style_centered">Centered</string>
+    <string name="lyrics_card_style_centered_desc">Lyrics take center stage</string>
+    <string name="lyrics_card_style_blur_wash">Blur Wash</string>
+    <string name="lyrics_card_style_blur_wash_desc">Ultra-blurred background</string>
+    <string name="lyrics_card_style_streaming_modern">Streaming</string>
+    <string name="lyrics_card_style_streaming_modern_desc">Modern music app style</string>
+    <string name="lyrics_card_background_cover_art">Cover art</string>
+    <string name="lyrics_card_background_solid_dark">Dark</string>
+    <string name="lyrics_card_background_solid_light">Light</string>
+    <string name="lyrics_card_background_gradient">Gradient</string>
+
+    <!-- Misc device/language pickers -->
+    <string name="select_device">Select device</string>
+    <string name="device">Device</string>
+    <string name="device_speaker">Speaker</string>
+    <string name="device_wired_headphones">Wired headphones</string>
+    <string name="device_wired_headset">Wired headset</string>
+    <string name="device_bluetooth">Bluetooth</string>
+    <string name="device_bluetooth_sco">Bluetooth SCO</string>
+    <string name="device_ble_headset">BLE headset</string>
+    <string name="search_language">Search language</string>
+
+    <!-- Local music -->
+    <string name="on_device_shortcut">On Device</string>
+
+    <!-- Discovery / library -->
+    <string name="most_played">Most played</string>
+    <string name="highlights">Highlights</string>
+    <string name="featured">Featured</string>
+
+    <!-- Updater -->
+    <string name="unknown_error_short">Unknown error</string>
+    <string name="up_to_date">Up to date</string>
+    <string name="view_update">View update (%1$s)</string>
+    <string name="checking_for_update">Checking…</string>
+    <string name="download_cover_art">Download cover art</string>
+    <string name="always_on_display_description">Styles, shapes, and customization options</string>
+    <string name="up_next_prefix">Up next: %1$s</string>
+    <string name="storage_almost_full">⚠️ Almost full</string>
+    <string name="update_already_latest">You already have the latest version.</string>
+    <string name="update_new_version_available">New version available</string>
+    <string name="update_version_label">Version %1$s</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_restart_notice">The app will restart once the download finishes.</string>
+    <string name="update_error_prefix">Error: %1$s</string>
 </resources>
