@@ -596,7 +596,7 @@ fun MD3ExpressiveCacheCard(
                                 onClick = { },
                                 label = {
                                     Text(
-                                        text = "⚠️ Casi lleno",
+                                        text = stringResource(R.string.storage_almost_full),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Medium
                                     )

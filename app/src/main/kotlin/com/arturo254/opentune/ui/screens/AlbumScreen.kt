@@ -338,12 +338,12 @@ private fun QualitySelectionDialog(
                     onDismiss()
                 }
             ) {
-                Text("Descargar")
+                Text(stringResource(R.string.download))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -683,7 +683,7 @@ fun AlbumScreen(
                                     } else {
                                         Icon(
                                             painter = painterResource(R.drawable.download),
-                                            contentDescription = "Descargar carátula",
+                                            contentDescription = stringResource(R.string.download_cover_art),
                                             tint = Color.White.copy(alpha = 0.8f), // Ícono semi-transparente
                                             modifier = Modifier.size(24.dp) // Ícono más pequeño
                                         )

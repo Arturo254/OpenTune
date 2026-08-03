@@ -606,7 +606,7 @@ private fun FeaturedCarousel(
                 }
             }
             Text(
-                text = "Lo más destacado",
+                text = stringResource(R.string.highlights),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface

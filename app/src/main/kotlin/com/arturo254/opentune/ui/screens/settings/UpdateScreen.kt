@@ -173,6 +173,8 @@ fun UpdateScreen(
         }
     }
 
+    val unknownErrorText = stringResource(R.string.unknown_error_short)
+
     fun checkForUpdate() {
         if (updateCheckState == UpdateCheckState.Loading) return
         coroutineScope.launch {
@@ -188,7 +190,7 @@ fun UpdateScreen(
                     }
                 }
                 .onFailure { err ->
-                    updateCheckState = UpdateCheckState.Error(err.message ?: "Error desconocido")
+                    updateCheckState = UpdateCheckState.Error(err.message ?: unknownErrorText)
                 }
         }
     }
@@ -349,9 +351,9 @@ fun UpdateScreen(
                         ) {
                             val (msg, color) = when (val s = updateCheckState) {
                                 UpdateCheckState.UpToDate  ->
-                                    "Ya tienes la versión más reciente." to MaterialTheme.colorScheme.tertiary
+                                    stringResource(R.string.update_already_latest) to MaterialTheme.colorScheme.tertiary
                                 is UpdateCheckState.Error  ->
-                                    "Error: ${s.message}" to MaterialTheme.colorScheme.error
+                                    stringResource(R.string.update_error_prefix, s.message) to MaterialTheme.colorScheme.error
                                 else -> "" to MaterialTheme.colorScheme.onSurface
                             }
                             Spacer(Modifier.height(8.dp))
@@ -536,20 +538,20 @@ private fun UpdateCheckButton(
                     UpdateCheckState.Loading -> {
                         CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
                         Spacer(Modifier.width(8.dp))
-                        Text("Comprobando…")
+                        Text(stringResource(R.string.checking_for_update))
                     }
                     UpdateCheckState.UpToDate -> {
                         Icon(painterResource(R.drawable.done), null, Modifier.size(16.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Al día")
+                        Text(stringResource(R.string.up_to_date))
                     }
                     is UpdateCheckState.UpdateAvailable -> {
                         Icon(painterResource(R.drawable.update), null, Modifier.size(16.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Ver actualización (${s.info.versionName})")
+                        Text(stringResource(R.string.view_update, s.info.versionName))
                     }
                     is UpdateCheckState.Error -> {
-                        Text("Reintentar")
+                        Text(stringResource(R.string.retry))
                     }
                     else -> {
                         Icon(painterResource(R.drawable.update), null, Modifier.size(16.dp))
@@ -592,13 +594,13 @@ private fun UpdateDetailsBottomSheet(
                 .padding(bottom = 32.dp + LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding())
         ) {
             Text(
-                text = "Nueva versión disponible",
+                text = stringResource(R.string.update_new_version_available),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Versión ${info.versionName}",
+                text = stringResource(R.string.update_version_label, info.versionName),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -616,7 +618,7 @@ private fun UpdateDetailsBottomSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Descargando actualización…",
+                            text = stringResource(R.string.update_downloading),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -636,7 +638,7 @@ private fun UpdateDetailsBottomSheet(
                     )
                     
                     Text(
-                        text = "La aplicación se reiniciará al finalizar la descarga.",
+                        text = stringResource(R.string.update_restart_notice),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
