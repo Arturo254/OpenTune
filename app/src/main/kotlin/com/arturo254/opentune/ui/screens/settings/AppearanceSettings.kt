@@ -458,6 +458,7 @@ fun AppearanceSettings(
                     PlayerDesignStyle.V6 -> stringResource(R.string.player_design_v6)
                     PlayerDesignStyle.V7 -> stringResource(R.string.player_design_v7)
                     PlayerDesignStyle.V8 -> stringResource(R.string.Apple_Music)
+                    PlayerDesignStyle.SPOTIFY -> stringResource(R.string.player_design_spotify)
                 }
             },
         )
@@ -492,6 +493,7 @@ fun AppearanceSettings(
                     PlayerBackgroundStyle.BLUR_GRADIENT -> stringResource(R.string.blur_gradient)
                     PlayerBackgroundStyle.GLOW -> stringResource(R.string.glow)
                     PlayerBackgroundStyle.GLOW_ANIMATED -> "Glow Animated"
+                    PlayerBackgroundStyle.SPOTIFY -> stringResource(R.string.player_background_spotify)
                 }
             },
         )
