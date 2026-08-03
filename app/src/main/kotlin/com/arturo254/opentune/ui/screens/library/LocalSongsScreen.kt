@@ -134,12 +134,17 @@ fun LocalSongsScreen(
     }
     var isScanning by remember { mutableStateOf(false) }
 
+    var availableFolders by remember { mutableStateOf(emptyList<String>()) }
+
     fun scan() {
         if (!hasPermission || isScanning) return
         isScanning = true
         coroutineScope.launch {
             runCatching {
-                LocalMediaScanner.scan(context, database)
+                LocalMediaScanner.scan(context, database, selectedFolders)
+            }
+            runCatching {
+                availableFolders = LocalMediaScanner.listAvailableFolders(context)
             }
             isScanning = false
         }
@@ -157,14 +162,12 @@ fun LocalSongsScreen(
     // library is still empty (e.g. first install). Re-opening this screen afterwards
     // must not re-trigger a full MediaStore scan — use the rescan button for that.
     LaunchedEffect(Unit) {
-        if (hasPermission && database.localSongs().first().isEmpty()) scan()
-    }
-
-    val availableFolders by remember(allSongs) {
-        derivedStateOf {
-            allSongs.mapNotNull { songItem ->
-                extractFolderNameFromLocalPath(songItem.song.localPath)
-            }.distinct().sorted()
+        if (hasPermission) {
+            if (database.localSongs().first().isEmpty()) {
+                scan()
+            } else {
+                runCatching { availableFolders = LocalMediaScanner.listAvailableFolders(context) }
+            }
         }
     }
 
