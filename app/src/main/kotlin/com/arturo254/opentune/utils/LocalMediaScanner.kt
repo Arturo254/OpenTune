@@ -56,6 +56,7 @@ object LocalMediaScanner {
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
 
         var count = 0
+        val seenSongIds = mutableSetOf<String>()
         context.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
@@ -106,6 +107,7 @@ object LocalMediaScanner {
                 val year = storeYear ?: tags?.year
 
                 val songId = "$LOCAL_SONG_ID_PREFIX$mediaStoreId"
+                seenSongIds += songId
                 val now = LocalDateTime.now()
                 val dateModified = if (dateModifiedSec > 0) {
                     LocalDateTime.ofInstant(Instant.ofEpochSecond(dateModifiedSec), ZoneId.systemDefault())
@@ -137,6 +139,16 @@ object LocalMediaScanner {
                 count++
             }
         }
+
+        // Drop library rows for MediaStore-sourced tracks whose file no longer exists
+        // (deleted/moved outside the app). Only touches ids scan() itself could have
+        // created — files added via scanUri() (e.g. "Open with") use a hash-based id
+        // and are left alone since they're outside the MediaStore index scan() covers.
+        database.localSongs().first()
+            .filter { it.song.id.removePrefix(LOCAL_SONG_ID_PREFIX).toLongOrNull() != null }
+            .filterNot { it.song.id in seenSongIds }
+            .forEach { database.delete(it.song) }
+
         count
     }
 
