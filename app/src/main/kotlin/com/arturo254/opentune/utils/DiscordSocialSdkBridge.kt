@@ -156,6 +156,17 @@ object DiscordSocialSdkBridge {
 
     fun clearRichPresence() = nativeClearRichPresence()
 
+    data class CurrentUser(val displayName: String, val username: String, val avatarUrl: String?)
+
+    /** Only populated once the client's websocket status reaches `Ready` (see discordpp.h's
+     * `Client::Status`) — returns null before that, or if there's no client in this process. */
+    fun currentUser(): CurrentUser? {
+        val displayName = nativeGetCurrentUserDisplayName() ?: return null
+        val username = nativeGetCurrentUserUsername() ?: displayName
+        val avatarUrl = nativeGetCurrentUserAvatarUrl()
+        return CurrentUser(displayName, username, avatarUrl)
+    }
+
     // Called from native code (JNI static method lookups) — do not rename without updating
     // discord_bridge.cpp's GetStaticMethodID calls.
     @JvmStatic
@@ -221,4 +232,7 @@ object DiscordSocialSdkBridge {
         button2Url: String?,
     )
     private external fun nativeClearRichPresence()
+    private external fun nativeGetCurrentUserDisplayName(): String?
+    private external fun nativeGetCurrentUserUsername(): String?
+    private external fun nativeGetCurrentUserAvatarUrl(): String?
 }

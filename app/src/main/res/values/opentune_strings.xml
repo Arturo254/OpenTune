@@ -573,6 +573,7 @@
     <string name="discord_social_sdk_sign_in">Sign in with Discord</string>
     <string name="discord_social_sdk_use_official">Use official Discord SDK (beta)</string>
     <string name="discord_social_sdk_use_official_desc">No account token stored, no ban risk — requires signing in separately below.</string>
+    <string name="discord_social_sdk_status_idle">Ready to connect</string>
 
     <string name="discord_sign_in_method">Sign-in method</string>
     <string name="discord_sign_in_method_official">Official (recommended)</string>

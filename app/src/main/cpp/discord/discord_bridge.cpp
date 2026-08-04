@@ -272,3 +272,33 @@ Java_com_arturo254_opentune_utils_DiscordSocialSdkBridge_nativeClearRichPresence
     if (!g_client) return;
     g_client->ClearRichPresence();
 }
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_arturo254_opentune_utils_DiscordSocialSdkBridge_nativeGetCurrentUserDisplayName(
+    JNIEnv* env, jobject) {
+    if (!g_client) return nullptr;
+    auto user = g_client->GetCurrentUserV2();
+    if (!user.has_value()) return nullptr;
+    return ToJString(env, user->DisplayName());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_arturo254_opentune_utils_DiscordSocialSdkBridge_nativeGetCurrentUserUsername(
+    JNIEnv* env, jobject) {
+    if (!g_client) return nullptr;
+    auto user = g_client->GetCurrentUserV2();
+    if (!user.has_value()) return nullptr;
+    return ToJString(env, user->Username());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_arturo254_opentune_utils_DiscordSocialSdkBridge_nativeGetCurrentUserAvatarUrl(
+    JNIEnv* env, jobject) {
+    if (!g_client) return nullptr;
+    auto user = g_client->GetCurrentUserV2();
+    if (!user.has_value()) return nullptr;
+    return ToJString(
+        env,
+        user->AvatarUrl(
+            discordpp::UserHandle::AvatarType::Png, discordpp::UserHandle::AvatarType::Png));
+}
