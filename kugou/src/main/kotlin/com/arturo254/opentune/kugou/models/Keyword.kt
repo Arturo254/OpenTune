@@ -8,4 +8,7 @@
 
 package com.arturo254.opentune.kugou.models
 
+/**
+ * 表示关键词的数据类，包含标题和艺术家信息。
+ */
 data class Keyword(val title: String, val artist: String)
