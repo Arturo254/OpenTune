@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -141,7 +142,7 @@ fun DeviceSelectionBottomSheet(
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    text = "Seleccionar dispositivo",
+                    text = stringResource(R.string.select_device),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = textBackgroundColor,
@@ -153,13 +154,13 @@ fun DeviceSelectionBottomSheet(
                     val isActive = device == activeDevice
                     val deviceName = device.productName?.toString()
                         ?: when (device.type) {
-                            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "Altavoz"
-                            AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> "Auriculares con cable"
-                            AudioDeviceInfo.TYPE_WIRED_HEADSET -> "Headset con cable"
-                            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> "Bluetooth"
-                            AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "Bluetooth SCO"
-                            AudioDeviceInfo.TYPE_BLE_HEADSET -> "BLE Headset"
-                            else -> "Dispositivo"
+                            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> stringResource(R.string.device_speaker)
+                            AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> stringResource(R.string.device_wired_headphones)
+                            AudioDeviceInfo.TYPE_WIRED_HEADSET -> stringResource(R.string.device_wired_headset)
+                            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> stringResource(R.string.device_bluetooth)
+                            AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> stringResource(R.string.device_bluetooth_sco)
+                            AudioDeviceInfo.TYPE_BLE_HEADSET -> stringResource(R.string.device_ble_headset)
+                            else -> stringResource(R.string.device)
                         }
 
                     val iconRes = when (device.type) {
@@ -256,7 +257,7 @@ fun DeviceSelectionBottomSheet(
                             .padding(12.dp)
                     ) {
                         Text(
-                            text = "Cerrar",
+                            text = stringResource(R.string.close),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )

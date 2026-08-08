@@ -95,6 +95,7 @@ import com.arturo254.opentune.ui.component.SongListItem
 import com.arturo254.opentune.ui.menu.SongMenu
 import com.arturo254.opentune.utils.LocalMediaScanner
 import com.arturo254.opentune.utils.rememberPreference
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -133,12 +134,17 @@ fun LocalSongsScreen(
     }
     var isScanning by remember { mutableStateOf(false) }
 
+    var availableFolders by remember { mutableStateOf(emptyList<String>()) }
+
     fun scan() {
         if (!hasPermission || isScanning) return
         isScanning = true
         coroutineScope.launch {
             runCatching {
-                LocalMediaScanner.scan(context, database)
+                LocalMediaScanner.scan(context, database, selectedFolders)
+            }
+            runCatching {
+                availableFolders = LocalMediaScanner.listAvailableFolders(context)
             }
             isScanning = false
         }
@@ -150,17 +156,18 @@ fun LocalSongsScreen(
             if (granted) scan()
         }
 
-    LaunchedEffect(hasPermission) {
-        if (hasPermission) scan()
-    }
-
     val allSongs by database.localSongs().collectAsState(initial = emptyList())
 
-    val availableFolders by remember(allSongs) {
-        derivedStateOf {
-            allSongs.mapNotNull { songItem ->
-                extractFolderNameFromLocalPath(songItem.song.localPath)
-            }.distinct().sorted()
+    // Only auto-scan once, on first entry, when permission is already granted but the
+    // library is still empty (e.g. first install). Re-opening this screen afterwards
+    // must not re-trigger a full MediaStore scan — use the rescan button for that.
+    LaunchedEffect(Unit) {
+        if (hasPermission) {
+            if (database.localSongs().first().isEmpty()) {
+                scan()
+            } else {
+                runCatching { availableFolders = LocalMediaScanner.listAvailableFolders(context) }
+            }
         }
     }
 

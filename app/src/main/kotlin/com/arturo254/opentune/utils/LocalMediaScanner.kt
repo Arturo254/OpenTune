@@ -30,8 +30,8 @@ import java.time.ZoneId
 /** Stable id prefix for songs sourced from on-device MediaStore audio. */
 private const val LOCAL_SONG_ID_PREFIX = "LM"
 
-/** Legacy but still functional MediaStore album-art URI, keyed by album id. */
-private val ALBUM_ART_URI = Uri.parse("content://media/external/audio/albumart")
+/** Sentinel meaning "no folder filter" in [SelectedLocalFoldersKey]-style preference sets. */
+private const val ALL_FOLDERS_SENTINEL = "Todas"
 
 /**
  * Scans the device's [MediaStore.Audio.Media] for playable audio files and upserts them into
@@ -40,7 +40,20 @@ private val ALBUM_ART_URI = Uri.parse("content://media/external/audio/albumart")
  */
 object LocalMediaScanner {
 
-    suspend fun scan(context: Context, database: MusicDatabase): Int = withContext(Dispatchers.IO) {
+    /**
+     * @param selectedFolders when non-empty (and not containing the "all folders" sentinel),
+     * restricts both the MediaStore query and the dead-row cleanup below to files whose parent
+     * folder name matches one of these — the same "last path segment" matching used by the
+     * folder picker UI. Tracks outside the selected folders are left untouched (neither
+     * re-verified nor deleted).
+     */
+    suspend fun scan(
+        context: Context,
+        database: MusicDatabase,
+        selectedFolders: Set<String> = emptySet(),
+    ): Int = withContext(Dispatchers.IO) {
+        val folderFilter = selectedFolders.takeUnless { it.isEmpty() || ALL_FOLDERS_SENTINEL in it }
+
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
@@ -53,14 +66,23 @@ object LocalMediaScanner {
             MediaStore.Audio.Media.DATE_MODIFIED,
             MediaStore.Audio.Media.DATA, // Ruta del archivo
         )
-        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
+        val selection = buildString {
+            append("${MediaStore.Audio.Media.IS_MUSIC} != 0")
+            if (folderFilter != null) {
+                append(" AND (")
+                append(folderFilter.joinToString(" OR ") { "${MediaStore.Audio.Media.DATA} LIKE ?" })
+                append(")")
+            }
+        }
+        val selectionArgs = folderFilter?.map { "%/$it/%" }?.toTypedArray()
 
         var count = 0
+        val seenSongIds = mutableSetOf<String>()
         context.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
             selection,
-            null,
+            selectionArgs,
             null,
         )?.use { cursor ->
             val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
@@ -68,7 +90,6 @@ object LocalMediaScanner {
             val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
             val albumArtistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ARTIST)
             val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-            val albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
             val yearCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
             val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val dateModifiedCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
@@ -84,9 +105,7 @@ object LocalMediaScanner {
                 val storeArtist = cursor.getString(artistCol)?.takeUnless { it.isUnknownTag() }
                 val storeAlbumArtist = cursor.getString(albumArtistCol)?.takeUnless { it.isUnknownTag() }
                 val albumName = cursor.getString(albumCol)?.takeUnless { it.isUnknownTag() }
-                val albumId = cursor.getLong(albumIdCol)
                 val storeYear = cursor.getInt(yearCol).takeIf { it > 0 }
-                val thumbnailUrl = ContentUris.withAppendedId(ALBUM_ART_URI, albumId).toString()
                 val durationMs = cursor.getLong(durationCol)
                 val dateModifiedSec = cursor.getLong(dateModifiedCol)
                 val filePath = cursor.getString(dataCol)
@@ -105,7 +124,15 @@ object LocalMediaScanner {
                     ?: "Unknown artist"
                 val year = storeYear ?: tags?.year
 
+                // Prefer embedded art when the tag fallback already ran (no extra IO cost);
+                // otherwise point at the track's own content URI and let
+                // LocalAudioThumbnailFetcher resolve it lazily at display time via
+                // ContentResolver.loadThumbnail(), rather than paying decode cost during scan.
+                val thumbnailUrl = tags?.embeddedArt?.let { art -> saveEmbeddedArt(context, contentUri, art) }
+                    ?: contentUri.toString()
+
                 val songId = "$LOCAL_SONG_ID_PREFIX$mediaStoreId"
+                seenSongIds += songId
                 val now = LocalDateTime.now()
                 val dateModified = if (dateModifiedSec > 0) {
                     LocalDateTime.ofInstant(Instant.ofEpochSecond(dateModifiedSec), ZoneId.systemDefault())
@@ -137,61 +164,75 @@ object LocalMediaScanner {
                 count++
             }
         }
+
+        // Drop library rows for MediaStore-sourced tracks whose file no longer exists
+        // (deleted/moved outside the app). Only touches ids scan() itself could have
+        // created — files added via scanUri() (e.g. "Open with") use a hash-based id and
+        // are cleaned up separately below. When a folder filter is active, only rows whose
+        // folder was actually scanned this pass are eligible: rows outside the current
+        // selection weren't looked at, so they can't be judged dead.
+        database.localSongs().first()
+            .filter { it.song.id.removePrefix(LOCAL_SONG_ID_PREFIX).toLongOrNull() != null }
+            .filter { folderFilter == null || folderNameOfLocalPath(it.song.localPath) in folderFilter }
+            .filterNot { it.song.id in seenSongIds }
+            .forEach { database.delete(it.song) }
+
+        cleanUpDeadScanUriSongs(context, database)
+
         count
     }
 
     /**
-     * Obtiene las carpetas disponibles que contienen música
-     * Usa el campo localPath de SongEntity
+     * Removes isLocal rows added via [scanUri] (non-numeric id suffix, so untouched by the
+     * MediaStore-driven cleanup above) whose backing file/content URI can no longer be opened.
      */
-    suspend fun getAvailableFolders(database: MusicDatabase): List<String> =
-        withContext(Dispatchers.IO) {
-            try {
-                // Obtener todas las canciones locales
-                val allSongs = database.localSongs().first()
+    private suspend fun cleanUpDeadScanUriSongs(context: Context, database: MusicDatabase) {
+        database.localSongs().first()
+            .filter { it.song.id.removePrefix(LOCAL_SONG_ID_PREFIX).toLongOrNull() == null }
+            .filter { songItem ->
+                val path = songItem.song.localPath ?: return@filter true
+                val uri = runCatching { Uri.parse(path) }.getOrNull() ?: return@filter true
+                val isAlive = runCatching {
+                    context.contentResolver.openInputStream(uri)?.use { true }
+                }.getOrNull() ?: false
+                !isAlive
+            }
+            .forEach { database.delete(it.song) }
+    }
 
-                // Extraer carpetas de las rutas de las canciones
-                val folders = allSongs.mapNotNull { songItem ->
-                    // Obtener el localPath directamente de SongEntity
-                    val localPath = songItem.song.localPath
-                    // Verificar que no sea null o vacío
-                    if (!localPath.isNullOrBlank()) {
-                        try {
-                            val uri = android.net.Uri.parse(localPath)
-                            val filePath = uri.path
-                            // Verificar que no sea null o vacío
-                            if (!filePath.isNullOrBlank()) {
-                                val file = File(filePath)
-                                val parent = file.parent
-                                // Verificar que no sea null o vacío
-                                if (!parent.isNullOrBlank()) {
-                                    // Extraer solo el nombre de la última carpeta para mostrar
-                                    val folderName = File(parent).name
-                                    if (folderName.isNotBlank()) {
-                                        folderName
-                                    } else {
-                                        parent
-                                    }
-                                } else {
-                                    null
-                                }
-                            } else {
-                                null
-                            }
-                        } catch (e: Exception) {
-                            null
-                        }
-                    } else {
-                        null
-                    }
-                }.distinct().sorted()
+    /** Same "last path segment" matching the folder-filter UI uses, applied to a stored [localPath]. */
+    private fun folderNameOfLocalPath(localPath: String?): String? {
+        if (localPath.isNullOrBlank()) return null
+        val filePath = runCatching { Uri.parse(localPath) }.getOrNull()?.path?.takeIf { it.isNotBlank() }
+            ?: return null
+        return runCatching { File(filePath).parentFile?.name }.getOrNull()
+    }
 
-                folders
-            } catch (e: Exception) {
-                // Si hay error, devolver lista vacía
-                emptyList()
+    /**
+     * Cheap, MediaStore-only folder discovery (no tag fallback, no DB writes) so the folder
+     * picker always lists every on-device folder, even ones a scoped [scan] hasn't touched yet.
+     */
+    suspend fun listAvailableFolders(context: Context): List<String> = withContext(Dispatchers.IO) {
+        val projection = arrayOf(MediaStore.Audio.Media.DATA)
+        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
+        val folders = mutableSetOf<String>()
+
+        context.contentResolver.query(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            projection,
+            selection,
+            null,
+            null,
+        )?.use { cursor ->
+            val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+            while (cursor.moveToNext()) {
+                val filePath = cursor.getString(dataCol) ?: continue
+                File(filePath).parentFile?.name?.takeIf { it.isNotBlank() }?.let { folders += it }
             }
         }
+
+        folders.sorted()
+    }
 
     /**
      * Scans a single, arbitrary content/file [uri] (e.g. from a file manager's "Open with") and
