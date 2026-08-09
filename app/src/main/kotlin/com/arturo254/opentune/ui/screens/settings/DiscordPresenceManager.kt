@@ -219,7 +219,7 @@ object DiscordPresenceManager {
             return true
         }
 
-        if (com.discord.socialsdk.DiscordSocialSdkInit.getApplicationContext() == null) {
+        if (com.arturo254.opentune.utils.DiscordSocialSdkInitCompat.getApplicationContext() == null) {
             // MainActivity hasn't run yet in this process (e.g. MusicService was started in the
             // background, such as by a media button, before the UI ever opened) — the SDK's
             // native code needs an Activity-derived Context first (set in MainActivity.onCreate)

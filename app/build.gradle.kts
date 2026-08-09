@@ -76,6 +76,12 @@ if (localPropertiesFile.exists()) {
 
 val gitCommit = fetchGitCommitHash()
 
+// discord_partner_sdk.aar is Discord's proprietary Social SDK binary, not committed to the repo
+// (see app/libs/README.md) — gate the native module and AAR dependency on its presence so CI
+// and fresh clones without it still build, just without the official Discord SDK feature.
+val discordSdkAarFile = file("libs/discord_partner_sdk.aar")
+val discordSdkAarAvailable = discordSdkAarFile.exists()
+
 android {
     namespace = "com.arturo254.opentune"
     compileSdk = 36
@@ -124,6 +130,12 @@ android {
                 ?: ""
         buildConfigField("String", "DISCORD_SOCIAL_SDK_CLIENT_ID", "\"$discordSocialSdkClientId\"")
         manifestPlaceholders["discordSocialSdkClientId"] = discordSocialSdkClientId
+
+        // discord_partner_sdk.aar is Discord's proprietary Social SDK binary — it's not
+        // committed (see app/libs/README.md) so CI and fresh clones don't have it. Expose
+        // availability at runtime so DiscordSocialSdkBridge can degrade gracefully instead of
+        // crashing with UnsatisfiedLinkError.
+        buildConfigField("boolean", "DISCORD_SOCIAL_SDK_AVAILABLE", "$discordSdkAarAvailable")
     }
 
     flavorDimensions += "abi"
@@ -194,10 +206,12 @@ android {
         prefab = true
     }
 
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/discord/CMakeLists.txt")
-            version = "3.22.1"
+    if (discordSdkAarAvailable) {
+        externalNativeBuild {
+            cmake {
+                path = file("src/main/cpp/discord/CMakeLists.txt")
+                version = "3.22.1"
+            }
         }
     }
 
@@ -243,7 +257,9 @@ ksp {
 }
 
 dependencies {
-    implementation(files("libs/discord_partner_sdk.aar"))
+    if (discordSdkAarAvailable) {
+        implementation(files("libs/discord_partner_sdk.aar"))
+    }
 
     implementation(libs.guava)
     implementation(libs.coroutines.guava)

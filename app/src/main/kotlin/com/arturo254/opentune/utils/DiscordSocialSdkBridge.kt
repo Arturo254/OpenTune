@@ -18,7 +18,13 @@ import kotlinx.coroutines.launch
  * rather than a request-id map; callers must not overlap calls of the same kind.
  */
 object DiscordSocialSdkBridge {
-    init {
+    private const val UNAVAILABLE_ERROR =
+        "Discord Social SDK not available in this build (discord_partner_sdk.aar missing)"
+
+    /** False when discord_partner_sdk.aar wasn't present at build time (see app/libs/README.md
+     * and the `discordSdkAarAvailable` Gradle check) — every public function below becomes a
+     * no-op/failure instead of throwing UnsatisfiedLinkError. */
+    val isAvailable: Boolean = runCatching {
         // libdiscord_partner_sdk.so has its own JNI_OnLoad (registers its internal websocket
         // JNI class map) that only runs if the JVM loads it directly via System.loadLibrary —
         // loading only discord_bridge.so (which merely *links against* it) leaves that
@@ -26,7 +32,7 @@ object DiscordSocialSdkBridge {
         // "ClassMapEmbedded not initialized" the moment Connect() spins it up.
         System.loadLibrary("discord_partner_sdk")
         System.loadLibrary("discord_bridge")
-    }
+    }.isSuccess
 
     data class AuthorizeResult(val success: Boolean, val code: String, val redirectUri: String, val error: String)
     data class TokenResult(
@@ -75,15 +81,19 @@ object DiscordSocialSdkBridge {
         private set
 
     fun createClient(): Boolean {
+        if (!isAvailable) return false
         val created = nativeCreateClient()
         isClientCreated = created
         if (created) startCallbackPump()
         return created
     }
 
-    fun defaultPresenceScopes(): String = nativeGetDefaultPresenceScopes()
+    fun defaultPresenceScopes(): String = if (isAvailable) nativeGetDefaultPresenceScopes() else ""
 
     suspend fun authorize(clientId: Long, scopes: String): AuthorizeResult {
+        if (!isAvailable) {
+            return AuthorizeResult(success = false, code = "", redirectUri = "", error = UNAVAILABLE_ERROR)
+        }
         val deferred = CompletableDeferred<AuthorizeResult>()
         pendingAuthorize = deferred
         nativeAuthorize(clientId, scopes)
@@ -91,6 +101,12 @@ object DiscordSocialSdkBridge {
     }
 
     suspend fun getToken(applicationId: Long, code: String, redirectUri: String): TokenResult {
+        if (!isAvailable) {
+            return TokenResult(
+                success = false, accessToken = "", refreshToken = "",
+                expiresIn = 0, scopes = "", error = UNAVAILABLE_ERROR,
+            )
+        }
         val deferred = CompletableDeferred<TokenResult>()
         pendingToken = deferred
         nativeGetToken(applicationId, code, redirectUri)
@@ -98,6 +114,7 @@ object DiscordSocialSdkBridge {
     }
 
     suspend fun updateToken(accessToken: String): SimpleResult {
+        if (!isAvailable) return SimpleResult(success = false, error = UNAVAILABLE_ERROR)
         val deferred = CompletableDeferred<SimpleResult>()
         pendingUpdateToken = deferred
         nativeUpdateToken(accessToken)
@@ -106,17 +123,23 @@ object DiscordSocialSdkBridge {
 
     /** Exchanges a stored refresh token for a new access token, without the user re-authorizing. */
     suspend fun refreshToken(applicationId: Long, refreshToken: String): TokenResult {
+        if (!isAvailable) {
+            return TokenResult(
+                success = false, accessToken = "", refreshToken = "",
+                expiresIn = 0, scopes = "", error = UNAVAILABLE_ERROR,
+            )
+        }
         val deferred = CompletableDeferred<TokenResult>()
         pendingToken = deferred
         nativeRefreshToken(applicationId, refreshToken)
         return deferred.await()
     }
 
-    fun connect() = nativeConnect()
+    fun connect() { if (isAvailable) nativeConnect() }
 
-    fun disconnect() = nativeDisconnect()
+    fun disconnect() { if (isAvailable) nativeDisconnect() }
 
-    fun isAuthenticated(): Boolean = nativeIsAuthenticated()
+    fun isAuthenticated(): Boolean = isAvailable && nativeIsAuthenticated()
 
     /** Matches discordpp::ActivityTypes ordinals — pass the raw value through, no mapping needed. */
     object ActivityType {
@@ -143,6 +166,7 @@ object DiscordSocialSdkBridge {
         button2Label: String? = null,
         button2Url: String? = null,
     ): SimpleResult {
+        if (!isAvailable) return SimpleResult(success = false, error = UNAVAILABLE_ERROR)
         val deferred = CompletableDeferred<SimpleResult>()
         pendingUpdateRichPresence = deferred
         nativeUpdateRichPresence(
@@ -154,13 +178,14 @@ object DiscordSocialSdkBridge {
         return deferred.await()
     }
 
-    fun clearRichPresence() = nativeClearRichPresence()
+    fun clearRichPresence() { if (isAvailable) nativeClearRichPresence() }
 
     data class CurrentUser(val displayName: String, val username: String, val avatarUrl: String?)
 
     /** Only populated once the client's websocket status reaches `Ready` (see discordpp.h's
      * `Client::Status`) — returns null before that, or if there's no client in this process. */
     fun currentUser(): CurrentUser? {
+        if (!isAvailable) return null
         val displayName = nativeGetCurrentUserDisplayName() ?: return null
         val username = nativeGetCurrentUserUsername() ?: displayName
         val avatarUrl = nativeGetCurrentUserAvatarUrl()

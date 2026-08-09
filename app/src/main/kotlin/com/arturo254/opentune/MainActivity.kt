@@ -472,7 +472,7 @@ class MainActivity : ComponentActivity() {
         // (DiscordSocialSdkInit.setEngineActivity) before any native SDK call touches Context —
         // otherwise a background-started MusicService trying to use a previously-linked account
         // crashes with a NullPointerException deep in the SDK's own DiscordRpcClient.
-        com.discord.socialsdk.DiscordSocialSdkInit.setEngineActivity(this)
+        com.arturo254.opentune.utils.DiscordSocialSdkInitCompat.setEngineActivity(this)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             val initialLocale = PreferenceStore.get(AppLanguageKey)

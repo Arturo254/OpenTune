@@ -69,9 +69,9 @@ import com.arturo254.opentune.constants.DiscordSocialSdkLinkedKey
 import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.utils.backToMain
 import com.arturo254.opentune.utils.DiscordSocialSdkBridge
+import com.arturo254.opentune.utils.DiscordSocialSdkInitCompat
 import com.arturo254.opentune.utils.DiscordSocialSdkTokenStore
 import com.arturo254.opentune.utils.rememberPreference
-import com.discord.socialsdk.DiscordSocialSdkInit
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -130,7 +130,7 @@ fun DiscordSocialLoginScreen(navController: NavController) {
         isWorking = true
         isError = false
         statusMessage = null
-        DiscordSocialSdkInit.setEngineActivity(activity)
+        DiscordSocialSdkInitCompat.setEngineActivity(activity)
 
         scope.launch {
             try {
