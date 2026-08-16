@@ -83,6 +83,19 @@ class PlayerConnection(
     val waitingForNetworkConnection = service.waitingForNetworkConnection
     val queueRestoreCompleted = service.queueRestoreCompleted
 
+
+    fun removeSongFromQueue(songId: String): Boolean {
+        return service.removeSongFromQueue(songId)
+    }
+
+    fun removeSongFromQueueByIndex(index: Int): Boolean {
+        return service.removeSongFromQueueByIndex(index)
+    }
+
+    fun clearQueue(): Boolean {
+        return service.clearQueue()
+    }
+
     init {
         player.addListener(this)
 

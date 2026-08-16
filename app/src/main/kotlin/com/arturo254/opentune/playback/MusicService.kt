@@ -4830,7 +4830,10 @@ class MusicService :
         }
     }
 
-    private fun writePersistentObject(fileName: String, payload: Serializable) {
+    private fun writePersistentObject(
+        fileName: String,
+        payload: Serializable,
+    ) {
         val persistentFile = filesDir.resolve(fileName)
         val tempFile = filesDir.resolve("$fileName.tmp")
 
@@ -4841,14 +4844,15 @@ class MusicService :
                         output.writeObject(payload)
                         output.flush()
                     }
-                    fos.fd.sync()
                 }
 
-                if (persistentFile.exists() && !persistentFile.delete()) {
-                    error("Could not replace $fileName")
-                }
                 if (!tempFile.renameTo(persistentFile)) {
-                    error("Could not atomically move $fileName")
+                    if (persistentFile.exists() && !persistentFile.delete()) {
+                        error("Could not replace $fileName")
+                    }
+                    if (!tempFile.renameTo(persistentFile)) {
+                        error("Could not atomically move $fileName")
+                    }
                 }
             }.onFailure {
                 runCatching { tempFile.delete() }
@@ -4898,7 +4902,7 @@ class MusicService :
         )
     }
 
-    private suspend fun saveQueueToDisk() {
+    suspend fun saveQueueToDisk() {
         val mediaItemsSnapshot = player.mediaItems.mapNotNull { it.toPersistableMetadata() }
         if (mediaItemsSnapshot.isEmpty()) return
 
@@ -4912,14 +4916,13 @@ class MusicService :
         val playbackState = player.playbackState
 
         withContext(Dispatchers.IO) {
-            // Save current queue with proper type information
             val persistQueue = currentQueue.toPersistQueue(
                 title = queueTitle,
                 items = mediaItemsSnapshot,
                 mediaItemIndex = currentMediaItemIndex,
                 position = currentPosition
             )
-            
+
             val persistAutomix =
                 PersistQueue(
                     title = "automix",
@@ -4927,22 +4930,73 @@ class MusicService :
                     mediaItemIndex = 0,
                     position = 0,
                 )
-                
-            // Save player state
+
             val persistPlayerState = PersistPlayerState(
                 playWhenReady = playWhenReady,
                 repeatMode = repeatMode,
                 shuffleModeEnabled = shuffleModeEnabled,
                 volume = volume,
                 currentPosition = currentPosition,
-                currentMediaItemIndex = currentMediaItemIndex, // Redundant but part of data class
+                currentMediaItemIndex = currentMediaItemIndex,
                 playbackState = playbackState
             )
-            
+
             writePersistentObject(PERSISTENT_QUEUE_FILE, persistQueue)
             writePersistentObject(PERSISTENT_AUTOMIX_FILE, persistAutomix)
             writePersistentObject(PERSISTENT_PLAYER_STATE_FILE, persistPlayerState)
         }
+    }
+
+
+    fun removeSongFromQueue(songId: String): Boolean {
+        val currentIndex = player.currentMediaItemIndex
+        var removed = false
+
+
+        for (i in 0 until player.mediaItemCount) {
+            val item = player.getMediaItemAt(i)
+            val metadata = item.metadata
+            if (metadata != null && metadata.id == songId) {
+                player.removeMediaItem(i)
+                removed = true
+                break
+            }
+        }
+
+        if (removed) {
+            scope.launch(SilentHandler) {
+                saveQueueToDisk()
+            }
+        }
+
+        return removed
+    }
+
+    fun removeSongFromQueueByIndex(index: Int): Boolean {
+        if (index < 0 || index >= player.mediaItemCount) return false
+
+
+        player.removeMediaItem(index)
+
+        scope.launch(SilentHandler) {
+            saveQueueToDisk()
+        }
+
+        return true
+    }
+
+    fun clearQueue(): Boolean {
+        if (player.mediaItemCount == 0) return false
+
+        player.clearMediaItems()
+        currentQueue = EmptyQueue
+        queueTitle = null
+
+        scope.launch(SilentHandler) {
+            saveQueueToDisk()
+        }
+
+        return true
     }
 
 

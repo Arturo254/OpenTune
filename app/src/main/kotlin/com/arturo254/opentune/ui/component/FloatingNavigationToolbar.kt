@@ -294,6 +294,7 @@ private fun FloatingToolbarOverflowAction(
 
     Box {
         FloatingToolbarDefaults.VibrantFloatingActionButton(
+            shape = CircleShape,
             onClick = { fabMenuExpanded = !fabMenuExpanded },
             containerColor = floatingToolbarFabContainerColor(pureBlack = pureBlack),
             contentColor = floatingToolbarFabContentColor(pureBlack = pureBlack),

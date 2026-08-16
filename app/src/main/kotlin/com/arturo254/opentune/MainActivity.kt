@@ -932,7 +932,8 @@ class MainActivity : ComponentActivity() {
                             isPlayerExpanded && playerFullscreen -> {
                                 controller.systemBarsBehavior =
                                     WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                                controller.hide(WindowInsetsCompat.Type.systemBars())
+                                controller.hide(WindowInsetsCompat.Type.statusBars())
+                                controller.show(WindowInsetsCompat.Type.navigationBars())
                             }
 
                             isYearInMusicScreen -> {

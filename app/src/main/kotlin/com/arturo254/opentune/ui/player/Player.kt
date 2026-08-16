@@ -276,17 +276,14 @@ fun BottomSheetPlayer(
         defaultValue = false
     )
 
-// Activar fullscreen al expandir
     LaunchedEffect(state.isExpanded, playerFullscreen) {
         if (state.isExpanded && playerFullscreen && window != null) {
             WindowCompat.setDecorFitsSystemWindows(window, false)
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-            insetsController.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            insetsController.hide(WindowInsetsCompat.Type.systemBars())
+            insetsController.hide(WindowInsetsCompat.Type.statusBars())
+            insetsController.show(WindowInsetsCompat.Type.navigationBars())
         }
     }
-
 
 
 
