@@ -97,6 +97,8 @@ import com.arturo254.opentune.constants.AutoDownloadOnLikeKey
 import com.arturo254.opentune.constants.AutoSkipNextOnErrorKey
 import com.arturo254.opentune.constants.AutoStartOnBluetoothKey
 import com.arturo254.opentune.constants.InnerTubeCookieKey
+import com.arturo254.opentune.constants.DiscordSocialSdkEnabledKey
+import com.arturo254.opentune.constants.DiscordSocialSdkLinkedKey
 import com.arturo254.opentune.constants.DiscordTokenKey
 import com.arturo254.opentune.constants.EqualizerBandLevelsMbKey
 import com.arturo254.opentune.constants.EqualizerBassBoostEnabledKey
@@ -875,7 +877,7 @@ class MusicService :
                     scope.launch {
                         try {
                             val token = dataStore.get(DiscordTokenKey, "")
-                            if (token.isNotBlank() && DiscordPresenceManager.isRunning()) {
+                            if (DiscordPresenceManager.isRunning()) {
                                 val mediaId = mediaItem.mediaId
                                 val song = if (mediaId != null) withContext(Dispatchers.IO) { database.song(mediaId).first() } else null
                                 val finalSong = song ?: metadata?.let { createTransientSongFromMedia(it) }
@@ -1185,7 +1187,9 @@ class MusicService :
             }
 
             val key: String = dataStore.get(DiscordTokenKey, "")
-            if (key.isNullOrBlank()) {
+            val usingSocialSdk = dataStore.get(DiscordSocialSdkEnabledKey, false) &&
+                dataStore.get(DiscordSocialSdkLinkedKey, false)
+            if (key.isNullOrBlank() && !usingSocialSdk) {
                 if (DiscordPresenceManager.isRunning()) {
                     Timber.tag("MusicService").d("No Discord token → stopping presence manager")
                     try { DiscordPresenceManager.stop() } catch (_: Exception) {}
@@ -3810,7 +3814,7 @@ class MusicService :
     scope.launch {
         try {
             val token = withContext(Dispatchers.IO) { dataStore.get(DiscordTokenKey, "") }
-            if (token.isNotBlank() && DiscordPresenceManager.isRunning()) {
+            if (DiscordPresenceManager.isRunning()) {
                 // Obtain the freshest Song from DB using current media item id to avoid stale currentSong.value
                 val mediaId = player.currentMediaItem?.mediaId
                 val song = if (mediaId != null) withContext(Dispatchers.IO) { database.song(mediaId).first() } else null
@@ -3958,7 +3962,7 @@ class MusicService :
             scope.launch {
                 try {
                     val token = dataStore.get(DiscordTokenKey, "")
-                    if (token.isNotBlank() && DiscordPresenceManager.isRunning()) {
+                    if (DiscordPresenceManager.isRunning()) {
                         val mediaId = player.currentMediaItem?.mediaId
                         val song = if (mediaId != null) withContext(Dispatchers.IO) { database.song(mediaId).first() } else null
                         val finalSong = song ?: player.currentMetadata?.let { createTransientSongFromMedia(it) }
@@ -4012,7 +4016,7 @@ class MusicService :
             scope.launch {
                 try {
                     val token = withContext(Dispatchers.IO) { dataStore.get(DiscordTokenKey, "") }
-                    if (token.isNotBlank() && DiscordPresenceManager.isRunning()) {
+                    if (DiscordPresenceManager.isRunning()) {
                         val song = if (currentMediaId != null) withContext(Dispatchers.IO) { database.song(currentMediaId).first() } else null
                         val finalSong = song ?: currentMetadata?.let { createTransientSongFromMedia(it) }
 

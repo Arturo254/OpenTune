@@ -76,9 +76,17 @@ if (localPropertiesFile.exists()) {
 
 val gitCommit = fetchGitCommitHash()
 
+// discord_partner_sdk.aar is Discord's proprietary Social SDK binary, not committed to the repo
+// (see app/libs/README.md) — gate the native module and AAR dependency on its presence so CI
+// and fresh clones without it still build, just without the official Discord SDK feature.
+val discordSdkAarFile = file("libs/discord_partner_sdk.aar")
+val discordSdkAarAvailable = discordSdkAarFile.exists()
+
 android {
     namespace = "com.arturo254.opentune"
     compileSdk = 36
+
+    ndkVersion = "27.1.12297006"
 
     defaultConfig {
         applicationId = "com.Arturo254.opentune"
@@ -90,6 +98,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++20"
+            }
+        }
 
         val lastfmApiKey =
             localProperties.getProperty("LASTFM_API_KEY")
@@ -109,6 +123,19 @@ android {
         buildConfigField("String", "TOGETHER_BEARER_TOKEN", "\"$togetherBearerToken\"")
 
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
+
+        val discordSocialSdkClientId =
+            localProperties.getProperty("DISCORD_SOCIAL_SDK_CLIENT_ID")
+                ?: System.getenv("DISCORD_SOCIAL_SDK_CLIENT_ID")
+                ?: ""
+        buildConfigField("String", "DISCORD_SOCIAL_SDK_CLIENT_ID", "\"$discordSocialSdkClientId\"")
+        manifestPlaceholders["discordSocialSdkClientId"] = discordSocialSdkClientId
+
+        // discord_partner_sdk.aar is Discord's proprietary Social SDK binary — it's not
+        // committed (see app/libs/README.md) so CI and fresh clones don't have it. Expose
+        // availability at runtime so DiscordSocialSdkBridge can degrade gracefully instead of
+        // crashing with UnsatisfiedLinkError.
+        buildConfigField("boolean", "DISCORD_SOCIAL_SDK_AVAILABLE", "$discordSdkAarAvailable")
     }
 
     flavorDimensions += "abi"
@@ -176,6 +203,16 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        prefab = true
+    }
+
+    if (discordSdkAarAvailable) {
+        externalNativeBuild {
+            cmake {
+                path = file("src/main/cpp/discord/CMakeLists.txt")
+                version = "3.22.1"
+            }
+        }
     }
 
     dependenciesInfo {
@@ -220,9 +257,14 @@ ksp {
 }
 
 dependencies {
+    if (discordSdkAarAvailable) {
+        implementation(files("libs/discord_partner_sdk.aar"))
+    }
+
     implementation(libs.guava)
     implementation(libs.coroutines.guava)
     implementation(libs.concurrent.futures)
+    implementation(libs.security.crypto)
 
     implementation(libs.activity)
     implementation(libs.navigation)

@@ -468,6 +468,12 @@ class MainActivity : ComponentActivity() {
         window.decorView.layoutDirection = View.LAYOUT_DIRECTION_LTR
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
+        // Discord Social SDK requires a live Activity to derive its application Context from
+        // (DiscordSocialSdkInit.setEngineActivity) before any native SDK call touches Context —
+        // otherwise a background-started MusicService trying to use a previously-linked account
+        // crashes with a NullPointerException deep in the SDK's own DiscordRpcClient.
+        com.arturo254.opentune.utils.DiscordSocialSdkInitCompat.setEngineActivity(this)
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             val initialLocale = PreferenceStore.get(AppLanguageKey)
                 ?.takeUnless { it == SYSTEM_DEFAULT }

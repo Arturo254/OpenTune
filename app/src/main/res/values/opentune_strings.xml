@@ -559,4 +559,26 @@
     <string name="update_downloading">Downloading update…</string>
     <string name="update_restart_notice">The app will restart once the download finishes.</string>
     <string name="update_error_prefix">Error: %1$s</string>
+
+    <!-- Discord Social SDK (official Rich Presence, replaces kizzy token-scraping) -->
+    <string name="discord_social_sdk_title">Discord (official)</string>
+    <string name="discord_social_sdk_ready">Sign in with Discord to enable Rich Presence via the official SDK — no account token required.</string>
+    <string name="discord_social_sdk_missing_client_id">Missing Discord client ID — set DISCORD_SOCIAL_SDK_CLIENT_ID in local.properties.</string>
+    <string name="discord_social_sdk_init_failed">Failed to initialize the Discord SDK client.</string>
+    <string name="discord_social_sdk_waiting_for_browser">Waiting for authorization in Discord…</string>
+    <string name="discord_social_sdk_authorization_failed">Authorization failed or was cancelled.</string>
+    <string name="discord_social_sdk_exchanging_token">Finishing sign-in…</string>
+    <string name="discord_social_sdk_token_exchange_failed">Failed to exchange the authorization code for a token.</string>
+    <string name="discord_social_sdk_linked">Signed in with Discord.</string>
+    <string name="discord_social_sdk_sign_in">Sign in with Discord</string>
+    <string name="discord_social_sdk_use_official">Use official Discord SDK (beta)</string>
+    <string name="discord_social_sdk_use_official_desc">No account token stored, no ban risk — requires signing in separately below.</string>
+    <string name="discord_social_sdk_status_idle">Ready to connect</string>
+
+    <string name="discord_sign_in_method">Sign-in method</string>
+    <string name="discord_sign_in_method_official">Official (recommended)</string>
+    <string name="discord_sign_in_method_legacy">Legacy (account token)</string>
+    <string name="discord_sign_in_method_legacy_warning">Uses your Discord account token directly — against Discord\'s ToS and carries a ban risk. Prefer Official above unless you need it.</string>
+    <string name="discord_section_content">Content</string>
+    <string name="discord_section_buttons">Buttons</string>
 </resources>

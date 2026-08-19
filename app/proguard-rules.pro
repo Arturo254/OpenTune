@@ -125,3 +125,12 @@
 -dontwarn javax.imageio.**
 -dontwarn javax.swing.**
 -keep class org.jaudiotagger.** { *; }
+
+## Discord Social SDK JNI bridge - native code calls these by name via GetStaticMethodID,
+## and declares "external fun"s R8 can't see are used from C++; keep both from being
+## renamed/stripped in release builds.
+-keep class com.arturo254.opentune.utils.DiscordSocialSdkBridge {
+    *;
+}
+-keep class com.discord.socialsdk.** { *; }
+-dontwarn com.discord.socialsdk.**
