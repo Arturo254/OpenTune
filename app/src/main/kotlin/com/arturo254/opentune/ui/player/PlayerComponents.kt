@@ -36,6 +36,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -47,7 +48,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularWavyProgressIndicator
@@ -65,8 +71,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
+import com.arturo254.opentune.LocalDatabase
+import com.arturo254.opentune.innertube.YouTube
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -107,6 +119,7 @@ import com.arturo254.opentune.constants.PlayerBackgroundStyle
 import com.arturo254.opentune.constants.PlayerDesignStyle
 import com.arturo254.opentune.constants.PlayerHorizontalPadding
 import com.arturo254.opentune.constants.SliderStyle
+import com.arturo254.opentune.db.entities.ArtistEntity
 import com.arturo254.opentune.db.entities.FormatEntity
 import com.arturo254.opentune.extensions.togglePlayPause
 import com.arturo254.opentune.extensions.toggleRepeatMode
@@ -761,6 +774,7 @@ fun PlayerTopActions(
                 }
             }
         }
+        else -> {}
     }
 }
 
@@ -2730,6 +2744,14 @@ fun PlayerBackground(
                 }
             }
 
+            PlayerBackgroundStyle.SPOTIFY -> {
+                SpotifyPlayerBackdrop(
+                    thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                    accentColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
             else -> {
                 // DEFAULT or other modes - no background
             }
@@ -3429,6 +3451,669 @@ fun GlassTrack(
                         )
                     )
                 )
+        )
+    }
+}
+
+@Composable
+fun SpotifyCollapsedHeader(
+    mediaMetadata: MediaMetadata,
+    surfaceColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    isLiked: Boolean,
+    onLike: () -> Unit,
+    onOpenMenu: () -> Unit,
+    onOpenArtist: (String) -> Unit = {},
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(surfaceColor.copy(alpha = 0.96f))
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+            .padding(horizontal = 20.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AsyncImage(
+            model = mediaMetadata.thumbnailUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(45.dp)
+                .clip(RoundedCornerShape(8.dp))
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = mediaMetadata.title,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee(),
+            )
+            Spacer(Modifier.height(2.dp))
+            Row(modifier = Modifier.basicMarquee()) {
+                mediaMetadata.artists.forEachIndexed { index, artist ->
+                    Text(
+                        text = artist.name + if (index < mediaMetadata.artists.lastIndex) ", " else "",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.Normal),
+                        color = Color.White.copy(alpha = 0.68f),
+                        modifier = Modifier.clickable {
+                            artist.id?.let { artistId ->
+                                if (artistId.isNotBlank()) onOpenArtist(artistId)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.width(16.dp))
+        SpotifyRoundIconButton(
+            icon = if (isLiked) R.drawable.favorite else R.drawable.favorite_border,
+            transparent = true,
+            tint = if (isLiked) Color(0xFF1DB954) else Color.White,
+            onClick = onLike
+        )
+        Spacer(Modifier.width(12.dp))
+        SpotifyRoundIconButton(icon = R.drawable.more_vert, transparent = true, onClick = onOpenMenu)
+    }
+}
+
+@Composable
+fun SpotifyPlayerBackdrop(
+    thumbnailUrl: String?,
+    accentColor: Color = Color.Black,
+    modifier: Modifier = Modifier,
+) {
+    val animatedAccentColor by androidx.compose.animation.animateColorAsState(
+        targetValue = accentColor,
+        animationSpec = tween(durationMillis = 800),
+        label = "spotifyAccentColor"
+    )
+    Box(modifier = modifier.background(Color.Black)) {
+        AsyncImage(
+            model = thumbnailUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(110.dp)
+                .alpha(0.55f)
+                .graphicsLayer { scaleX = 1.25f; scaleY = 1.25f }
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to animatedAccentColor.copy(alpha = 0.55f),
+                            0.45f to Color.Black.copy(alpha = 0.65f),
+                            1f to Color.Black,
+                        )
+                    )
+                )
+        )
+    }
+}
+
+@Composable
+fun SpotifyPlayerContent(
+    mediaMetadata: MediaMetadata,
+    position: Long,
+    duration: Long,
+    isPlaying: Boolean,
+    isLoading: Boolean,
+    canSkipPrevious: Boolean,
+    canSkipNext: Boolean,
+    repeatMode: Int,
+    sliderStyle: SliderStyle,
+    lyricsPreview: String?,
+    onSeek: (Long) -> Unit,
+    onSeekFinished: () -> Unit,
+    onPlayPause: () -> Unit,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onShuffle: () -> Unit,
+    onRepeat: () -> Unit,
+    onOpenLyrics: () -> Unit,
+    onOpenQueue: () -> Unit,
+    onCollapse: () -> Unit,
+    onOpenArtist: (String) -> Unit,
+    onOpenMenu: () -> Unit,
+    isLiked: Boolean,
+    onLike: () -> Unit,
+    onAddToPlaylist: () -> Unit,
+    onShowDetails: () -> Unit,
+    shuffleModeEnabled: Boolean,
+    currentSongArtists: List<ArtistEntity> = emptyList(),
+    surfaceColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+) {
+    val safeDuration = duration.takeIf { it > 0 } ?: 0L
+    val sliderValue = if (safeDuration > 0) position.coerceIn(0L, safeDuration).toFloat() else 0f
+    val artists = mediaMetadata.artists.joinToString { it.name }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SpotifyRoundIconButton(
+                icon = R.drawable.expand_more,
+                transparent = true,
+                onClick = onCollapse,
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = androidx.compose.ui.res.stringResource(R.string.now_playing).uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+                    color = Color.White,
+                )
+                Text(
+                    text = "\"${mediaMetadata.title}\"",
+                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.basicMarquee(),
+                )
+            }
+            SpotifyRoundIconButton(
+                icon = R.drawable.more_vert,
+                transparent = true,
+                onClick = onOpenMenu,
+            )
+        }
+    }
+
+    Spacer(Modifier.height(32.dp))
+
+    AsyncImage(
+        model = mediaMetadata.thumbnailUrl,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .fillMaxWidth(0.94f)
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(8.dp))
+    )
+
+    Spacer(Modifier.height(36.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = mediaMetadata.title,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 25.sp, fontWeight = FontWeight.Bold),
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee()
+            )
+            Spacer(Modifier.height(4.dp))
+            Row(modifier = Modifier.basicMarquee()) {
+                mediaMetadata.artists.forEachIndexed { index, artist ->
+                    Text(
+                        text = artist.name + if (index < mediaMetadata.artists.lastIndex) ", " else "",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, fontWeight = FontWeight.Normal),
+                        color = Color.White.copy(alpha = 0.68f),
+                        modifier = Modifier.clickable {
+                            artist.id?.let { artistId ->
+                                if (artistId.isNotBlank()) onOpenArtist(artistId)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        SpotifyRoundIconButton(
+            icon = if (isLiked) R.drawable.favorite else R.drawable.favorite_border,
+            transparent = true,
+            tint = if (isLiked) Color(0xFF1DB954) else Color.White,
+            onClick = onLike
+        )
+    }
+
+    Spacer(Modifier.height(18.dp))
+
+    SpotifyStyledSlider(
+        value = sliderValue,
+        duration = safeDuration,
+        sliderStyle = sliderStyle,
+        isPlaying = isPlaying,
+        onSeek = onSeek,
+        onSeekFinished = onSeekFinished,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = makeTimeString(position.coerceAtLeast(0L)),
+            style = MaterialTheme.typography.labelMedium,
+            color = Color.White.copy(alpha = 0.68f),
+        )
+        Spacer(Modifier.weight(1f))
+        Text(
+            text = makeTimeString(safeDuration),
+            style = MaterialTheme.typography.labelMedium,
+            color = Color.White.copy(alpha = 0.68f),
+        )
+    }
+
+    Spacer(Modifier.height(12.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SpotifyPlainIconButton(
+            if (shuffleModeEnabled) R.drawable.shuffle_on else R.drawable.shuffle,
+            onShuffle,
+            if (shuffleModeEnabled) Color(0xFF1DB954) else Color.White,
+        )
+        SpotifyPlainIconButton(
+            R.drawable.skip_previous,
+            onPrevious,
+            if (canSkipPrevious) Color.White else Color.White.copy(alpha = 0.32f),
+        )
+        Box(
+            modifier = Modifier
+                .size(74.dp)
+                .clip(CircleShape)
+                .background(Color.White)
+                .clickable(onClick = onPlayPause),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(if (isPlaying && !isLoading) R.drawable.pause else R.drawable.play),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(Color.Black),
+                modifier = Modifier.size(38.dp)
+            )
+        }
+        SpotifyPlainIconButton(
+            R.drawable.skip_next,
+            onNext,
+            if (canSkipNext) Color.White else Color.White.copy(alpha = 0.32f),
+        )
+        SpotifyPlainIconButton(
+            if (repeatMode == Player.REPEAT_MODE_ONE) R.drawable.repeat_one else R.drawable.repeat,
+            onRepeat,
+            if (repeatMode == Player.REPEAT_MODE_OFF) Color.White else Color(0xFF1DB954),
+        )
+    }
+
+    Spacer(Modifier.height(22.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SpotifyRoundIconButton(icon = R.drawable.info, transparent = true, onClick = onShowDetails)
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            SpotifyRoundIconButton(icon = R.drawable.playlist_add, transparent = true, onClick = onAddToPlaylist)
+            SpotifyRoundIconButton(icon = R.drawable.queue_music, transparent = true, onClick = onOpenQueue)
+        }
+    }
+
+    Spacer(Modifier.height(26.dp))
+
+    SpotifyLyricsPreviewCard(
+        lyrics = lyricsPreview,
+        position = position,
+        surfaceColor = surfaceColor,
+        onClick = onOpenLyrics,
+    )
+
+    Spacer(Modifier.height(12.dp))
+
+    mediaMetadata.artists.forEach { artist ->
+        val artistEntity = currentSongArtists.find { it.id == artist.id }
+        val thumbnailUrl = artistEntity?.thumbnailUrl?.takeIf { it.isNotBlank() } ?: mediaMetadata.thumbnailUrl
+        SpotifyArtistCard(
+            artist = artist.name,
+            artistId = artist.id,
+            thumbnailUrl = thumbnailUrl,
+            onClick = {
+                artist.id?.let { artistId ->
+                    onOpenArtist(artistId)
+                }
+            },
+        )
+        Spacer(Modifier.height(12.dp))
+    }
+
+    Spacer(Modifier.height(12.dp))
+
+    SpotifyDetailsCard(
+        mediaMetadata = mediaMetadata,
+        artists = artists,
+        surfaceColor = surfaceColor,
+        onClick = onOpenMenu,
+    )
+}
+
+@Composable
+private fun SpotifyStyledSlider(
+    value: Float,
+    duration: Long,
+    sliderStyle: SliderStyle,
+    isPlaying: Boolean,
+    onSeek: (Long) -> Unit,
+    onSeekFinished: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val valueRange = 0f..duration.coerceAtLeast(1L).toFloat()
+    StyledPlaybackSlider(
+        sliderStyle = sliderStyle,
+        value = value,
+        valueRange = valueRange,
+        onValueChange = { onSeek(it.toLong()) },
+        onValueChangeFinished = onSeekFinished,
+        activeColor = Color.White,
+        isPlaying = isPlaying,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun SpotifyLyricsPreviewCard(
+    lyrics: String?,
+    position: Long,
+    surfaceColor: Color,
+    onClick: () -> Unit,
+) {
+    val lyricEntries = remember(lyrics) {
+        when {
+            lyrics.isNullOrBlank() || lyrics == com.arturo254.opentune.db.entities.LyricsEntity.LYRICS_NOT_FOUND -> emptyList()
+            lyrics.startsWith("[") -> com.arturo254.opentune.lyrics.LyricsUtils.parseLyrics(lyrics)
+            else -> lyrics.lines()
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .mapIndexed { index, line -> com.arturo254.opentune.lyrics.LyricsEntry(index * 2500L, line) }
+        }
+    }
+    val activeLineIndex = remember(lyricEntries, position) {
+        lyricEntries.indexOfLast { it.time <= position }.coerceAtLeast(0)
+    }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    androidx.compose.runtime.LaunchedEffect(activeLineIndex, lyricEntries.size) {
+        if (lyricEntries.isNotEmpty()) {
+            listState.animateScrollToItem(activeLineIndex.coerceAtMost(lyricEntries.lastIndex))
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(surfaceColor.copy(alpha = 0.9f))
+            .clickable(onClick = onClick)
+            .padding(15.dp),
+    ) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = androidx.compose.ui.res.stringResource(R.string.lyrics),
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold),
+                    color = Color.White,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "Show",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White.copy(alpha = 0.72f),
+                )
+            }
+
+            Spacer(Modifier.height(26.dp))
+
+            if (lyricEntries.isEmpty()) {
+                Text(
+                    text = androidx.compose.ui.res.stringResource(R.string.lyrics_not_found),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White.copy(alpha = 0.45f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(bottom = 20.dp),
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                ) {
+                    androidx.compose.foundation.lazy.LazyColumn(
+                        state = listState,
+                        userScrollEnabled = false,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(lyricEntries.size) { index ->
+                            val isCurrent = index == activeLineIndex
+                            val isPast = index < activeLineIndex
+                            Text(
+                                text = lyricEntries[index].text,
+                                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                                color = when {
+                                    isCurrent -> Color.White
+                                    isPast -> Color.White.copy(alpha = 0.5f)
+                                    else -> Color.White.copy(alpha = 0.25f)
+                                },
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        item {
+                            Spacer(Modifier.height(150.dp))
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(18.dp))
+            Text(
+                text = if (lyricEntries.isEmpty()) "" else "Line Synced\nLyrics provided by LRCLIB",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.Normal),
+                color = Color.White.copy(alpha = 0.68f),
+                modifier = Modifier.align(Alignment.End),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpotifyArtistCard(
+    artist: String,
+    artistId: String? = null,
+    thumbnailUrl: String?,
+    onClick: () -> Unit,
+) {
+    val database = LocalDatabase.current
+    val avatarUrl by produceState<String?>(initialValue = thumbnailUrl, key1 = artistId, key2 = thumbnailUrl) {
+        if (!artistId.isNullOrBlank()) {
+            val dbArtist = withContext(Dispatchers.IO) { database.artist(artistId).firstOrNull() }
+            if (!dbArtist?.artist?.thumbnailUrl.isNullOrBlank()) {
+                value = dbArtist?.artist?.thumbnailUrl
+            } else {
+                withContext(Dispatchers.IO) {
+                    YouTube.artist(artistId).onSuccess { artistPage ->
+                        artistPage.artist.thumbnail?.let { url ->
+                            value = url
+                            dbArtist?.artist?.let { entity ->
+                                database.query {
+                                    update(entity.copy(thumbnailUrl = url))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(250.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick),
+    ) {
+        AsyncImage(
+            model = avatarUrl ?: thumbnailUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize().alpha(0.82f),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Black.copy(alpha = 0.1f), Color.Black.copy(alpha = 0.66f))
+                    )
+                )
+        )
+        Text(
+            text = androidx.compose.ui.res.stringResource(R.string.artists),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White,
+            modifier = Modifier.align(Alignment.TopStart).padding(28.dp),
+        )
+        Column(
+            modifier = Modifier.align(Alignment.BottomStart).padding(28.dp),
+        ) {
+            Text(
+                text = artist,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White,
+            )
+            Text(
+                text = "Artist",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White.copy(alpha = 0.7f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpotifyDetailsCard(
+    mediaMetadata: MediaMetadata,
+    artists: String,
+    surfaceColor: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(surfaceColor.copy(alpha = 0.9f))
+            .clickable(onClick = onClick)
+            .padding(28.dp),
+    ) {
+        Column {
+            Text(
+                text = mediaMetadata.album?.title?.takeIf { it.isNotBlank() } ?: mediaMetadata.title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White,
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = makeTimeString(mediaMetadata.duration * 1000L),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White,
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = artists,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.62f),
+            )
+            Spacer(Modifier.height(22.dp))
+            Text(
+                text = "Description",
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                color = Color.White,
+            )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = listOf(mediaMetadata.title, artists).joinToString(" • "),
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White.copy(alpha = 0.62f),
+            )
+            Spacer(Modifier.height(18.dp))
+            Text(
+                text = "More",
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                color = Color.White,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpotifyRoundIconButton(
+    icon: Int,
+    transparent: Boolean = false,
+    tint: Color = Color.White,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .background(if (transparent) Color.Transparent else Color.White.copy(alpha = 0.12f))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(icon),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(tint),
+            modifier = Modifier.size(23.dp)
+        )
+    }
+}
+
+@Composable
+private fun SpotifyPlainIconButton(
+    icon: Int,
+    onClick: () -> Unit,
+    tint: Color,
+) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(icon),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(tint),
+            modifier = Modifier.size(30.dp)
         )
     }
 }

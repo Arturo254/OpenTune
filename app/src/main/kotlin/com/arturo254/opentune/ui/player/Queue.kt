@@ -412,6 +412,10 @@ fun Queue(
                         onExpandQueue = { state.expandSoft() },
                     )
                 }
+
+                PlayerDesignStyle.SPOTIFY -> {
+                    // Spotify style uses its own inline action buttons
+                }
             }
 
             if (showSleepTimerDialog) {

@@ -411,7 +411,8 @@ enum class PlayerDesignStyle {
     V5,
     V6,
     V7,
-    V8
+    V8,
+    SPOTIFY
 }
 
 enum class PlayerBackgroundStyle {
@@ -423,6 +424,7 @@ enum class PlayerBackgroundStyle {
     BLUR_GRADIENT,
     GLOW,
     GLOW_ANIMATED,
+    SPOTIFY
 }
 
 // Keys for customized background
